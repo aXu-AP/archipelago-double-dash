@@ -94,24 +94,24 @@ class MkddWorld(World):
         from Utils import visualize_regions
         visualize_regions(self.multiworld.get_region("Menu", self.player), "my_world.puml")
 
-# def launch_client():
-#     from .MkddClient import main
-#     launch_subprocess(main, name="MKDD client")
+def launch_client():
+    from .mkdd_client import main
+    launch_subprocess(main, name="MKDD client")
 
 
-# def add_client_to_launcher() -> None:
-#     version = "0.2.0"
-#     found = False
-#     for c in components:
-#         if c.display_name == "Mario Kart Double Dash Client":
-#             found = True
-#             if getattr(c, "version", 0) < version:
-#                 c.version = version
-#                 c.func = launch_client
-#                 return
-#     if not found:
-#         components.append(Component("Mario Kart Double Dash Client", "MKDDClient",
-#                                     func=launch_client))
+def add_client_to_launcher() -> None:
+    version = "0.2.0"
+    found = False
+    for c in components:
+        if c.display_name == "Mario Kart Double Dash Client":
+            found = True
+            if getattr(c, "version", 0) < version:
+                c.version = version
+                c.func = launch_client
+                return
+    if not found:
+        components.append(Component("Mario Kart Double Dash Client", "MKDDClient",
+                                    func=launch_client))
 
 
-# add_client_to_launcher()
+add_client_to_launcher()
