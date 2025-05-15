@@ -9,8 +9,9 @@ from worlds.AutoWorld import WebWorld, World
 from worlds.LauncherComponents import Component, components, launch_subprocess
 import warnings
 
-from .items import MkddItem, item_data_table, item_id_table
-from .locations import MkddLocation, location_data_table, location_id_table, locked_locations
+from . import locations, items
+from .items import MkddItem
+from .locations import MkddLocation
 from .options import MkddOptions
 from .regions import region_data_table
 from .rules import MkddRules
@@ -30,8 +31,8 @@ class MkddWorld(World):
     options_dataclass = MkddOptions
     options: MkddOptions
 
-    item_name_to_id = item_id_table
-    location_name_to_id = location_id_table
+    item_name_to_id = items.name_to_id
+    location_name_to_id = locations.name_to_id
 
     def create_regions(self) -> None:
         # Create regions.
@@ -43,33 +44,33 @@ class MkddWorld(World):
         for region_name, region_data in region_data_table.items():
             region = self.get_region(region_name)
             region.add_locations({
-                location_name: location_data.id for location_name, location_data in location_data_table.items()
+                location_data.name: id for id, location_data in enumerate(locations.data_table)
                 if location_data.region == region_name
             }, MkddLocation)
             region.add_exits(region_data_table[region_name].connecting_regions)
             if region_name in game_data.CUPS:
                 cup_no = game_data.CUPS.index(region_name)
                 if cup_no < 4: # Exclude All Cup Tour.
-                    region.add_exits([game_data.COURSES[cup_no * 4 + i] + " GP" for i in range(4)])
+                    region.add_exits([game_data.COURSES[cup_no * 4 + i].name + " GP" for i in range(4)])
 
-        # Place locked locations.
-        for location_name, location_data in locked_locations.items():
-            locked_item = self.create_item(location_data.locked_item)
-            self.get_location(location_name).place_locked_item(locked_item)
+        # # Place locked locations.
+        # for location_name, location_data in locked_locations.items():
+        #     locked_item = self.create_item(location_data.locked_item)
+        #     self.get_location(location_name).place_locked_item(locked_item)
         
         self.get_location("Special Cup Gold 150cc").place_locked_item(self.create_item("Victory"))
         
     
     def create_items(self) -> None:
         item_pool: List[MkddItem] = []
-        for name, item in item_data_table.items():
-            if item.id and item.classification != ItemClassification.filler:
+        for item in items.data_table:
+            if item.classification != ItemClassification.filler:
                 count = item.count
-                for (loc_name, loc_data) in locked_locations.items():
-                    if loc_data.locked_item == name:
-                        count -= 1
+                # for (loc_name, loc_data) in locked_locations.items():
+                #     if loc_data.locked_item == name:
+                #         count -= 1
                 for i in range(count):
-                    item_pool.append(self.create_item(name))
+                    item_pool.append(self.create_item(item.name))
         
         total_locations = len(self.multiworld.get_unfilled_locations(self.player))
         if len(item_pool) > total_locations:
@@ -79,10 +80,13 @@ class MkddWorld(World):
         
         self.multiworld.itempool += item_pool
         self.multiworld.push_precollected(self.create_item("Mushroom Cup"))
+        self.multiworld.push_precollected(self.create_item("Mario"))
+        self.multiworld.push_precollected(self.create_item("Luigi"))
 
     def create_item(self, name: str) -> MkddItem:
-        item_data = item_data_table[name]
-        return MkddItem(name, item_data.classification, item_data.id, self.player)
+        id = items.name_to_id[name]
+        item_data = items.data_table[id]
+        return MkddItem(name, item_data.classification, id, self.player)
 
     def get_filler_item_name(self) -> str:
         return "Random Item"
@@ -94,13 +98,14 @@ class MkddWorld(World):
         from Utils import visualize_regions
         visualize_regions(self.multiworld.get_region("Menu", self.player), "my_world.puml")
 
+
 def launch_client():
     from .mkdd_client import main
-    launch_subprocess(main, name="MKDD client")
+    launch_subprocess(main, name="MKDD Client")
 
 
 def add_client_to_launcher() -> None:
-    version = "0.2.0"
+    version = "0.0.1"
     found = False
     for c in components:
         if c.display_name == "Mario Kart Double Dash Client":
@@ -110,8 +115,7 @@ def add_client_to_launcher() -> None:
                 c.func = launch_client
                 return
     if not found:
-        components.append(Component("Mario Kart Double Dash Client", "MKDDClient",
-                                    func=launch_client))
+        components.append(Component("Mario Kart Double Dash Client", "MKDDClient", func=launch_client))
 
 
 add_client_to_launcher()

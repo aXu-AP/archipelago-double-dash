@@ -1,13 +1,6 @@
+from enum import Enum, IntEnum
 from typing import NamedTuple
 
-MENU_CHAR_ADR = 0x812C1BFB
-"""Player 1 cursor for character selection. 0 Mario - 19 King Boo"""
-MENU_KART_ADR = 0x812C1C0F
-"""Player 1 cursor for kart selection. 0 Goo-Goo Buggy - 20 Parade Kart"""
-MENU_CUP_ADR = 0x803CB7AB
-"""Cup selection. 0 Mushroom Cup - 4 All Cup Tour"""
-MENU_COURSE_ADR = 0x803CB7AF
-"""Course selection within the selected cup. 0-3"""
 
 class Character(NamedTuple):
     name: str
@@ -72,21 +65,51 @@ CUPS = [
     "All Cup Tour",
 ]
 
+class CourseType(IntEnum):
+    RACE = 0
+    BATTLE = 1
+    CEREMONY = 2
+
+class Course(NamedTuple):
+    name: str = ""
+    id: int = -1
+    type: CourseType = CourseType.RACE
+
+
 COURSES = [
-    "Luigi Circuit",
-    "Peach Beach",
-    "Baby Park",
-    "Dry Dry Desert",
-    "Mushroom Bridge",
-    "Mario Circuit",
-    "Daisy Cruiser",
-    "Waluigi Stadium",
-    "Sherbet Land",
-    "Mushroom City",
-    "Yoshi Circuit",
-    "DK Mountain",
-    "Wario Colosseum",
-    "Dino Dino Jungle",
-    "Bowser's Castle",
-    "Rainbow Road",
+    # Race courses:
+    Course("Luigi Circuit", 0x24),
+    Course("Peach Beach", 0x22),
+    Course("Baby Park", 0x21),
+    Course("Dry Dry Desert", 0x32),
+    Course("Mushroom Bridge", 0x28),
+    Course("Mario Circuit", 0x25),
+    Course("Daisy Cruiser", 0x23),
+    Course("Waluigi Stadium", 0x2a),
+    Course("Sherbet Land", 0x33),
+    Course("Mushroom City", 0x29),
+    Course("Yoshi Circuit", 0x26),
+    Course("DK Mountain", 0x2d),
+    Course("Wario Colosseum", 0x2b),
+    Course("Dino Dino Jungle", 0x2c),
+    Course("Bowser's Castle", 0x2f),
+    Course("Rainbow Road", 0x31),
+    # Battle courses:
+    Course("Cookie Land", 0x3a, CourseType.BATTLE),
+    Course("Pipe Plaza", 0x3b, CourseType.BATTLE),
+    Course("Block City", 0x36, CourseType.BATTLE),
+    Course("Nintendo Gamecube", 0x35, CourseType.BATTLE),
+    Course("Luigi's Mansion", 0x34, CourseType.BATTLE),
+    Course("Tilt-A-Kart", 0x38, CourseType.BATTLE),
+    # Award Ceremony
+    Course("Award Ceremony", 0x44, CourseType.CEREMONY),
 ]
+
+class Modes(IntEnum):
+    TIMETRIAL = 1
+    GRANDPRIX = 2
+    VERSUS = 3
+    BATTLE_BALLOON = 4
+    BATTLE_SHINE = 7
+    BATTLE_BOMB = 6
+    CEREMONY = 8

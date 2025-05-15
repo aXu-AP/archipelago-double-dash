@@ -1,15 +1,18 @@
 import asyncio
 import time
 import traceback
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set
 
-import dolphin_memory_engine
+import dolphin_memory_engine as dolphin
 
 import Utils
 from CommonClient import ClientCommandProcessor, CommonContext, get_base_parser, gui_enabled, logger, server_loop
 from NetUtils import ClientStatus, NetworkItem
+
+from . import game_data, items, locations
 from .locations import MkddLocationData
-from .items import MkddItemData, item_id_table
+from .items import ItemType, MkddItemData
+from .asm import patches, mem_addresses
 
 if TYPE_CHECKING:
     import kvui
@@ -76,10 +79,13 @@ class MkddContext(CommonContext):
         self.awaiting_rom: bool = False
         self.last_rcvd_index: int = -1
         self.has_send_death: bool = False
+        self.memory_addresses = mem_addresses.MkddMemAddressesUsa
+        self.race_counter: int = 0
+        self.course_changed_time: int = 0
 
         # Name of the current stage as read from the game's memory. Sent to trackers whenever its value changes to
         # facilitate automatically switching to the map of the current stage.
-        self.current_stage_name: str = ""
+        self.current_course: game_data.Course = game_data.Course()
 
         # Length of the item get array in memory.
         self.len_give_item_array: int = 0x10
@@ -93,7 +99,7 @@ class MkddContext(CommonContext):
         """
         self.auth = None
         self.salvage_locations_map = {}
-        self.current_stage_name = ""
+        self.current_course = game_data.Course()
         self.visited_stage_names = None
         await super().disconnect(allow_autoreconnect)
 
@@ -150,37 +156,27 @@ class MkddContext(CommonContext):
         return ui
 
 
-def read_short(console_address: int) -> int:
-    """
-    Read a 2-byte short from Dolphin memory.
-
-    :param console_address: Address to read from.
-    :return: The value read from memory.
-    """
-    return int.from_bytes(dolphin_memory_engine.read_bytes(console_address, 2), byteorder="big")
-
-
-def write_short(console_address: int, value: int) -> None:
-    """
-    Write a 2-byte short to Dolphin memory.
-
-    :param console_address: Address to write to.
-    :param value: Value to write.
-    """
-    dolphin_memory_engine.write_bytes(console_address, value.to_bytes(2, byteorder="big"))
+###### Dolphin connecton ######
+def _apply_ar_code(ctx: MkddContext, code: List[int]):
+    for i in range(0, len(code), 2):
+        command = (code[i] & 0xFE00_0000) >> 24
+        address = (code[i] & 0x01FF_FFFF) | 0x8000_0000
+        logger.info(f"({command:02x}) {address:08x}: {code[i + 1]:08x} ({i/2}/{len(code)/2})")
+        if command == 0x04:
+            dolphin.write_word(address, code[i + 1])
 
 
-def read_string(console_address: int, strlen: int) -> str:
-    """
-    Read a string from Dolphin memory.
+def _apply_dict_patch(ctx: MkddContext, code: Dict[int, List[int]]):
+    for start_address, rows in code.items():
+        address = start_address
+        for row in rows:
+            dolphin.write_word(address, row)
+            address += 4
 
-    :param console_address: Address to start reading from.
-    :param strlen: Length of the string to read.
-    :return: The string.
-    """
-    
-    return dolphin_memory_engine.read_bytes(console_address, strlen).split(b"\0", 1)[0].decode()
 
+def _apply_patch(ctx: MkddContext):
+    _apply_dict_patch(ctx, patches.character_selection)
+    logger.info("Patch Applied.")
 
 
 def _give_death(ctx: MkddContext) -> None:
@@ -191,7 +187,7 @@ def _give_death(ctx: MkddContext) -> None:
     """
     if (
         ctx.slot is not None
-        and dolphin_memory_engine.is_hooked()
+        and dolphin.is_hooked()
         and ctx.dolphin_status == CONNECTION_CONNECTED_STATUS
         and check_ingame()
     ):
@@ -199,7 +195,7 @@ def _give_death(ctx: MkddContext) -> None:
         # TODO: Add death link.
 
 
-def _give_item(ctx: MkddContext, item_name: str) -> bool:
+def _give_item(ctx: MkddContext, item: MkddItemData) -> bool:
     """
     Give an item to the player in-game.
 
@@ -207,8 +203,9 @@ def _give_item(ctx: MkddContext, item_name: str) -> bool:
     :param item_name: Name of the item to give.
     :return: Whether the item was successfully given.
     """
-    # TODO: Add item handling.
-    logger.info(f"Got item {item_name}")
+    logger.info(f"Got item: {item.name}")
+    if item.item_type == ItemType.CHARACTER:
+        dolphin.write_byte(ctx.memory_addresses.available_characters_bx + item.address, 1)
     return True
 
 
@@ -223,43 +220,11 @@ async def give_items(ctx: MkddContext) -> None:
         # If the item's index is greater than the player's expected index, give the player the item.
         if ctx.last_item_handled < idx:
             # Attempt to give the item and increment the expected index.
-            while not _give_item(ctx, str(item.item)):
+            while not _give_item(ctx, items.data_table[item.item]):
                 await asyncio.sleep(0.01)
 
             # Increment the expected index.
             ctx.last_item_handled = idx
-
-
-def check_special_location(location_name: str, data: MkddLocationData) -> bool:
-    """
-    Check that the player has checked a given location.
-    This function handles locations that require special logic.
-
-    :param location_name: The name of the location.
-    :param data: The data associated with the location.
-    :raises NotImplementedError: If an unknown location name is provided.
-    """
-    checked = False
-
-    return checked
-
-
-def check_regular_location(ctx: MkddContext, curr_stage_id: int, data: MkddLocationData) -> bool:
-    """
-    Check that the player has checked a given location.
-    This function handles locations that only require checking that a particular bit is set.
-
-    The check looks at the saved data for the stage at which the location is located and the data for the current stage.
-    In the latter case, this data includes data that has not yet been written to the saved data.
-
-    :param ctx: Mario Kart Double Dash client context.
-    :param curr_stage_id: The current stage at which the player is.
-    :param data: The data associated with the location.
-    :raises NotImplementedError: If a location with an unknown type is provided.
-    """
-    checked = False
-
-    return checked
 
 
 async def check_locations(ctx: MkddContext) -> None:
@@ -271,13 +236,61 @@ async def check_locations(ctx: MkddContext) -> None:
 
     :param ctx: Mario Kart Double Dash client context.
     """
+    new_location_names: Set[str] = set()
+
+    mode: int = dolphin.read_word(ctx.memory_addresses.mode_w)
+    cup: str = game_data.CUPS[dolphin.read_word(ctx.memory_addresses.cup_w)]
+    menu_course: int = dolphin.read_word(ctx.memory_addresses.menu_course_w)
+    vehicle_class: int = dolphin.read_word(ctx.memory_addresses.vehicle_class_w)
+    current_lap: int = dolphin.read_word(ctx.memory_addresses.current_lap_wx)
+    # Get placement and modify it to be 0-based for less confusion (rankings are also 0-based).
+    in_race_placement: int = dolphin.read_word(ctx.memory_addresses.in_race_placement_wx) - 1
+    current_course_ranking: int = dolphin.read_word(ctx.memory_addresses.current_course_ranking_w)
+    total_ranking: int = dolphin.read_word(ctx.memory_addresses.total_ranking_w)
+    total_points: int = dolphin.read_word(ctx.memory_addresses.total_points_wx)
+    game_ticks: int = dolphin.read_word(ctx.memory_addresses.game_ticks_w)
+    # Course finishing related locations.
+    if check_finished(ctx):
+        await check_current_course_changed(ctx) # In case the client was reconnected during rankings screen.
+        new_location_names.add(locations.get_loc_name_finish(ctx.current_course.name))
+        logger.info(f"Finished {ctx.current_course.name} in place: {in_race_placement}. Mode: {mode}, class: {vehicle_class}.")
+        if mode == game_data.Modes.GRANDPRIX:
+            if in_race_placement == 0:
+                new_location_names.add(locations.get_loc_name_first(ctx.current_course.name))
+
+    if mode == game_data.Modes.GRANDPRIX and current_lap > 0 and in_race_placement == 0 and game_ticks > ctx.course_changed_time + 600:
+        new_location_names.add(locations.get_loc_name_lead(ctx.current_course.name))
+
+    # Cup related locations.
+    if mode == game_data.Modes.CEREMONY:
+        new_location_names.add(locations.get_loc_name_finish(cup))
+        # Bronze or better. Add all variants that are considered easier than current (ie. 50 bronze for 150 gold finish).
+        if total_ranking <= 2:
+            for r in range(2, total_ranking - 1, -1):
+                for c in range(vehicle_class + 1):
+                    new_location_names.add(locations.get_loc_name_cup(cup, r, c))
+        if total_points == 40:
+            new_location_names.add(locations.get_loc_name_perfect(cup))
+        
+    new_locations = {locations.name_to_id.get(loc_name) for loc_name in new_location_names}
+    new_locations.discard(None)
+    ctx.locations_checked.update(new_locations)
     # Send the list of newly-checked locations to the server.
     locations_checked = ctx.locations_checked.difference(ctx.checked_locations)
     if locations_checked:
         await ctx.send_msgs([{"cmd": "LocationChecks", "locations": locations_checked}])
 
 
-async def check_current_stage_changed(ctx: MkddContext) -> None:
+def check_finished(ctx: MkddContext) -> bool:
+    current_race: int = dolphin.read_word(ctx.memory_addresses.race_counter_w)
+    if current_race > ctx.race_counter:
+        ctx.race_counter = current_race
+        return True
+    else:
+        return False
+
+
+async def check_current_course_changed(ctx: MkddContext) -> None:
     """
     Check if the player has moved to a new stage.
     If so, update all trackers with the new stage name.
@@ -285,8 +298,22 @@ async def check_current_stage_changed(ctx: MkddContext) -> None:
 
     :param ctx: Mario Kart Double Dash client context.
     """
-    # TODO: Retrieve current course.
-    # ctx.current_stage_name = 
+    course_id = dolphin.read_word(ctx.memory_addresses.current_course_w)
+    courses: List[game_data.Course] = [c for c in game_data.COURSES if c.id == course_id]
+    if len(courses) > 0:
+        new_course = courses[0]
+        if new_course != ctx.current_course:
+            ctx.course_changed_time = dolphin.read_word(ctx.memory_addresses.game_ticks_w)
+            ctx.current_course = new_course
+            # Send a Bounced message containing the new stage name to all trackers connected to the current slot.
+            data_to_send = {"mkdd_course_name": new_course.name}
+            message = {
+                "cmd": "Bounce",
+                "slots": [ctx.slot],
+                "data": data_to_send,
+            }
+            await ctx.send_msgs([message])
+
 
 
 async def check_death(ctx: MkddContext) -> None:
@@ -328,39 +355,45 @@ async def dolphin_sync_task(ctx: MkddContext) -> None:
     logger.info("Starting Dolphin connector. Use /dolphin for status information.")
     while not ctx.exit_event.is_set():
         try:
-            if dolphin_memory_engine.is_hooked() and ctx.dolphin_status == CONNECTION_CONNECTED_STATUS:
+            if dolphin.is_hooked() and ctx.dolphin_status == CONNECTION_CONNECTED_STATUS:
                 if not check_ingame():
                     # Reset the give item array while not in the game.
-                    #dolphin_memory_engine.write_bytes(GIVE_ITEM_ARRAY_ADDR, bytes([0xFF] * ctx.len_give_item_array))
-                    await asyncio.sleep(0.1)
+                    #dolphin.write_bytes(GIVE_ITEM_ARRAY_ADDR, bytes([0xFF] * ctx.len_give_item_array))
+                    await asyncio.sleep(0.2)
                     continue
                 if ctx.slot is not None:
                     if "DeathLink" in ctx.tags:
                         await check_death(ctx)
                     await give_items(ctx)
                     await check_locations(ctx)
-                    await check_current_stage_changed(ctx)
+                    await check_current_course_changed(ctx)
                 else:
                     # if not ctx.auth:
                     #     ctx.auth = read_string(SLOT_NAME_ADDR, 0x40)
                     if ctx.awaiting_rom:
                         await ctx.server_auth()
-                await asyncio.sleep(0.1)
+                if dolphin.read_bytes(0x80000000, 6) != b"GM4E01":
+                    logger.info("Connection to Dolphin lost, reconnecting...")
+                    ctx.dolphin_status = CONNECTION_LOST_STATUS
+                await asyncio.sleep(0.2)
             else:
                 if ctx.dolphin_status == CONNECTION_CONNECTED_STATUS:
                     logger.info("Connection to Dolphin lost, reconnecting...")
                     ctx.dolphin_status = CONNECTION_LOST_STATUS
                 logger.info("Attempting to connect to Dolphin...")
-                dolphin_memory_engine.hook()
-                if dolphin_memory_engine.is_hooked():
-                    if dolphin_memory_engine.read_bytes(0x80000000, 6) != b"GM4E01":
+                dolphin.hook()
+                if dolphin.is_hooked():
+                    if dolphin.read_bytes(0x80000000, 6) != b"GM4E01":
                         logger.info(CONNECTION_REFUSED_GAME_STATUS)
                         ctx.dolphin_status = CONNECTION_REFUSED_GAME_STATUS
-                        dolphin_memory_engine.un_hook()
+                        dolphin.un_hook()
                         await asyncio.sleep(5)
                     else:
                         logger.info(CONNECTION_CONNECTED_STATUS)
                         ctx.dolphin_status = CONNECTION_CONNECTED_STATUS
+                        _apply_patch(ctx)
+                        ctx.last_item_handled = 0
+                        give_items(ctx)
                         ctx.locations_checked = set()
                 else:
                     logger.info("Connection to Dolphin failed, attempting again in 5 seconds...")
@@ -369,7 +402,7 @@ async def dolphin_sync_task(ctx: MkddContext) -> None:
                     await asyncio.sleep(5)
                     continue
         except Exception:
-            dolphin_memory_engine.un_hook()
+            dolphin.un_hook()
             logger.info("Connection to Dolphin failed, attempting again in 5 seconds...")
             logger.error(traceback.format_exc())
             ctx.dolphin_status = CONNECTION_LOST_STATUS

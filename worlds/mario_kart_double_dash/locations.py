@@ -4,7 +4,7 @@ from BaseClasses import Location
 from . import game_data
 
 if TYPE_CHECKING:
-    from . import CliqueWorld
+    from . import MkddWorld
 
 
 class MkddLocation(Location):
@@ -12,34 +12,64 @@ class MkddLocation(Location):
 
 
 class MkddLocationData():
-    id_iterator = 2000
-    def __init__(self, difficulty: int, region: str = "Menu", required_items: Dict[str, int] = {}, locked_item: str = "", no_id: bool = False):
-        if no_id:
-            self.id: int = 0
-        else:
-            self.id: int = MkddLocationData.id_iterator
-            MkddLocationData.id_iterator += 1
+    def __init__(self, name:str, difficulty: int, region: str = "Menu", required_items: Dict[str, int] = {}, locked_item: str = "", no_id: bool = False):
+        self.name: str = name
         self.difficulty: int = difficulty
         self.region: str = region
         self.required_items: Dict[str, int] = required_items
         self.locked_item: str = locked_item
 
-location_data_table: Dict[str, MkddLocationData] = {}
+def get_loc_name_cup(cup: str, ranking: int, vehicle_class: int):
+    try:
+        rank_name = ["Gold", "Silver", "Bronze"][ranking]
+        class_name = ["50cc", "100cc", "150cc", "Mirror"][vehicle_class]
+        return f"{cup} {rank_name} {class_name}"
+    except:
+        return ""
+
+def get_loc_name_perfect(cup: str):
+    return f"{cup} Perfect"
+
+def get_loc_name_finish(course_or_cup: str):
+    return f"{course_or_cup} Finish"
+
+def get_loc_name_lead(course: str):
+    return f"{course} Take The Lead"
+
+def get_loc_name_first(course: str):
+    return f"{course} 1st"
+
+def get_loc_name_ghost(course: str):
+    return f"{course} Defeat Staff Ghost"
+
+
+data_table: List[MkddLocationData] = []
 
 for cup in game_data.CUPS:
-    location_data_table[cup + " Bronze"]        = MkddLocationData(0, cup)
-    location_data_table[cup + " Silver"]        = MkddLocationData(1, cup)
-    location_data_table[cup + " Gold 50cc"]     = MkddLocationData(2, cup)
-    location_data_table[cup + " Gold 100cc"]    = MkddLocationData(5, cup, {"Progressive Mode":1})
-    location_data_table[cup + " Gold 150cc"]    = MkddLocationData(10, cup, {"Progressive Mode":2})
-    location_data_table[cup + " Gold Mirror"]   = MkddLocationData(10, cup, {"Progressive Mode":3})
-    location_data_table[cup + " Perfect"]       = MkddLocationData(5, cup)
+    data_table.append(MkddLocationData(get_loc_name_finish(cup), 0, cup))
+    data_table.append(MkddLocationData(get_loc_name_perfect(cup), 5, cup))
+    # 50cc
+    data_table.append(MkddLocationData(get_loc_name_cup(cup, 2, 0),  0, cup))
+    data_table.append(MkddLocationData(get_loc_name_cup(cup, 1, 0),  1, cup))
+    data_table.append(MkddLocationData(get_loc_name_cup(cup, 0, 0),  2, cup))
+    # 100cc
+    data_table.append(MkddLocationData(get_loc_name_cup(cup, 2, 1),  0, cup, {"Progressive Class":1}))
+    data_table.append(MkddLocationData(get_loc_name_cup(cup, 1, 1),  1, cup, {"Progressive Class":1}))
+    data_table.append(MkddLocationData(get_loc_name_cup(cup, 0, 1),  5, cup, {"Progressive Class":1}))
+    # 150cc
+    data_table.append(MkddLocationData(get_loc_name_cup(cup, 2, 2),  3, cup, {"Progressive Class":2}))
+    data_table.append(MkddLocationData(get_loc_name_cup(cup, 1, 2),  8, cup, {"Progressive Class":2}))
+    data_table.append(MkddLocationData(get_loc_name_cup(cup, 0, 2), 10, cup, {"Progressive Class":2}))
+    # Mirror
+    data_table.append(MkddLocationData(get_loc_name_cup(cup, 2, 3),  7, cup, {"Progressive Class":3}))
+    data_table.append(MkddLocationData(get_loc_name_cup(cup, 1, 3), 10, cup, {"Progressive Class":3}))
+    data_table.append(MkddLocationData(get_loc_name_cup(cup, 0, 3), 15, cup, {"Progressive Class":3}))
 
 for course in game_data.COURSES:
-    location_data_table[course + " 1st"]                = MkddLocationData(2, course + " GP")
-    location_data_table[course + " Take The Lead"]      = MkddLocationData(1, course + " GP")
-    location_data_table[course + " Defeat Staff Ghost"] = MkddLocationData(10, course + " TT")
-    location_data_table[course + " Item Box"]           = MkddLocationData(0, course)
+    if course.type == game_data.CourseType.RACE:
+        data_table.append(MkddLocationData(get_loc_name_finish(course.name), 0, course.name))
+        data_table.append(MkddLocationData(get_loc_name_lead(course.name), 1, course.name + " GP"))
+        data_table.append(MkddLocationData(get_loc_name_first(course.name), 2, course.name + " GP"))
+        data_table.append(MkddLocationData(get_loc_name_ghost(course.name), 10, course.name + " TT"))
 
-location_id_table: Dict[str, int] = {name:data.id for (name, data) in location_data_table.items() if data.id != 0}
-locked_locations: Dict[str, MkddLocationData] = {name: data for name, data in location_data_table.items() if data.locked_item}
+name_to_id: Dict[str, int] = {data.name:id for (id, data) in enumerate(data_table)}
