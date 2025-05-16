@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, NamedTuple, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 from enum import Enum
 
 from BaseClasses import Item, ItemClassification
@@ -30,7 +30,7 @@ class MkddItemData():
         self.classification: int = classification
         self.count = count
 
-data_table: List[MkddItemData] = [
+data_table: list[MkddItemData] = [
     MkddItemData("", 0, count = 0), # Id 0 is reserved
     MkddItemData("Progressive Class", PROG, count = 3),
     MkddItemData("Random Item", FILL),
@@ -41,4 +41,4 @@ data_table.extend([MkddItemData(kart.name, PROG, count = 2) for kart in game_dat
 data_table.extend([MkddItemData(name, PROG) for name in game_data.CUPS])
 data_table.extend([MkddItemData(f"{course.name} Time Trial", PROG) for course in game_data.COURSES if course.type == game_data.CourseType.RACE])
 
-name_to_id: Dict[str, int] = {item.name:id for (id, item) in enumerate(data_table) if id > 0}
+name_to_id: dict[str, int] = {item.name:id for (id, item) in enumerate(data_table) if id > 0}

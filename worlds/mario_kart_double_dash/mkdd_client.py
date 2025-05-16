@@ -1,7 +1,7 @@
 import asyncio
 import time
 import traceback
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set
+from typing import TYPE_CHECKING, Any, Optional
 
 import dolphin_memory_engine as dolphin
 
@@ -157,7 +157,7 @@ class MkddContext(CommonContext):
 
 
 ###### Dolphin connecton ######
-def _apply_ar_code(ctx: MkddContext, code: List[int]):
+def _apply_ar_code(ctx: MkddContext, code: list[int]):
     for i in range(0, len(code), 2):
         command = (code[i] & 0xFE00_0000) >> 24
         address = (code[i] & 0x01FF_FFFF) | 0x8000_0000
@@ -166,7 +166,7 @@ def _apply_ar_code(ctx: MkddContext, code: List[int]):
             dolphin.write_word(address, code[i + 1])
 
 
-def _apply_dict_patch(ctx: MkddContext, code: Dict[int, List[int]]):
+def _apply_dict_patch(ctx: MkddContext, code: dict[int, list[int]]):
     for start_address, rows in code.items():
         address = start_address
         for row in rows:
@@ -236,7 +236,7 @@ async def check_locations(ctx: MkddContext) -> None:
 
     :param ctx: Mario Kart Double Dash client context.
     """
-    new_location_names: Set[str] = set()
+    new_location_names: set[str] = set()
 
     mode: int = dolphin.read_word(ctx.memory_addresses.mode_w)
     cup: str = game_data.CUPS[dolphin.read_word(ctx.memory_addresses.cup_w)]
@@ -299,7 +299,7 @@ async def check_current_course_changed(ctx: MkddContext) -> None:
     :param ctx: Mario Kart Double Dash client context.
     """
     course_id = dolphin.read_word(ctx.memory_addresses.current_course_w)
-    courses: List[game_data.Course] = [c for c in game_data.COURSES if c.id == course_id]
+    courses: list[game_data.Course] = [c for c in game_data.COURSES if c.id == course_id]
     if len(courses) > 0:
         new_course = courses[0]
         if new_course != ctx.current_course:

@@ -1,8 +1,7 @@
-from typing import List
 import os
 import subprocess
 
-def convert(input_path: str, out: List) -> None:
+def convert(input_path: str, out: list) -> None:
     if subprocess.call(["powerpc-gekko-as.exe", "-a32", "-mbig", "-mregnames", "-mgekko", input_path]) != 0:
         print(f"Couldn't convert file {input_path}.")
         return

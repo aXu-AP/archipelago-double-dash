@@ -2,7 +2,6 @@
 Archipelago init file for Mario Kart Double Dash!!
 """
 import random
-from typing import List, Dict, Any
 
 from BaseClasses import Region, ItemClassification
 from worlds.AutoWorld import WebWorld, World
@@ -35,8 +34,8 @@ class MkddWorld(World):
     location_name_to_id = locations.name_to_id
 
     def __init__(self, world, player):
-        self.current_locations: List[MkddLocation] = []
-        self.current_regions: Dict[str, MkddRegionData] = {}
+        self.current_locations: list[MkddLocation] = []
+        self.current_regions: dict[str, MkddRegionData] = {}
         super(MkddWorld, self).__init__(world, player)
 
     def create_regions(self) -> None:
@@ -76,7 +75,7 @@ class MkddWorld(World):
     
     def create_items(self) -> None:
         # (item_name, count)
-        precollected: List[str] = [game_data.CUPS[0]]
+        precollected: list[str] = [game_data.CUPS[0]]
         # Give 2 random characters to begin.
         precollected_characters = 0
         while precollected_characters < 2:
@@ -86,12 +85,12 @@ class MkddWorld(World):
                 precollected_characters += 1
         # Give 1 kart in each weight class.
         for weight in range(3):
-            karts: List[str] = [kart.name for kart in game_data.KARTS if kart.weight == weight]
+            karts: list[str] = [kart.name for kart in game_data.KARTS if kart.weight == weight]
             precollected.append(karts[self.random.randrange(len(karts))])
         for item in precollected:
             self.multiworld.push_precollected(self.create_item(item))
 
-        item_pool: List[MkddItem] = []
+        item_pool: list[MkddItem] = []
         for item in items.data_table:
             if item.classification != ItemClassification.filler:
                 count = item.count

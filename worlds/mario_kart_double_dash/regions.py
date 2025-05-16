@@ -1,16 +1,16 @@
-from typing import Dict, List, NamedTuple
+from typing import NamedTuple
 from . import game_data
 
 class MkddRegionData(NamedTuple):
-    connecting_regions: List[str] = []
+    connecting_regions: list[str] = []
 
-data_table: Dict[str, MkddRegionData] = {}
+data_table: dict[str, MkddRegionData] = {}
 
-cup_regions: Dict[str, MkddRegionData] = {cup:MkddRegionData() for cup in game_data.CUPS}
+cup_regions: dict[str, MkddRegionData] = {cup:MkddRegionData() for cup in game_data.CUPS}
 
-course_regions: Dict[str, MkddRegionData] = {}
-course_gp_regions: Dict[str, MkddRegionData] = {}
-course_tt_regions: Dict[str, MkddRegionData] = {}
+course_regions: dict[str, MkddRegionData] = {}
+course_gp_regions: dict[str, MkddRegionData] = {}
+course_tt_regions: dict[str, MkddRegionData] = {}
 for course in game_data.COURSES:
     course_regions[course.name] = MkddRegionData()
     course_gp_regions[course.name + " GP"] = MkddRegionData([course.name])
