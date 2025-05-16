@@ -26,10 +26,15 @@ class MkddRules:
         set_rule(entrance, rule)
 
     def set_rules(self) -> None:
-        for location in locations.data_table:
+        for location in self.world.current_locations:
             for item, count in location.required_items.items():
                 self.add_loc_rule(location.name, lambda state, item = item, count = count: state.has(item, self.player, count))
+
         for cup in game_data.CUPS:
+            # Exclude All Cup Tour
+            if cup == "All Cup Tour" and self.world.options.all_cup_tour_length == 0:
+                continue
             self.set_ent_rule(f"Menu -> {cup}", lambda state, cup = cup: state.has(cup, self.player))
+
         for course in game_data.COURSES:
             self.set_ent_rule(f"Menu -> {course.name} TT", lambda state, course = course.name: state.has(f"{course} Time Trial", self.player))

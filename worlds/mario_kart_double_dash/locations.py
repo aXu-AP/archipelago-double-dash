@@ -43,7 +43,7 @@ def get_loc_name_ghost(course: str):
     return f"{course} Defeat Staff Ghost"
 
 
-data_table: List[MkddLocationData] = []
+data_table: List[MkddLocationData] = [MkddLocationData("", 0)] # Id 0 is reserved.
 
 for cup in game_data.CUPS:
     data_table.append(MkddLocationData(get_loc_name_finish(cup), 0, cup))
@@ -72,4 +72,4 @@ for course in game_data.COURSES:
         data_table.append(MkddLocationData(get_loc_name_first(course.name), 2, course.name + " GP"))
         data_table.append(MkddLocationData(get_loc_name_ghost(course.name), 10, course.name + " TT"))
 
-name_to_id: Dict[str, int] = {data.name:id for (id, data) in enumerate(data_table)}
+name_to_id: Dict[str, int] = {data.name:id for (id, data) in enumerate(data_table) if id > 0}

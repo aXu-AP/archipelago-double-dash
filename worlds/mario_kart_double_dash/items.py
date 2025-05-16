@@ -31,6 +31,7 @@ class MkddItemData():
         self.count = count
 
 data_table: List[MkddItemData] = [
+    MkddItemData("", 0, count = 0), # Id 0 is reserved
     MkddItemData("Progressive Class", PROG, count = 3),
     MkddItemData("Random Item", FILL),
     MkddItemData("Victory", PROG, count = 0),
@@ -40,4 +41,4 @@ data_table.extend([MkddItemData(kart.name, PROG, count = 2) for kart in game_dat
 data_table.extend([MkddItemData(name, PROG) for name in game_data.CUPS])
 data_table.extend([MkddItemData(f"{course.name} Time Trial", PROG) for course in game_data.COURSES if course.type == game_data.CourseType.RACE])
 
-name_to_id: Dict[str, int] = {item.name:id for (id, item) in enumerate(data_table)}
+name_to_id: Dict[str, int] = {item.name:id for (id, item) in enumerate(data_table) if id > 0}
