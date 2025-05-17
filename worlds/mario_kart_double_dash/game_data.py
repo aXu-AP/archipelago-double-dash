@@ -32,29 +32,30 @@ CHARACTERS = [
 class Kart(NamedTuple):
     name: str
     weight: int
+    unlock_id: int
 
 KARTS = [
-    Kart("Goo-Goo Buggy", 0),       # 00
-    Kart("Rattle Buggy", 0),        # 01
-    Kart("Koopa Dasher", 0),        # 02
-    Kart("Para-Wing", 0),           # 03
-    Kart("Barrel Train", 0),        # 04
-    Kart("Bullet Blaster", 0),      # 05
-    Kart("Toad Kart", 0),           # 06
-    Kart("Toadette Kart", 0),       # 07
-    Kart("Red Fire", 1),            # 08
-    Kart("Green Fire", 1),          # 09
-    Kart("Heart Coach", 1),         # 10
-    Kart("Bloom Coach", 1),         # 11
-    Kart("Turbo Yoshi", 1),         # 12
-    Kart("Turbo Birdo", 1),         # 13
-    Kart("Waluigi Racer", 1),       # 14
-    Kart("Wario Car", 2),           # 15
-    Kart("DK Jumbo", 2),            # 16
-    Kart("Koopa King", 2),          # 17
-    Kart("Piranha Pipes", 2),       # 18
-    Kart("Boo Pipes", 2),           # 19
-    Kart("Parade Kart", -1),        # 20
+    Kart("Goo-Goo Buggy", 0, 5),    # 00
+    Kart("Rattle Buggy", 0, 13),    # 01
+    Kart("Koopa Dasher", 0, 3),     # 02
+    Kart("Para-Wing", 0, 11),       # 03
+    Kart("Barrel Train", 0, 9),     # 04
+    Kart("Bullet Blaster", 0, 15),  # 05
+    Kart("Toad Kart", 0, 16),       # 06
+    Kart("Toadette Kart", 0, 17),   # 07
+    Kart("Red Fire", 1, 0),         # 08
+    Kart("Green Fire", 1, 8),       # 09
+    Kart("Heart Coach", 1, 4),      # 10
+    Kart("Bloom Coach", 1, 12),     # 11
+    Kart("Turbo Yoshi", 1, 2),      # 12
+    Kart("Turbo Birdo", 1, 10),     # 13
+    Kart("Waluigi Racer", 1, 14),   # 14
+    Kart("Wario Car", 2, 6),        # 15
+    Kart("DK Jumbo", 2, 1),         # 16
+    Kart("Koopa King", 2, 7),       # 17
+    Kart("Piranha Pipes", 2, 19),   # 18
+    Kart("Boo Pipes", 2, 18),       # 19
+    Kart("Parade Kart", -1, 20),    # 20
 ]
 
 CUPS = [
@@ -74,13 +75,14 @@ class Course(NamedTuple):
     name: str = ""
     id: int = -1
     type: CourseType = CourseType.RACE
+    laps: int = 3
 
 
 COURSES = [
     # Race courses:
     Course("Luigi Circuit", 0x24),
     Course("Peach Beach", 0x22),
-    Course("Baby Park", 0x21),
+    Course("Baby Park", 0x21, laps = 7),
     Course("Dry Dry Desert", 0x32),
     Course("Mushroom Bridge", 0x28),
     Course("Mario Circuit", 0x25),
@@ -90,7 +92,7 @@ COURSES = [
     Course("Mushroom City", 0x29),
     Course("Yoshi Circuit", 0x26),
     Course("DK Mountain", 0x2d),
-    Course("Wario Colosseum", 0x2b),
+    Course("Wario Colosseum", 0x2b, laps = 2),
     Course("Dino Dino Jungle", 0x2c),
     Course("Bowser's Castle", 0x2f),
     Course("Rainbow Road", 0x31),

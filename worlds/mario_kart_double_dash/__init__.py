@@ -2,6 +2,8 @@
 Archipelago init file for Mario Kart Double Dash!!
 """
 import random
+import math
+from typing import Any
 
 from BaseClasses import Region, ItemClassification
 from worlds.AutoWorld import WebWorld, World
@@ -120,6 +122,18 @@ class MkddWorld(World):
         self.multiworld.completion_condition[self.player] = lambda state: state.has("Victory", self.player)
         from Utils import visualize_regions
         visualize_regions(self.multiworld.get_region("Menu", self.player), "my_world.puml")
+    
+    def fill_slot_data(self) -> dict[str, Any]:
+        lap_counts = {course.name:course.laps for course in game_data.COURSES if course.type == game_data.CourseType.RACE}
+        if self.options.shorter_courses:
+            for course, laps in lap_counts.items():
+                lap_counts[course] = int(math.ceil(laps * 2 / 3))
+        for course, laps in self.options.custom_lap_counts.items():
+            if laps > 0:
+                lap_counts[course] = laps
+        return {
+            "lap_counts": lap_counts
+        }
 
 
 def launch_client():

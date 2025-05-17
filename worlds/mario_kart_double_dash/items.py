@@ -16,7 +16,9 @@ TRAP = ItemClassification.trap
 class ItemType(Enum):
     OTHER = 0
     CHARACTER = 1
-    CUP = 2
+    KART = 2
+    CUP = 3
+    TT_COURSE = 4
 
 class MkddItem(Item):
     game = "Mario Kart Double Dash"
@@ -30,15 +32,23 @@ class MkddItemData():
         self.classification: int = classification
         self.count = count
 
+PROGRESSIVE_CLASS = "Progressive Class"
+RANDOM_ITEM = "Random Item"
+VICTORY = "Victory"
+
+def get_item_name_tt_course(course: str):
+    return f"{course} Time Trial"
+
+
 data_table: list[MkddItemData] = [
     MkddItemData("", 0, count = 0), # Id 0 is reserved
-    MkddItemData("Progressive Class", PROG, count = 3),
-    MkddItemData("Random Item", FILL),
-    MkddItemData("Victory", PROG, count = 0),
+    MkddItemData(PROGRESSIVE_CLASS, PROG, count = 3),
+    MkddItemData(RANDOM_ITEM, FILL),
+    MkddItemData(VICTORY, PROG, count = 0),
 ]
 data_table.extend([MkddItemData(char.name, PROG, ItemType.CHARACTER, id) for id, char in enumerate(game_data.CHARACTERS)])
-data_table.extend([MkddItemData(kart.name, PROG, count = 2) for kart in game_data.KARTS])
-data_table.extend([MkddItemData(name, PROG) for name in game_data.CUPS])
-data_table.extend([MkddItemData(f"{course.name} Time Trial", PROG) for course in game_data.COURSES if course.type == game_data.CourseType.RACE])
+data_table.extend([MkddItemData(kart.name, PROG, ItemType.KART, id, 2) for id, kart in enumerate(game_data.KARTS)])
+data_table.extend([MkddItemData(name, PROG, ItemType.CUP, id) for id, name in enumerate(game_data.CUPS)])
+data_table.extend([MkddItemData(get_item_name_tt_course(course.name), PROG, ItemType.TT_COURSE, id) for id, course in enumerate(game_data.COURSES) if course.type == game_data.CourseType.RACE])
 
 name_to_id: dict[str, int] = {item.name:id for (id, item) in enumerate(data_table) if id > 0}

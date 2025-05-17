@@ -4,6 +4,7 @@ class MkddMemAddresses():
     Inherit this class to specify addresses for different versions.
 
     Property suffixes tell the data type (b = byte, h = half word, w = word, x = table).
+    Pointers are always words.
     """
     # Vanilla addresses:
     mode_w: int
@@ -28,13 +29,31 @@ class MkddMemAddresses():
     game_ticks_w: int
     """Frames since game startup. 60 per second."""
 
+    # Vanilla offsets:
+    menu_character_w_offset: int
+    """Offset from menu_pointer, cursor position."""
+    menu_kart_w_offset: int
+    """Offset from menu_pointer, selected kart."""
+    menu_driver_w_offset: int
+    """Offset from menu_pointer, confirmed driver."""
+    menu_rider_w_offset: int
+    """Offset from menu_pointer, confirmed rider."""
+
     # Custom addresses:
+    menu_pointer: int
+    """Pointer to menu object. Use with character/kart offsets."""
     available_characters_bx: int
     """Table of available characters from Mario to Petey (size 20). 1 = unlocked."""
     available_karts_bx: int
     """Table of available karts from Goo-Goo Buggy to Parade Kart (size 21). 1 = unlocked."""
     race_counter_w: int
     """Increased each time the player finishes."""
+    race_timer_w: int
+    """Increased each frame during the race (inc. countdown of 185 frames)."""
+    lap_count_bx: int
+    """Lap count for each course. Offsets from course ids."""
+    max_vehicle_class_w: int
+    """0 = 50cc, 3 = Mirror"""
 
 class MkddMemAddressesUsa(MkddMemAddresses):
     # Vanilla addresses:
@@ -50,7 +69,17 @@ class MkddMemAddressesUsa(MkddMemAddresses):
     total_points_wx = 0x803b11cc
     game_ticks_w = 0x803b0754
 
+    # Vanilla offsets:
+    menu_character_w_offset = 0x212c
+    menu_kart_w_offset = 0x2140
+    menu_driver_w_offset = 0x2138
+    menu_rider_w_offset = 0x213c
+
     # Custom addresses:
+    menu_pointer = 0x800010f0
     available_characters_bx = 0x80001000
     available_karts_bx = 0x80001014
     race_counter_w = 0x8000102c
+    race_timer_w = 0x800010f4
+    lap_count_bx = 0x80005460 - 0x21 # First course has id of 0x21
+    max_vehicle_class_w = 0x800010f8
