@@ -19,7 +19,7 @@ class MkddLocationData():
         self.required_items: dict[str, int] = required_items
         self.locked_item: str = locked_item
 
-def get_loc_name_cup(cup: str, ranking: int, vehicle_class: int):
+def get_loc_name_cup(cup: str, ranking: int, vehicle_class: int) -> str:
     try:
         rank_name = ["Gold", "Silver", "Bronze"][ranking]
         class_name = ["50cc", "100cc", "150cc", "Mirror"][vehicle_class]
@@ -27,20 +27,30 @@ def get_loc_name_cup(cup: str, ranking: int, vehicle_class: int):
     except:
         return ""
 
-def get_loc_name_perfect(cup: str):
+def get_loc_name_perfect(cup: str) -> str:
     return f"{cup} Perfect"
 
-def get_loc_name_finish(course_or_cup: str):
+def get_loc_name_finish(course_or_cup: str) -> str:
     return f"{course_or_cup} Finish"
 
-def get_loc_name_lead(course: str):
+def get_loc_name_lead(course: str) -> str:
     return f"{course} Take The Lead"
 
-def get_loc_name_first(course: str):
+def get_loc_name_first(course: str) -> str:
     return f"{course} 1st"
 
-def get_loc_name_ghost(course: str):
+def get_loc_name_ghost(course: str) -> str:
     return f"{course} Defeat Staff Ghost"
+
+def get_loc_name_win_char_kart(character: str, kart: str) -> str:
+    return f"Win With {character} Driving {kart}"
+
+def get_loc_name_win_course_char(course: game_data.Course) -> str:
+    characters = [game_data.CHARACTERS[character].name for character in course.owners]
+    if len(characters) == 1:
+        return f"Win in {course.name} With {characters[0]}"
+    else:
+        return f"Win in {course.name} With {characters[0]} or {characters[1]}"
 
 
 data_table: list[MkddLocationData] = [MkddLocationData("", 0)] # Id 0 is reserved.
@@ -71,5 +81,23 @@ for course in game_data.COURSES:
         data_table.append(MkddLocationData(get_loc_name_lead(course.name), 1, course.name + " GP"))
         data_table.append(MkddLocationData(get_loc_name_first(course.name), 2, course.name + " GP"))
         data_table.append(MkddLocationData(get_loc_name_ghost(course.name), 10, course.name + " TT"))
+
+for character in game_data.CHARACTERS:
+    kart = game_data.KARTS[character.default_kart]
+    data_table.append(MkddLocationData(get_loc_name_win_char_kart(character.name, kart.name), 2, "Menu", {character.name:1, kart.name:1}))
+
+GOLD_LIGHT = "Win Gold With a Light Kart"
+GOLD_MEDIUM = "Win Gold With a Medium Kart"
+GOLD_HEAVY = "Win Gold With a Heavy Kart"
+GOLD_PARADE = "Win Gold With Parade Kart"
+
+data_table.append(MkddLocationData(GOLD_LIGHT, 2))
+data_table.append(MkddLocationData(GOLD_MEDIUM, 2))
+data_table.append(MkddLocationData(GOLD_HEAVY, 2))
+data_table.append(MkddLocationData(GOLD_PARADE, 2, {"Parade Kart":1}))
+
+# Win courses with certain characters require special rules so they are not defined here.
+for course in [course for course in game_data.COURSES if len(course.owners) > 0]:
+    data_table.append(MkddLocationData(get_loc_name_win_course_char(course), 2, course.name + " GP"))
 
 name_to_id: dict[str, int] = {data.name:id for (id, data) in enumerate(data_table) if id > 0}

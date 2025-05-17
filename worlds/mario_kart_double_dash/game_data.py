@@ -5,28 +5,29 @@ from typing import NamedTuple
 class Character(NamedTuple):
     name: str
     weight: int
+    default_kart: int
 
 CHARACTERS = [
-    Character("Mario", 1),          # 00
-    Character("Luigi", 1),          # 01
-    Character("Peach", 1),          # 02
-    Character("Daisy", 1),          # 03
-    Character("Yoshi", 1),          # 04
-    Character("Birdo", 1),          # 05
-    Character("Baby Mario", 0),     # 06
-    Character("Baby Luigi", 0),     # 07
-    Character("Toad", 0),           # 08
-    Character("Toadette", 0),       # 09
-    Character("Koopa", 0),          # 10
-    Character("Paratroopa", 0),     # 11
-    Character("Donkey Kong", 2),    # 12
-    Character("Diddy Kong", 0),     # 13
-    Character("Bowser", 2),         # 14
-    Character("Bowser Jr.", 0),     # 15
-    Character("Wario", 2),          # 16
-    Character("Waluigi", 1),        # 17
-    Character("Petey Piranha", 2),  # 18
-    Character("King Boo", 2),       # 19
+    Character("Mario", 1, 8),           # 00
+    Character("Luigi", 1, 9),           # 01
+    Character("Peach", 1, 10),          # 02
+    Character("Daisy", 1, 11),          # 03
+    Character("Yoshi", 1, 12),          # 04
+    Character("Birdo", 1, 13),          # 05
+    Character("Baby Mario", 0, 0),      # 06
+    Character("Baby Luigi", 0, 1),      # 07
+    Character("Toad", 0, 6),            # 08
+    Character("Toadette", 0, 7),        # 09
+    Character("Koopa", 0, 2),           # 10
+    Character("Paratroopa", 0, 3),      # 11
+    Character("Donkey Kong", 2, 16),    # 12
+    Character("Diddy Kong", 0, 4),      # 13
+    Character("Bowser", 2, 17),         # 14
+    Character("Bowser Jr.", 0, 5),      # 15
+    Character("Wario", 2, 15),          # 16
+    Character("Waluigi", 1, 14),        # 17
+    Character("Petey Piranha", 2, 18),  # 18
+    Character("King Boo", 2, 19),       # 19
 ]
 
 class Kart(NamedTuple):
@@ -35,27 +36,27 @@ class Kart(NamedTuple):
     unlock_id: int
 
 KARTS = [
-    Kart("Goo-Goo Buggy", 0, 5),    # 00
-    Kart("Rattle Buggy", 0, 13),    # 01
-    Kart("Koopa Dasher", 0, 3),     # 02
-    Kart("Para-Wing", 0, 11),       # 03
-    Kart("Barrel Train", 0, 9),     # 04
-    Kart("Bullet Blaster", 0, 15),  # 05
-    Kart("Toad Kart", 0, 16),       # 06
-    Kart("Toadette Kart", 0, 17),   # 07
-    Kart("Red Fire", 1, 0),         # 08
-    Kart("Green Fire", 1, 8),       # 09
-    Kart("Heart Coach", 1, 4),      # 10
-    Kart("Bloom Coach", 1, 12),     # 11
-    Kart("Turbo Yoshi", 1, 2),      # 12
-    Kart("Turbo Birdo", 1, 10),     # 13
-    Kart("Waluigi Racer", 1, 14),   # 14
-    Kart("Wario Car", 2, 6),        # 15
-    Kart("DK Jumbo", 2, 1),         # 16
-    Kart("Koopa King", 2, 7),       # 17
-    Kart("Piranha Pipes", 2, 19),   # 18
-    Kart("Boo Pipes", 2, 18),       # 19
-    Kart("Parade Kart", -1, 20),    # 20
+    Kart("Goo-Goo Buggy", 0, 5),        # 00
+    Kart("Rattle Buggy", 0, 13),        # 01
+    Kart("Koopa Dasher", 0, 3),         # 02
+    Kart("Para-Wing", 0, 11),           # 03
+    Kart("Barrel Train", 0, 9),         # 04
+    Kart("Bullet Blaster", 0, 15),      # 05
+    Kart("Toad Kart", 0, 16),           # 06
+    Kart("Toadette Kart", 0, 17),       # 07
+    Kart("Red Fire", 1, 0),             # 08
+    Kart("Green Fire", 1, 8),           # 09
+    Kart("Heart Coach", 1, 4),          # 10
+    Kart("Bloom Coach", 1, 12),         # 11
+    Kart("Turbo Yoshi", 1, 2),          # 12
+    Kart("Turbo Birdo", 1, 10),         # 13
+    Kart("Waluigi Racer", 1, 14),       # 14
+    Kart("Wario Car", 2, 6),            # 15
+    Kart("DK Jumbo", 2, 1),             # 16
+    Kart("Koopa King", 2, 7),           # 17
+    Kart("Piranha Pipes", 2, 19),       # 18
+    Kart("Boo Pipes", 2, 18),           # 19
+    Kart("Parade Kart", -1, 20),        # 20
 ]
 
 CUPS = [
@@ -76,25 +77,26 @@ class Course(NamedTuple):
     id: int = -1
     type: CourseType = CourseType.RACE
     laps: int = 3
+    owners: list[int] = []
 
 
 COURSES = [
     # Race courses:
-    Course("Luigi Circuit", 0x24),
-    Course("Peach Beach", 0x22),
-    Course("Baby Park", 0x21, laps = 7),
+    Course("Luigi Circuit", 0x24, owners = [1]),
+    Course("Peach Beach", 0x22, owners = [2]),
+    Course("Baby Park", 0x21, laps = 7, owners = [6, 7]),
     Course("Dry Dry Desert", 0x32),
     Course("Mushroom Bridge", 0x28),
-    Course("Mario Circuit", 0x25),
-    Course("Daisy Cruiser", 0x23),
-    Course("Waluigi Stadium", 0x2a),
+    Course("Mario Circuit", 0x25, owners = [0]),
+    Course("Daisy Cruiser", 0x23, owners = [3]),
+    Course("Waluigi Stadium", 0x2a, owners = [17]),
     Course("Sherbet Land", 0x33),
     Course("Mushroom City", 0x29),
-    Course("Yoshi Circuit", 0x26),
-    Course("DK Mountain", 0x2d),
-    Course("Wario Colosseum", 0x2b, laps = 2),
+    Course("Yoshi Circuit", 0x26, owners = [4]),
+    Course("DK Mountain", 0x2d, owners = [12]),
+    Course("Wario Colosseum", 0x2b, laps = 2, owners = [16]),
     Course("Dino Dino Jungle", 0x2c),
-    Course("Bowser's Castle", 0x2f),
+    Course("Bowser's Castle", 0x2f, owners = [14]),
     Course("Rainbow Road", 0x31),
     # Battle courses:
     Course("Cookie Land", 0x3a, CourseType.BATTLE),

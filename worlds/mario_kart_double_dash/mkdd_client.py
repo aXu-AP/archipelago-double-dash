@@ -105,6 +105,8 @@ class MkddContext(CommonContext):
 
         self.lap_counts: dict[str, int]
 
+        self.active_characters: list[game_data.Character] = [game_data.CHARACTERS[0], game_data.CHARACTERS[0]]
+        self.active_kart: game_data.Kart = game_data.KARTS[0]
         # Name of the current stage as read from the game's memory. Sent to trackers whenever its value changes to
         # facilitate automatically switching to the map of the current stage.
         self.current_course: game_data.Course = game_data.Course()
@@ -292,15 +294,25 @@ async def check_locations(ctx: MkddContext) -> None:
     course_loaded: bool = game_ticks > ctx.course_changed_time + 60 # Don't give checks in menus etc.
     ctx.last_race_timer = race_timer
     # Course finishing related locations.
-    if in_game and current_lap >= ctx.lap_counts.get(ctx.current_course, 3):
-        #await check_current_course_changed(ctx) # In case the client was reconnected during rankings screen.
+    if in_game and current_lap >= ctx.lap_counts.get(ctx.current_course.name, 3):
         if mode == game_data.Modes.TIMETRIAL:
             new_location_names.add(locations.get_loc_name_finish(ctx.current_course.name))
         if mode == game_data.Modes.GRANDPRIX:
             new_location_names.add(locations.get_loc_name_finish(ctx.current_course.name))
             if in_race_placement == 0:
                 new_location_names.add(locations.get_loc_name_first(ctx.current_course.name))
-
+            
+                # Win with default character + kart combination.
+                for character in ctx.active_characters:
+                    kart = game_data.KARTS[character.default_kart]
+                    if ctx.active_kart == kart:
+                        new_location_names.add(locations.get_loc_name_win_char_kart(character.name, kart.name))
+                
+                # Win with course owner.
+                for character in ctx.current_course.owners:
+                    if game_data.CHARACTERS[character] in ctx.active_characters:
+                        new_location_names.add(locations.get_loc_name_win_course_char(ctx.current_course))
+            
     if mode == game_data.Modes.GRANDPRIX and current_lap > 0 and in_race_placement == 0 and in_game:
         new_location_names.add(locations.get_loc_name_lead(ctx.current_course.name))
 
@@ -312,6 +324,17 @@ async def check_locations(ctx: MkddContext) -> None:
             for r in range(2, total_ranking - 1, -1):
                 for c in range(vehicle_class + 1):
                     new_location_names.add(locations.get_loc_name_cup(cup, r, c))
+        # Gold for various vehicles.
+        if total_ranking == 0:
+            if ctx.active_kart.weight == 0:
+                new_location_names.add(locations.GOLD_LIGHT)
+            elif ctx.active_kart.weight == 1:
+                new_location_names.add(locations.GOLD_MEDIUM)
+            elif ctx.active_kart.weight == 2:
+                new_location_names.add(locations.GOLD_HEAVY)
+            elif ctx.active_kart.weight == -1:
+                new_location_names.add(locations.GOLD_PARADE)
+        
         if total_points == 40:
             new_location_names.add(locations.get_loc_name_perfect(cup))
         
@@ -349,7 +372,19 @@ def update_game(ctx: MkddContext) -> None:
     #       - Random choice kart
     menu_pointer = dolphin.read_word(ctx.memory_addresses.menu_pointer)
     if menu_pointer != 0:
+        driver = dolphin.read_word(menu_pointer + ctx.memory_addresses.menu_driver_w_offset)
+        rider = dolphin.read_word(menu_pointer + ctx.memory_addresses.menu_rider_w_offset)
         character: int = int(dolphin.read_word(menu_pointer + ctx.memory_addresses.menu_character_w_offset))
+        kart: int = int(dolphin.read_word(menu_pointer + ctx.memory_addresses.menu_kart_w_offset))
+        
+        # Save selections for later use (when menu pointer becomes invalid).
+        if driver >= 0 and driver < len(game_data.CHARACTERS):
+            ctx.active_characters[0] = game_data.CHARACTERS[driver]
+        if rider >= 0 and rider < len(game_data.CHARACTERS):
+            ctx.active_characters[1] = game_data.CHARACTERS[rider]
+        if kart >= 0 and kart < len(game_data.KARTS):
+            ctx.active_kart = game_data.KARTS[kart]
+
         if character >= 0 and character < len(game_data.CHARACTERS) and not character in ctx.unlocked_characters:
             direction: int = character - ctx.last_selected_character
             direction = 1 if direction == 0 else int(direction / abs(direction))
@@ -360,11 +395,8 @@ def update_game(ctx: MkddContext) -> None:
             dolphin.write_word(menu_pointer + ctx.memory_addresses.menu_character_w_offset, character)
         ctx.last_selected_character = character
 
-        kart: int = int(dolphin.read_word(menu_pointer + ctx.memory_addresses.menu_kart_w_offset))
         if kart >= 0 and kart < len(game_data.KARTS) and not kart in ctx.unlocked_karts:
-            driver = game_data.CHARACTERS[dolphin.read_word(menu_pointer + ctx.memory_addresses.menu_driver_w_offset)]
-            rider = game_data.CHARACTERS[dolphin.read_word(menu_pointer + ctx.memory_addresses.menu_rider_w_offset)]
-            weight = max(driver.weight, rider.weight)
+            weight = max(ctx.active_characters[0].weight, ctx.active_characters[1].weight)
             # weight = game_data.KARTS[kart].weight
             direction: int = kart - ctx.last_selected_kart
             direction = 1 if direction == 0 else int(direction / abs(direction))
