@@ -6,13 +6,21 @@ from typing import TYPE_CHECKING, Any, Optional
 import dolphin_memory_engine as dolphin
 
 import Utils
-from CommonClient import ClientCommandProcessor, CommonContext, get_base_parser, gui_enabled, logger, server_loop
+from CommonClient import get_base_parser, gui_enabled, logger, server_loop
 from NetUtils import ClientStatus, NetworkItem
 
-from . import game_data, items, locations
+from . import game_data, items, locations, patches, mem_addresses, ar_codes
 from .locations import MkddLocationData
 from .items import ItemType, MkddItemData
-from .asm import patches, mem_addresses, ar_codes
+
+tracker_loaded = False
+try:
+    from worlds.tracker.TrackerClient import (TrackerCommandProcessor as ClientCommandProcessor,
+                                              TrackerGameContext as CommonContext, UT_VERSION)
+    tracker_loaded = True
+except ImportError:
+    from CommonClient import ClientCommandProcessor, CommonContext
+
 
 if TYPE_CHECKING:
     import kvui
@@ -158,6 +166,8 @@ class MkddContext(CommonContext):
             self.items_received_2.sort(key=lambda v: v[1])
         elif cmd == "Retrieved":
             requested_keys_dict = args["keys"]
+        # Relay packages to the tracker also.
+        super().on_package(cmd, args)
 
     def on_deathlink(self, data: dict[str, Any]) -> None:
         """
@@ -177,6 +187,31 @@ class MkddContext(CommonContext):
         ui = super().make_gui()
         ui.base_title = "Archipelago Mario Kart Double Dash Client"
         return ui
+    
+    def run_gui(self):
+        from kvui import GameManager
+
+        class MkddManager(GameManager):
+            source = ""
+            logging_pairs = [("Client", "Archipelago")]
+            base_title = "Mario Kart: Double Dash!! Client"
+            if tracker_loaded:
+                base_title += f" | Universal Tracker v{UT_VERSION}"
+            base_title +=  " | Archipelago v"
+
+            def build(self):
+                container = super().build()
+                if tracker_loaded:
+                    self.ctx.build_gui(self)
+                else:
+                    logger.info("To enable a tracker, install Universal Tracker")
+
+                return container
+
+        self.ui = MkddManager(self)
+        if tracker_loaded:
+            self.load_kv()
+        self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
 
 ###### Dolphin connecton ######
@@ -601,6 +636,12 @@ def main(connect: Optional[str] = None, password: Optional[str] = None) -> None:
     async def _main(connect: Optional[str], password: Optional[str]) -> None:
         ctx = MkddContext(connect, password)
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
+
+        # Runs Universal Tracker's internal generator
+        if tracker_loaded:
+            ctx.run_generator()
+            ctx.tags.remove("Tracker")
+
         if gui_enabled:
             ctx.run_gui()
         ctx.run_cli()

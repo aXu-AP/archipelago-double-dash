@@ -21,8 +21,6 @@ build_apworld("mario_kart_double_dash",
               [
                   "*__pycache__/*",
                   "*.ignore/*",
-                  "*.out",
-                  "*.asm",
-                  "*.exe",
+                  "*asm/*",
                   "*.gitignore",
               ])

@@ -44,5 +44,6 @@ for file in os.listdir("."):
     if file.endswith(".asm"):
         convert(file, out)
 
+os.chdir("..")
 with open("patches.py", "w") as out_file:
     out_file.writelines(out)
