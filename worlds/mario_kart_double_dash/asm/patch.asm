@@ -7,9 +7,11 @@
 .set char_unlock_table, 0x80001000
 .set kart_unlock_table, 0x80001000 + 0x14
 .set race_counter, 0x80001000 + 0x2c
-.set menu_pointer, 0x80001000 + 0xf0
-.set race_timer, 0x80001000 + 0xf4
-.set max_vehicle_class, 0x80001000 + 0xf8
+.set menu_pointer, 0x80001000 + 0x30
+.set race_timer, 0x80001000 + 0x34
+.set max_vehicle_class, 0x80001000 + 0x38
+.set cup_unlock_table, 0x80001000 + 0x3c
+
 
 # SECTION character_selection
 # Change character flag setter to a custom one (below) when picking random characters.
@@ -52,6 +54,7 @@ addi    r5, r5, 1
 bdnz+   -0x10
 b       -0xc0
 
+
 # SECTION race_counter
 .set race_counter_jump, 0x80163a98 - 0x801ce0cc
 .set race_counter_return, 0x801ce0d0 - 0x80163ab0
@@ -65,6 +68,7 @@ b       race_counter_return
 
 WriteTo 0x801ce0cc
 b       race_counter_jump
+
 
 # SECTION kart_selection
 WriteTo 0x801dbc90
@@ -96,6 +100,52 @@ stw     r0, 0 (r3)
 lwz     r3, -0x5588 (r13) # default code
 b       menu_pointer_clear_return
 
+
+# SECTION cup_selection
+# Move right
+.set cup_selection_right_jump, 0x80000fd4 - 0x8016b090 - 0x8
+.set cup_selection_right_return, 0x8016b090 + 0xc - 0x80000ff0
+WriteTo 0x8016b090
+lis     r4, cup_unlock_table@ha
+addi    r4, r4, cup_unlock_table@l
+b       cup_selection_right_jump
+nop
+lwz     r4, 0x0390 (r31)    # default code
+lfs     f0, -0x5FF4 (rtoc)  # default code
+WriteTo 0x80000fd4
+addi    r3, r3, 1           # Move cursor
+cmpwi   r3, 5               # Wrap around
+bne     0x8
+li      r3, 0
+lbzx    r5, r4, r3          # Check cup availability, loops if =0
+cmpwi   r5, 0
+beq     -6 * 4
+b       cup_selection_right_return
+
+# Move left
+.set cup_selection_left_jump, 0x80001080 - 0x8016b028 - 0xc
+.set cup_selection_left_return, 0x8016b028 + 0x10 - 0x8000109c
+WriteTo 0x8016b028
+lwz     r3, -0x5C78 (r13)
+lis     r4, cup_unlock_table@ha
+addi    r4, r4, cup_unlock_table@l
+b       cup_selection_left_jump
+nop
+nop
+li      r0, 0               # default code
+lwz     r5, 0x0390 (r31)    # default code
+lfs     f0, -0x5FF4 (rtoc)  # default code
+WriteTo 0x80001080
+subi    r3, r3, 1           # Move cursor
+cmpwi   r3, -1              # Wrap around
+bne     0x8
+li      r3, 4
+lbzx    r5, r4, r3          # Check cup availability, loops if =0
+cmpwi   r5, 0
+beq     -6 * 4
+b       cup_selection_left_return
+
+
 # SECTION race_timer
 .set race_timer_jump, 0x80000fc4 - 0x801dce0c
 WriteTo 0x801dce0c
@@ -105,6 +155,7 @@ lis     r3, race_timer@ha
 addi    r3, r3, race_timer@l
 stw     r0, 0 (r3)
 blr
+
 
 # SECTION vehicle_class_selector
 # Move right.

@@ -53,11 +53,18 @@ class MkddCommandProcessor(ClientCommandProcessor):
         super().__init__(ctx)
 
     def _cmd_dolphin(self) -> None:
-        """
-        Display the current Dolphin emulator connection status.
-        """
+        """Display the current Dolphin emulator connection status."""
         if isinstance(self.ctx, MkddContext):
             logger.info(f"Dolphin Status: {self.ctx.dolphin_status}")
+    
+    def _cmd_unlocked(self) -> None:
+        """Show list of unlocked items."""
+        if isinstance(self.ctx, MkddContext):
+            logger.info(f"Unlocked characters: {", ".join([game_data.CHARACTERS[c].name for c in self.ctx.unlocked_characters])}")
+            logger.info(f"Unlocked karts: {", ".join([game_data.KARTS[c].name for c in self.ctx.unlocked_karts])}")
+            logger.info(f"Max vehicle class: {["50cc", "100cc", "150cc", "Mirror"][self.ctx.unlocked_vehicle_class]}")
+            logger.info(f"Unlocked cups: {", ".join([game_data.CUPS[c] for c in self.ctx.unlocked_cups])}")
+            logger.info(f"Unlocked time trial courses: {", ".join([game_data.COURSES[c].name for c in self.ctx.unlocked_courses])}")
 
 
 class MkddContext(CommonContext):
@@ -81,7 +88,7 @@ class MkddContext(CommonContext):
 
         super().__init__(server_address, password)
         self.items_received_2: list[tuple[NetworkItem, int]] = []
-        self.last_item_handled: int = 0
+        self.last_item_handled: int = -1
         self.dolphin_sync_task: Optional[asyncio.Task[None]] = None
         self.dolphin_status: str = CONNECTION_INITIAL_STATUS
         self.awaiting_rom: bool = False
@@ -107,6 +114,8 @@ class MkddContext(CommonContext):
 
         self.unlocked_cups: list[int] = []
         self.last_selected_cup: int = 0
+
+        self.unlocked_cup_skips: int = 0
         
         self.unlocked_courses: list[int] = []
         self.last_selected_course: int = 0
@@ -115,6 +124,7 @@ class MkddContext(CommonContext):
 
         self.active_characters: list[game_data.Character] = [game_data.CHARACTERS[0], game_data.CHARACTERS[0]]
         self.active_kart: game_data.Kart = game_data.KARTS[0]
+        
         # Name of the current stage as read from the game's memory. Sent to trackers whenever its value changes to
         # facilitate automatically switching to the map of the current stage.
         self.current_course: game_data.Course = game_data.Course()
@@ -214,7 +224,7 @@ class MkddContext(CommonContext):
         self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
 
 
-###### Dolphin connecton ######
+###### Dolphin connection ######
 def _apply_ar_code(code: list[int]):
     for i in range(0, len(code), 2):
         command = (code[i] & 0xFE00_0000) >> 24
@@ -234,6 +244,7 @@ def _apply_dict_patch(code: dict[int, list[int]]):
 def _apply_patch(ctx: MkddContext):
     _apply_dict_patch(patches.patch)
     _apply_ar_code(ar_codes.lap_modifier)
+    _apply_ar_code(ar_codes.gp_course_selection)
     logger.info("Patch Applied.")
 
 
@@ -261,7 +272,6 @@ def _give_item(ctx: MkddContext, item: MkddItemData) -> bool:
     :param item_name: Name of the item to give.
     :return: Whether the item was successfully given.
     """
-    logger.info(f"Got item: {item.name}")
     if item.item_type == ItemType.CHARACTER:
         dolphin.write_byte(ctx.memory_addresses.available_characters_bx + item.address, 1)
         ctx.unlocked_characters.append(item.address)
@@ -276,6 +286,8 @@ def _give_item(ctx: MkddContext, item: MkddItemData) -> bool:
     if item.name == items.PROGRESSIVE_CLASS:
         ctx.unlocked_vehicle_class += 1
         dolphin.write_word(ctx.memory_addresses.max_vehicle_class_w, ctx.unlocked_vehicle_class)
+    if item.name == items.PROGRESSIVE_CUP_SKIP:
+        ctx.unlocked_cup_skips += 1
     return True
 
 
@@ -442,43 +454,22 @@ def update_game(ctx: MkddContext) -> None:
             dolphin.write_word(menu_pointer + ctx.memory_addresses.menu_kart_w_offset, kart)
         ctx.last_selected_kart = kart
 
+    # Force cup and course selection.
     mode: int = int(dolphin.read_word(ctx.memory_addresses.mode_w))
+    available_cups_courses: dict[int, set[int]] = {}
     if mode == game_data.Modes.TIMETRIAL:
-        tt_cups: dict[int, set[int]] = {}
         course_order: list[list[int]] = [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11], [12, 13, 14, 15]]
         for cu in range(4):
             for c in ctx.unlocked_courses:
                 if c in course_order[cu]:
-                    if not cu in tt_cups:
-                        tt_cups[cu] = set()
-                    tt_cups[cu].add(c - cu * 4)
-        if len(tt_cups) == 0:
+                    if not cu in available_cups_courses:
+                        available_cups_courses[cu] = set()
+                    available_cups_courses[cu].add(c - cu * 4)
+        if len(available_cups_courses) == 0:
             # Failsafe if no tt tracks are unlocked.
             logger.info("No Time Trials unlocked yet! Changed mode to Grand Prix.")
             mode = int(game_data.Modes.GRANDPRIX)
             dolphin.write_word(ctx.memory_addresses.mode_w, mode)
-        else:
-            cup: int = int(dolphin.read_word(ctx.memory_addresses.cup_w))
-            if not cup in tt_cups:
-                direction: int = cup - ctx.last_selected_cup
-                direction = 1 if direction == 0 else int(direction / abs(direction))
-                while not cup in tt_cups:
-                    cup = wrap(cup + direction, len(game_data.CUPS))
-                    if cup == ctx.last_selected_cup:
-                        break
-                dolphin.write_word(ctx.memory_addresses.cup_w, cup)
-                ctx.last_selected_cup = cup
-
-            course: int = int(dolphin.read_word(ctx.memory_addresses.menu_course_w))
-            if not course in tt_cups[cup]:
-                direction: int = cup - ctx.last_selected_course
-                direction = 1 if direction == 0 else int(direction / abs(direction))
-                while not course in tt_cups[cup]:
-                    course = wrap(course + direction, 4)
-                    if course == ctx.last_selected_course:
-                        break
-                dolphin.write_word(ctx.memory_addresses.menu_course_w, course)
-                ctx.last_selected_course = course
 
         # Use vanilla lap counts in time trials.
         for c in [c for c in game_data.COURSES if c.type == game_data.CourseType.RACE]:
@@ -486,18 +477,42 @@ def update_game(ctx: MkddContext) -> None:
 
     
     if mode == game_data.Modes.GRANDPRIX:
-        cup: int = int(dolphin.read_word(ctx.memory_addresses.cup_w))
-        if not cup in ctx.unlocked_cups:
-            direction: int = cup - ctx.last_selected_cup
-            direction = 1 if direction == 0 else int(direction / abs(direction))
-            while not cup in ctx.unlocked_cups and cup != ctx.last_selected_cup:
-                cup = wrap(cup + direction, len(game_data.CUPS))
-            dolphin.write_word(ctx.memory_addresses.cup_w, cup)
-        ctx.last_selected_cup = cup
+        # Give option to skip x first courses.
+        courses = [c for c in range(ctx.unlocked_cup_skips + 1)]
+        for cup in ctx.unlocked_cups:
+            available_cups_courses[cup] = courses
 
         # Use custom lap counts in grand prix.
         for c in [c for c in game_data.COURSES if c.type == game_data.CourseType.RACE]:
             dolphin.write_byte(ctx.memory_addresses.lap_count_bx + c.id, ctx.lap_counts[c.name])
+
+    if len(available_cups_courses) > 0:
+        for c in range(len(game_data.CUPS)):
+            dolphin.write_byte(ctx.memory_addresses.available_cups_bx + c, int(c in ctx.unlocked_cups))
+            cup: int = int(dolphin.read_word(ctx.memory_addresses.cup_w))
+            if not cup in available_cups_courses:
+                direction: int = cup - ctx.last_selected_cup
+                direction = 1 if direction == 0 else int(direction / abs(direction))
+                while not cup in available_cups_courses:
+                    cup = wrap(cup + direction, len(game_data.CUPS))
+                    if cup == ctx.last_selected_cup:
+                        break
+                dolphin.write_word(ctx.memory_addresses.cup_w, cup)
+                ctx.last_selected_cup = cup
+
+            for c in range(len(game_data.CUPS)):
+                dolphin.write_byte(ctx.memory_addresses.available_cups_bx + c, int(c in available_cups_courses))
+
+            course: int = int(dolphin.read_word(ctx.memory_addresses.menu_course_w))
+            if not course in available_cups_courses[cup]:
+                direction: int = cup - ctx.last_selected_course
+                direction = 1 if direction == 0 else int(direction / abs(direction))
+                while not course in available_cups_courses[cup]:
+                    course = wrap(course + direction, 4)
+                    if course == ctx.last_selected_course:
+                        break
+                dolphin.write_word(ctx.memory_addresses.menu_course_w, course)
+                ctx.last_selected_course = course
 
 def wrap(value: int, max_value: int) -> int:
     if value < 0:
@@ -605,7 +620,7 @@ async def dolphin_sync_task(ctx: MkddContext) -> None:
                         logger.info(CONNECTION_CONNECTED_STATUS)
                         ctx.dolphin_status = CONNECTION_CONNECTED_STATUS
                         _apply_patch(ctx)
-                        ctx.last_item_handled = 0
+                        ctx.last_item_handled = -1
                         give_items(ctx)
                         ctx.locations_checked = set()
                 else:

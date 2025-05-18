@@ -33,6 +33,7 @@ class MkddItemData():
         self.count = count
 
 PROGRESSIVE_CLASS = "Progressive Class"
+PROGRESSIVE_CUP_SKIP = "Progressive Cup Skip"
 RANDOM_ITEM = "Random Item"
 VICTORY = "Victory"
 
@@ -43,6 +44,7 @@ def get_item_name_tt_course(course: str):
 data_table: list[MkddItemData] = [
     MkddItemData("", 0, count = 0), # Id 0 is reserved
     MkddItemData(PROGRESSIVE_CLASS, PROG, count = 3),
+    MkddItemData(PROGRESSIVE_CUP_SKIP, USEF, count = 2),
     MkddItemData(RANDOM_ITEM, FILL),
     MkddItemData(VICTORY, PROG, count = 0),
 ]

@@ -54,6 +54,8 @@ class MkddMemAddresses():
     """Lap count for each course. Offsets from course ids."""
     max_vehicle_class_w: int
     """0 = 50cc, 3 = Mirror"""
+    available_cups_bx: int
+    """Table of available cups (size 5). 1 = unlocked."""
 
 class MkddMemAddressesUsa(MkddMemAddresses):
     # Vanilla addresses:
@@ -76,10 +78,11 @@ class MkddMemAddressesUsa(MkddMemAddresses):
     menu_rider_w_offset = 0x213c
 
     # Custom addresses:
-    menu_pointer = 0x800010f0
+    menu_pointer = 0x80001030
     available_characters_bx = 0x80001000
     available_karts_bx = 0x80001014
     race_counter_w = 0x8000102c
-    race_timer_w = 0x800010f4
+    race_timer_w = 0x80001034
     lap_count_bx = 0x80005460 - 0x21 # First course has id of 0x21
-    max_vehicle_class_w = 0x800010f8
+    max_vehicle_class_w = 0x80001038
+    available_cups_bx = 0x8000103c

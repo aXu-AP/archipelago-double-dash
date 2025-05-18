@@ -22,3 +22,8 @@ unlock_everything = [
     0x041CD680, 0x60000000,
     0x041CDD68, 0x60000000,
 ]
+
+# Grand Prix Mode: Allow Course Selection [Ralf]
+gp_course_selection = [
+    0x04169E94, 0x41820050,
+]

@@ -34,6 +34,8 @@ class MkddWorld(World):
 
     item_name_to_id = items.name_to_id
     location_name_to_id = locations.name_to_id
+    
+    ut_can_gen_without_yaml = True
 
     def __init__(self, world, player):
         self.current_locations: list[MkddLocation] = []
@@ -77,7 +79,9 @@ class MkddWorld(World):
     
     def create_items(self) -> None:
         # (item_name, count)
-        precollected: list[str] = [game_data.CUPS[0]]
+        precollected: list[str] = []
+        # Give 1 cup, can't be All Star Cup.
+        precollected.append(game_data.CUPS[self.random.randrange(4)])
         # Give 2 random characters to begin.
         precollected_characters = 0
         while precollected_characters < 2:
