@@ -11,6 +11,8 @@
 .set race_timer, 0x80001000 + 0x34
 .set max_vehicle_class, 0x80001000 + 0x38
 .set cup_unlock_table, 0x80001000 + 0x3c
+.set tt_driver_item, 0x80001000 + 0x41
+.set tt_rider_item, 0x80001000 + 0x42
 
 
 # SECTION character_selection
@@ -175,3 +177,24 @@ cmpw    r0, r3
 ble     0x8015ee80 - 0x8015edbc
 mr      r0, r3
 nop
+
+
+# SECTION time_trial_items
+# Driver
+.set driver_item_jump, 0x800010a0 - 0x802baf7c
+.set driver_item_return, 0x802baf7c + 4 - 0x800010a0 - 8
+WriteTo 0x802baf7c
+b driver_item_jump
+WriteTo 0x800010a0
+lis     r4, tt_driver_item@ha
+lbz     r4, tt_driver_item@l (r4)
+b driver_item_return
+# Rider
+.set rider_item_jump, 0x800010ac - 0x802bafa8
+.set rider_item_return, 0x802bafa8 + 4 - 0x800010ac - 8
+WriteTo 0x802bafa8
+b rider_item_jump
+WriteTo 0x800010ac
+lis     r4, tt_rider_item@ha
+lbz     r4, tt_rider_item@l (r4)
+b rider_item_return

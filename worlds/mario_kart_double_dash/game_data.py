@@ -76,28 +76,30 @@ class Course(NamedTuple):
     name: str = ""
     id: int = -1
     type: CourseType = CourseType.RACE
-    laps: int = 3
+    staff_time: float = 0
+    good_time: float = 0
     owners: list[int] = []
+    laps: int = 3
 
 
 COURSES = [
     # Race courses:
-    Course("Luigi Circuit", 0x24, owners = [1]),
-    Course("Peach Beach", 0x22, owners = [2]),
-    Course("Baby Park", 0x21, laps = 7, owners = [6, 7]),
-    Course("Dry Dry Desert", 0x32),
-    Course("Mushroom Bridge", 0x28),
-    Course("Mario Circuit", 0x25, owners = [0]),
-    Course("Daisy Cruiser", 0x23, owners = [3]),
-    Course("Waluigi Stadium", 0x2a, owners = [17]),
-    Course("Sherbet Land", 0x33),
-    Course("Mushroom City", 0x29),
-    Course("Yoshi Circuit", 0x26, owners = [4]),
-    Course("DK Mountain", 0x2d, owners = [12]),
-    Course("Wario Colosseum", 0x2b, laps = 2, owners = [16]),
-    Course("Dino Dino Jungle", 0x2c),
-    Course("Bowser's Castle", 0x2f, owners = [14]),
-    Course("Rainbow Road", 0x31),
+    Course("Luigi Circuit",     0x24, staff_time =  86.277, good_time = 95, owners = [1]),
+    Course("Peach Beach",       0x22, staff_time =  80.404, good_time = 90, owners = [2]),
+    Course("Baby Park",         0x21, staff_time =  71.108, good_time = 80, owners = [6, 7], laps = 7),
+    Course("Dry Dry Desert",    0x32, staff_time = 110.755, good_time = 120),
+    Course("Mushroom Bridge",   0x28, staff_time =  91.458, good_time = 100),
+    Course("Mario Circuit",     0x25, staff_time = 101.384, good_time = 115, owners = [0]),
+    Course("Daisy Cruiser",     0x23, staff_time = 112.207, good_time = 120, owners = [3]),
+    Course("Waluigi Stadium",   0x2a, staff_time = 119.658, good_time = 130, owners = [17]),
+    Course("Sherbet Land",      0x33, staff_time =  85.904, good_time = 100),
+    Course("Mushroom City",     0x29, staff_time = 110.663, good_time = 120),
+    Course("Yoshi Circuit",     0x26, staff_time = 119.866, good_time = 135, owners = [4]),
+    Course("DK Mountain",       0x2d, staff_time = 132.639, good_time = 140, owners = [12]),
+    Course("Wario Colosseum",   0x2b, staff_time = 141.106, good_time = 155, owners = [16], laps = 2),
+    Course("Dino Dino Jungle",  0x2c, staff_time = 120.908, good_time = 140),
+    Course("Bowser's Castle",   0x2f, staff_time = 164.690, good_time = 185, owners = [14]),
+    Course("Rainbow Road",      0x31, staff_time = 196.476, good_time = 210),
     # Battle courses:
     Course("Cookie Land", 0x3a, CourseType.BATTLE),
     Course("Pipe Plaza", 0x3b, CourseType.BATTLE),
@@ -117,3 +119,61 @@ class Modes(IntEnum):
     BATTLE_SHINE = 7
     BATTLE_BOMB = 6
     CEREMONY = 8
+
+class Item(NamedTuple):
+    id: int
+    name: str
+    usefulness: int = 0
+
+ITEMS = [
+    Item(0, "Green Shell"),
+    Item(1, "Bowser's Shell"),
+    Item(2, "Red Shell"),
+    Item(3, "Banana"),
+    Item(4, "Giant Banana"),
+    Item(5, "Mushroom"),
+    Item(6, "Star"),
+    Item(7, "Chain Chomp"),
+    Item(8, "Bob-omb"),
+    Item(9, "Fireball"),
+    Item(10, "Lightning"),
+    Item(11, "Yoshi Egg"),
+    Item(12, "Golden Mushroom"),
+    Item(13, "Spiny Shell"),
+    Item(14, "Heart"),
+    Item(15, "Fake Item"),
+    Item(17, "Triple Green Shells"),
+    Item(18, "Triple Mushrooms"),
+    Item(19, "Triple Red Shells"),
+    Item(21, "Fireballs"),
+    Item(16, "None"),
+]
+
+ITEM_GREEN_SHELL = ITEMS[0]
+ITEM_BOWSER_SHELL = ITEMS[1]
+ITEM_RED_SHELL = ITEMS[2]
+ITEM_BANANA = ITEMS[3]
+ITEM_GIANT_BANANA = ITEMS[4]
+ITEM_MUSHROOM = ITEMS[5]
+ITEM_STAR = ITEMS[6]
+ITEM_CHAIN_CHOMP = ITEMS[7]
+ITEM_BOBOMB = ITEMS[8]
+ITEM_FIREBALL = ITEMS[9]
+ITEM_LIGHTNING = ITEMS[10]
+ITEM_YOSHI_EGG = ITEMS[11]
+ITEM_GOLDEN_MUSHROOM = ITEMS[12]
+ITEM_SPINY_SHELL = ITEMS[13]
+ITEM_HEART = ITEMS[14]
+ITEM_FAKE_ITEM = ITEMS[15]
+ITEM_TRIPLE_GREEN_SHELLS = ITEMS[16]
+ITEM_TRIPLE_MUSHROOMS = ITEMS[17]
+ITEM_TRIPLE_RED_SHELLS = ITEMS[18]
+ITEM_FIREBALLS = ITEMS[19]
+ITEM_NONE = ITEMS[20]
+
+TT_ITEM_TABLE = [
+    bytes([ITEM_NONE.id, ITEM_MUSHROOM.id]),
+    bytes([ITEM_MUSHROOM.id, ITEM_MUSHROOM.id]),
+    bytes([ITEM_NONE.id, ITEM_TRIPLE_MUSHROOMS.id]),
+    bytes([ITEM_STAR.id, ITEM_TRIPLE_MUSHROOMS.id]),
+]

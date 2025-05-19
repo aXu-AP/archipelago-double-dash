@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import NamedTuple, TYPE_CHECKING
 
 from BaseClasses import Location
 from . import game_data
@@ -11,13 +11,11 @@ class MkddLocation(Location):
     game = "Mario Kart Double Dash"
 
 
-class MkddLocationData():
-    def __init__(self, name:str, difficulty: int, region: str = "Menu", required_items: dict[str, int] = {}, locked_item: str = "", no_id: bool = False):
-        self.name: str = name
-        self.difficulty: int = difficulty
-        self.region: str = region
-        self.required_items: dict[str, int] = required_items
-        self.locked_item: str = locked_item
+class MkddLocationData(NamedTuple):
+    name: str
+    difficulty: int = 0
+    region: str = "Menu"
+    required_items: dict[str, int] = {}
 
 def get_loc_name_cup(cup: str, ranking: int, vehicle_class: int) -> str:
     try:
@@ -38,6 +36,12 @@ def get_loc_name_lead(course: str) -> str:
 
 def get_loc_name_first(course: str) -> str:
     return f"{course} 1st"
+
+def get_loc_name_good_time(course: game_data.Course) -> str:
+    seconds = course.good_time
+    minutes = int(seconds / 60)
+    seconds -= minutes * 60
+    return f"{course.name} Time Trial in {minutes}:{seconds:02d}"
 
 def get_loc_name_ghost(course: str) -> str:
     return f"{course} Defeat Staff Ghost"
@@ -80,7 +84,8 @@ for course in game_data.COURSES:
         data_table.append(MkddLocationData(get_loc_name_finish(course.name), 0, course.name))
         data_table.append(MkddLocationData(get_loc_name_lead(course.name), 1, course.name + " GP"))
         data_table.append(MkddLocationData(get_loc_name_first(course.name), 2, course.name + " GP"))
-        data_table.append(MkddLocationData(get_loc_name_ghost(course.name), 10, course.name + " TT"))
+        data_table.append(MkddLocationData(get_loc_name_good_time(course), 10, course.name + " TT"))
+        data_table.append(MkddLocationData(get_loc_name_ghost(course.name), 15, course.name + " TT"))
 
 for character in game_data.CHARACTERS:
     kart = game_data.KARTS[character.default_kart]

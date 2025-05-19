@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import NamedTuple, TYPE_CHECKING
 from enum import Enum
 
 from BaseClasses import Item, ItemClassification
@@ -24,16 +24,17 @@ class MkddItem(Item):
     game = "Mario Kart Double Dash"
 
 
-class MkddItemData():
-    def __init__(self, name: str, classification: int, item_type: ItemType = ItemType.OTHER, address: int = 0, count: int = 1):
-        self.name: str = name
-        self.item_type: ItemType = item_type
-        self.address: int = address
-        self.classification: int = classification
-        self.count = count
+class MkddItemData(NamedTuple):
+    name: str
+    classification: int
+    item_type: ItemType = ItemType.OTHER
+    address: int = 0
+    count: int = 1
+
 
 PROGRESSIVE_CLASS = "Progressive Class"
 PROGRESSIVE_CUP_SKIP = "Progressive Cup Skip"
+PROGRESSIVE_TIME_TRIAL_ITEM = "Progressive Time Trial Item"
 RANDOM_ITEM = "Random Item"
 VICTORY = "Victory"
 
@@ -45,6 +46,7 @@ data_table: list[MkddItemData] = [
     MkddItemData("", 0, count = 0), # Id 0 is reserved
     MkddItemData(PROGRESSIVE_CLASS, PROG, count = 3),
     MkddItemData(PROGRESSIVE_CUP_SKIP, USEF, count = 2),
+    MkddItemData(PROGRESSIVE_TIME_TRIAL_ITEM, PROG, count = 3),
     MkddItemData(RANDOM_ITEM, FILL),
     MkddItemData(VICTORY, PROG, count = 0),
 ]

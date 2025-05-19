@@ -119,6 +119,8 @@ class MkddContext(CommonContext):
         
         self.unlocked_courses: list[int] = []
         self.last_selected_course: int = 0
+        
+        self.time_trial_items: int = 0
 
         self.lap_counts: dict[str, int]
 
@@ -167,6 +169,7 @@ class MkddContext(CommonContext):
             if "death_link" in slot_data:
                 Utils.async_start(self.update_death_link(bool(args["slot_data"]["death_link"])))
             self.lap_counts = slot_data.get("lap_counts")
+            sync_state(self)
         elif cmd == "ReceivedItems":
             if args["index"] >= self.last_rcvd_index:
                 self.last_rcvd_index = args["index"]
@@ -241,11 +244,32 @@ def _apply_dict_patch(code: dict[int, list[int]]):
             address += 4
 
 
-def _apply_patch(ctx: MkddContext):
+def apply_patch(ctx: MkddContext):
     _apply_dict_patch(patches.patch)
     _apply_ar_code(ar_codes.lap_modifier)
     _apply_ar_code(ar_codes.gp_course_selection)
     logger.info("Patch Applied.")
+
+
+def sync_state(ctx: MkddContext) -> None:
+    """
+    Sets game state to match client data about unlocks.
+
+    :param ctx: Mario Kart Double Dash client context.
+    """
+    for character in range(len(game_data.CHARACTERS)):
+        dolphin.write_byte(
+            ctx.memory_addresses.available_characters_bx + character,
+            int(character in ctx.unlocked_characters)
+        )
+    for k in range(len(game_data.KARTS)):
+        kart = game_data.KARTS[k]
+        dolphin.write_byte(
+            ctx.memory_addresses.available_karts_bx + kart.unlock_id,
+            int(k in ctx.unlocked_karts)
+        )
+    dolphin.write_word(ctx.memory_addresses.max_vehicle_class_w, ctx.unlocked_vehicle_class)
+    dolphin.write_bytes(ctx.memory_addresses.tt_items_bx, game_data.TT_ITEM_TABLE[ctx.time_trial_items])
 
 
 def _give_death(ctx: MkddContext) -> None:
@@ -275,19 +299,29 @@ def _give_item(ctx: MkddContext, item: MkddItemData) -> bool:
     if item.item_type == ItemType.CHARACTER:
         dolphin.write_byte(ctx.memory_addresses.available_characters_bx + item.address, 1)
         ctx.unlocked_characters.append(item.address)
-    if item.item_type == ItemType.KART:
+    
+    elif item.item_type == ItemType.KART:
         kart = game_data.KARTS[item.address]
         dolphin.write_byte(ctx.memory_addresses.available_karts_bx + kart.unlock_id, 1)
         ctx.unlocked_karts.append(item.address)
-    if item.item_type == ItemType.CUP:
+    
+    elif item.item_type == ItemType.CUP:
         ctx.unlocked_cups.append(item.address)
-    if item.item_type == ItemType.TT_COURSE:
+    
+    elif item.item_type == ItemType.TT_COURSE:
         ctx.unlocked_courses.append(item.address)
-    if item.name == items.PROGRESSIVE_CLASS:
-        ctx.unlocked_vehicle_class += 1
+    
+    elif item.name == items.PROGRESSIVE_CLASS:
+        ctx.unlocked_vehicle_class = min(ctx.unlocked_vehicle_class + 1, 3)
         dolphin.write_word(ctx.memory_addresses.max_vehicle_class_w, ctx.unlocked_vehicle_class)
-    if item.name == items.PROGRESSIVE_CUP_SKIP:
-        ctx.unlocked_cup_skips += 1
+    
+    elif item.name == items.PROGRESSIVE_CUP_SKIP:
+        ctx.unlocked_cup_skips = min(ctx.unlocked_cup_skips + 1, 3)
+    
+    elif item.name == items.PROGRESSIVE_TIME_TRIAL_ITEM:
+        ctx.time_trial_items = min(ctx.time_trial_items + 1, len(game_data.TT_ITEM_TABLE) - 1)
+        dolphin.write_bytes(ctx.memory_addresses.tt_items_bx, game_data.TT_ITEM_TABLE[ctx.time_trial_items])
+    
     return True
 
 
@@ -332,6 +366,9 @@ async def check_locations(ctx: MkddContext) -> None:
     total_points: int = dolphin.read_word(ctx.memory_addresses.total_points_wx)
     game_ticks: int = dolphin.read_word(ctx.memory_addresses.game_ticks_w)
     race_timer: int = dolphin.read_word(ctx.memory_addresses.race_timer_w)
+    # Remove 181 frame headstart and convert to seconds.
+    # Close enough (to 1/10th of a second), altough probably exact formula should be investigated.
+    race_timer_s: float = (race_timer - 181) / 60
 
     # Some ways to check what state is the game in. In game in particular has to have one frame
     # leeway in case we read finishing state after the last frame advance has happened.
@@ -340,10 +377,20 @@ async def check_locations(ctx: MkddContext) -> None:
     ctx.last_in_game = new_in_game
     course_loaded: bool = game_ticks > ctx.course_changed_time + 60 # Don't give checks in menus etc.
     ctx.last_race_timer = race_timer
+
     # Course finishing related locations.
-    if in_game and current_lap >= ctx.lap_counts.get(ctx.current_course.name, 3):
+    # For Time Trials check against default lap counts.
+    if in_game and current_lap >= ctx.current_course.laps:
         if mode == game_data.Modes.TIMETRIAL:
             new_location_names.add(locations.get_loc_name_finish(ctx.current_course.name))
+            logger.info(f"{race_timer_s} / {race_timer}")
+            if race_timer_s < ctx.current_course.good_time:
+                new_location_names.add(locations.get_loc_name_good_time(ctx.current_course))
+            if race_timer_s < ctx.current_course.staff_time:
+                new_location_names.add(locations.get_loc_name_ghost(ctx.current_course.name))
+
+    # For Grand Prix use possible custom lap counts.
+    if in_game and current_lap >= ctx.lap_counts.get(ctx.current_course.name, 3):
         if mode == game_data.Modes.GRANDPRIX:
             new_location_names.add(locations.get_loc_name_finish(ctx.current_course.name))
             if in_race_placement == 0:
@@ -619,7 +666,8 @@ async def dolphin_sync_task(ctx: MkddContext) -> None:
                     else:
                         logger.info(CONNECTION_CONNECTED_STATUS)
                         ctx.dolphin_status = CONNECTION_CONNECTED_STATUS
-                        _apply_patch(ctx)
+                        apply_patch(ctx)
+                        sync_state(ctx)
                         ctx.last_item_handled = -1
                         give_items(ctx)
                         ctx.locations_checked = set()

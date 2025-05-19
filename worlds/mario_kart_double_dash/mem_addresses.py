@@ -56,6 +56,8 @@ class MkddMemAddresses():
     """0 = 50cc, 3 = Mirror"""
     available_cups_bx: int
     """Table of available cups (size 5). 1 = unlocked."""
+    tt_items_bx: int
+    """Items for driver and rider in time trials (size 2)."""
 
 class MkddMemAddressesUsa(MkddMemAddresses):
     # Vanilla addresses:
@@ -86,3 +88,4 @@ class MkddMemAddressesUsa(MkddMemAddresses):
     lap_count_bx = 0x80005460 - 0x21 # First course has id of 0x21
     max_vehicle_class_w = 0x80001038
     available_cups_bx = 0x8000103c
+    tt_items_bx = 0x80001041
