@@ -40,6 +40,8 @@ class MkddWorld(World):
     def __init__(self, world, player):
         self.current_locations: list[MkddLocation] = []
         self.current_regions: dict[str, MkddRegionData] = {}
+        self.character_item_total_weights: dict[str, list[int]] = {}
+        self.global_items_total_weights: list[int] = []
         super(MkddWorld, self).__init__(world, player)
 
     def create_regions(self) -> None:
@@ -85,9 +87,9 @@ class MkddWorld(World):
         # Give 2 random characters to begin.
         precollected_characters = 0
         while precollected_characters < 2:
-            character: str = game_data.CHARACTERS[self.random.randrange(len(game_data.CHARACTERS))].name
-            if not character in precollected:
-                precollected.append(character)
+            character_name: str = game_data.CHARACTERS[self.random.randrange(len(game_data.CHARACTERS))].name
+            if not character_name in precollected:
+                precollected.append(character_name)
                 precollected_characters += 1
         # Give 1 kart in each weight class.
         for weight in range(3):
@@ -96,6 +98,7 @@ class MkddWorld(World):
         for item in precollected:
             self.multiworld.push_precollected(self.create_item(item))
 
+        # Generic items by predetermined counts.
         item_pool: list[MkddItem] = []
         for item in items.data_table:
             if item.classification != ItemClassification.filler:
@@ -104,6 +107,55 @@ class MkddWorld(World):
                 for i in range(count):
                     item_pool.append(self.create_item(item.name))
         
+        # Item box item generation.
+        # Give mostly bad items as global items.
+        items_left: list[game_data.Item] = [item for item in game_data.ITEMS if item != game_data.ITEM_NONE]
+        weights: list[str] = [1000 - item.usefulness ** 3 for item in game_data.ITEMS if item != game_data.ITEM_NONE]
+        global_items: list[game_data.Item] = []
+        for i in range(self.options.items_for_everybody):
+            item = self.random.sample(items_left, 1, counts = weights)[0]
+            item_pool.append(self.create_item(items.get_item_name_character_item(None, item.name)))
+            global_items.append(item)
+            id = items_left.index(item)
+            items_left.pop(id)
+            weights.pop(id)
+
+        # Ensure that every item is in pool at least once.
+        items_left_characters_pool = items_left.copy()
+        weights = [1 for _ in items_left]
+        items_per_character: dict[game_data.Character, list[game_data.Item]] = {character:[] for character in game_data.CHARACTERS}
+        for i in range(self.options.items_per_character):
+            for character in game_data.CHARACTERS:
+                # Try rolling for unique items.
+                for j in range(50):
+                    item = self.random.sample(items_left, 1, counts = weights)[0]
+                    if not item in items_per_character[character]:
+                        break
+                    # If item hasn't been found after 10 tries, try refilling the pool.
+                    elif j == 10:
+                        items_left = items_left_characters_pool.copy()
+                        weights = [10 - item.usefulness for item in items_left]
+
+                items_per_character[character].append(item)
+                item_pool.append(self.create_item(items.get_item_name_character_item(character.name, item.name)))
+                id = items_left.index(item)
+                weights[id] -= 1
+                if weights[id] == 0:
+                    items_left.pop(id)
+                    weights.pop(id)
+                if len(items_left) == 0:
+                    # Refill the pool with some balancing.
+                    items_left = items_left_characters_pool.copy()
+                    weights = [10 - item.usefulness for item in items_left]
+
+        self.character_item_total_weights = {character.name:[] for character in game_data.CHARACTERS}
+        for i in range(8):
+            self.global_items_total_weights.append(sum([item.weight_table[i] for item in global_items]))
+            for character in game_data.CHARACTERS:
+                self.character_item_total_weights[character.name].append(
+                    sum([item.weight_table[i] for item in items_per_character[character]])
+                )
+
         total_locations = len(self.multiworld.get_unfilled_locations(self.player))
         if len(item_pool) > total_locations:
             warnings.warn("Number of total available items exceeds the number of locations, likely there is a bug in the generation.")
@@ -136,7 +188,9 @@ class MkddWorld(World):
             if laps > 0:
                 lap_counts[course] = laps
         return {
-            "lap_counts": lap_counts
+            "lap_counts": lap_counts,
+            "character_item_total_weights": self.character_item_total_weights,
+            "global_items_total_weights": self.global_items_total_weights,
         }
 
 

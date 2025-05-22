@@ -58,6 +58,8 @@ class MkddMemAddresses():
     """Table of available cups (size 5). 1 = unlocked."""
     tt_items_bx: int
     """Items for driver and rider in time trials (size 2)."""
+    gp_next_items_bx: int
+    """Item for player in grand prix. Offset by character's special item id (size 22)."""
 
 class MkddMemAddressesUsa(MkddMemAddresses):
     # Vanilla addresses:
@@ -89,3 +91,4 @@ class MkddMemAddressesUsa(MkddMemAddresses):
     max_vehicle_class_w = 0x80001038
     available_cups_bx = 0x8000103c
     tt_items_bx = 0x80001041
+    gp_next_items_bx = 0x80001043

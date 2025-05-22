@@ -17,6 +17,20 @@ class CustomLapCounts(OptionDict):
     display_name = "Custom Lap Counts"
     default = {"Luigi Circuit": 3}
     
+class ItemsForEverybody(Range):
+    """How many global item unlocks there are."""
+    display_name = "Items for Everybody"
+    range_start = 0
+    range_end = 19
+    default = 4
+
+class ItemsPerCharacter(Range):
+    """How many item unlocks there are per character.
+    Note: this setting raises the amount of items considerably and will be automatically lowered if there is not enough locations."""
+    display_name = "Items per Character"
+    range_start = 0
+    range_end = 4
+    default = 4
 
 @dataclass
 class MkddOptions(PerGameCommonOptions):
@@ -24,5 +38,8 @@ class MkddOptions(PerGameCommonOptions):
 
     shorter_courses: ShorterCourses
     custom_lap_counts: CustomLapCounts
+
+    items_for_everybody: ItemsForEverybody
+    items_per_character: ItemsPerCharacter
 
     start_inventory_from_pool: StartInventoryPool

@@ -1,4 +1,4 @@
-from typing import NamedTuple, TYPE_CHECKING
+from typing import Any, NamedTuple, TYPE_CHECKING
 from enum import Enum
 
 from BaseClasses import Item, ItemClassification
@@ -19,6 +19,7 @@ class ItemType(Enum):
     KART = 2
     CUP = 3
     TT_COURSE = 4
+    ITEM_UNLOCK =5
 
 class MkddItem(Item):
     game = "Mario Kart Double Dash"
@@ -30,6 +31,7 @@ class MkddItemData(NamedTuple):
     item_type: ItemType = ItemType.OTHER
     address: int = 0
     count: int = 1
+    meta: Any = None
 
 
 PROGRESSIVE_CLASS = "Progressive Class"
@@ -38,9 +40,14 @@ PROGRESSIVE_TIME_TRIAL_ITEM = "Progressive Time Trial Item"
 RANDOM_ITEM = "Random Item"
 VICTORY = "Victory"
 
-def get_item_name_tt_course(course: str):
+def get_item_name_tt_course(course: str) -> str:
     return f"{course} Time Trial"
 
+def get_item_name_character_item(character: str, item: str) -> str:
+    if character != None:
+        return f"{item} for {character}"
+    else:
+        return f"{item} for Everybody"
 
 data_table: list[MkddItemData] = [
     MkddItemData("", 0, count = 0), # Id 0 is reserved
@@ -54,5 +61,18 @@ data_table.extend([MkddItemData(char.name, PROG, ItemType.CHARACTER, id) for id,
 data_table.extend([MkddItemData(kart.name, PROG, ItemType.KART, id, 2) for id, kart in enumerate(game_data.KARTS)])
 data_table.extend([MkddItemData(name, PROG, ItemType.CUP, id) for id, name in enumerate(game_data.CUPS)])
 data_table.extend([MkddItemData(get_item_name_tt_course(course.name), PROG, ItemType.TT_COURSE, id) for id, course in enumerate(game_data.COURSES) if course.type == game_data.CourseType.RACE])
+
+for item in game_data.ITEMS:
+    classification = PROG if item.usefulness > 0 else FILL
+    if item != game_data.ITEM_NONE:
+        data_table.append(MkddItemData(
+            get_item_name_character_item(None, item.name), classification,
+            ItemType.ITEM_UNLOCK, count = 0, meta = {"character":None, "item":item}
+            ))
+        for character in game_data.CHARACTERS:
+            data_table.append(MkddItemData(
+                get_item_name_character_item(character.name, item.name), classification,
+                ItemType.ITEM_UNLOCK, count = 0, meta = {"character":character, "item":item}
+                ))
 
 name_to_id: dict[str, int] = {item.name:id for (id, item) in enumerate(data_table) if id > 0}

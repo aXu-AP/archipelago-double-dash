@@ -6,28 +6,29 @@ class Character(NamedTuple):
     name: str
     weight: int
     default_kart: int
+    item_offset: int
 
 CHARACTERS = [
-    Character("Mario", 1, 8),           # 00
-    Character("Luigi", 1, 9),           # 01
-    Character("Peach", 1, 10),          # 02
-    Character("Daisy", 1, 11),          # 03
-    Character("Yoshi", 1, 12),          # 04
-    Character("Birdo", 1, 13),          # 05
-    Character("Baby Mario", 0, 0),      # 06
-    Character("Baby Luigi", 0, 1),      # 07
-    Character("Toad", 0, 6),            # 08
-    Character("Toadette", 0, 7),        # 09
-    Character("Koopa", 0, 2),           # 10
-    Character("Paratroopa", 0, 3),      # 11
-    Character("Donkey Kong", 2, 16),    # 12
-    Character("Diddy Kong", 0, 4),      # 13
-    Character("Bowser", 2, 17),         # 14
-    Character("Bowser Jr.", 0, 5),      # 15
-    Character("Wario", 2, 15),          # 16
-    Character("Waluigi", 1, 14),        # 17
-    Character("Petey Piranha", 2, 18),  # 18
-    Character("King Boo", 2, 19),       # 19
+    Character("Mario", 1, 8, 21),          # 00
+    Character("Luigi", 1, 9, 21),          # 01
+    Character("Peach", 1, 10, 14),         # 02
+    Character("Daisy", 1, 11, 14),         # 03
+    Character("Yoshi", 1, 12, 11),         # 04
+    Character("Birdo", 1, 13, 11),         # 05
+    Character("Baby Mario", 0, 0, 7),      # 06
+    Character("Baby Luigi", 0, 1, 7),      # 07
+    Character("Toad", 0, 6, 12),           # 08
+    Character("Toadette", 0, 7, 12),       # 09
+    Character("Koopa", 0, 2, 17),          # 10
+    Character("Paratroopa", 0, 3, 17),     # 11
+    Character("Donkey Kong", 2, 16, 4),    # 12
+    Character("Diddy Kong", 0, 4, 4),      # 13
+    Character("Bowser", 2, 17, 1),         # 14
+    Character("Bowser Jr.", 0, 5, 1),      # 15
+    Character("Wario", 2, 15, 8),          # 16
+    Character("Waluigi", 1, 14, 8),        # 17
+    Character("Petey Piranha", 2, 18, 8),  # 18
+    Character("King Boo", 2, 19, 8),       # 19
 ]
 
 class Kart(NamedTuple):
@@ -124,29 +125,30 @@ class Item(NamedTuple):
     id: int
     name: str
     usefulness: int = 0
+    weight_table: list[int] = []
 
 ITEMS = [
-    Item(0, "Green Shell"),
-    Item(1, "Bowser's Shell"),
-    Item(2, "Red Shell"),
-    Item(3, "Banana"),
-    Item(4, "Giant Banana"),
-    Item(5, "Mushroom"),
-    Item(6, "Star"),
-    Item(7, "Chain Chomp"),
-    Item(8, "Bob-omb"),
-    Item(9, "Fireball"),
-    Item(10, "Lightning"),
-    Item(11, "Yoshi Egg"),
-    Item(12, "Golden Mushroom"),
-    Item(13, "Spiny Shell"),
-    Item(14, "Heart"),
-    Item(15, "Fake Item"),
-    Item(17, "Triple Green Shells"),
-    Item(18, "Triple Mushrooms"),
-    Item(19, "Triple Red Shells"),
-    Item(21, "Fireballs"),
-    Item(16, "None"),
+    Item(0, "Green Shell",          2, [ 90,  50,  25,  10,   1,   1,   1,   1]),
+    Item(1, "Bowser's Shell",       3, [ 30,  60, 100, 100, 100,  90,  40,   1]),
+    Item(2, "Red Shell",            3, [ 10,  55,  70,  70,  70,  50,  40,  20]),
+    Item(3, "Banana",               1, [ 70,  35,  15,   5,   1,   1,   1,   1]),
+    Item(4, "Giant Banana",         2, [120, 100,  90,  60,  30,   1,   1,   1]),
+    Item(5, "Mushroom",             5, [  1,  40,  65,  75,  65,  35,  10,   1]),
+    Item(6, "Star",                 7, [  1,   1,   1,  10,  20,  30,  40,  40]),
+    Item(7, "Chain Chomp",          6, [  0,   0,   1,   3,  20,  60, 130, 180]),
+    Item(8, "Bob-omb",              1, [ 10,  70, 100, 100, 100,  90,  40,   0]),
+    Item(9, "Fireball",             1, [ 90,  50,  25,  10,   1,   1,   1,   1]),
+    Item(10, "Lightning",           5, [  0,   0,   1,   1,   3,  10,  20,  30]),
+    Item(11, "Yoshi Egg",           4, [ 50,  70,  80,  80,  80,  70,  60,  40]),
+    Item(12, "Golden Mushroom",     8, [  0,   3,  10,  30,  50,  80, 100, 120]),
+    Item(13, "Spiny Shell",         0, [  0,   0,   5,  10,  10,  20,  20,  20]),
+    Item(14, "Heart",               5, [  1,   1,   3,  10,  30,  90, 110, 130]),
+    Item(15, "Fake Item",           0, [ 30,  20,  10,   0,   0,   0,   0,   1]),
+    Item(17, "Triple Green Shells", 3, [ 20,  50, 100, 100, 100,  90,  40,   1]),
+    Item(18, "Triple Mushrooms",    6, [  1,   1,  10,  20,  35,  50,  70,  90]),
+    Item(19, "Triple Red Shells",   4, [  5,  40,  60,  70,  70,  50,  50,  30]),
+    Item(21, "Fireballs",           2, [ 30,  70, 100, 100, 100,  90,  40,   1]),
+    Item(20, "None"),
 ]
 
 ITEM_GREEN_SHELL = ITEMS[0]

@@ -13,6 +13,7 @@
 .set cup_unlock_table, 0x80001000 + 0x3c
 .set tt_driver_item, 0x80001000 + 0x41
 .set tt_rider_item, 0x80001000 + 0x42
+.set gp_next_item, 0x80001000 + 0x43
 
 
 # SECTION character_selection
@@ -198,3 +199,20 @@ WriteTo 0x800010ac
 lis     r4, tt_rider_item@ha
 lbz     r4, tt_rider_item@l (r4)
 b rider_item_return
+
+
+# SECTION item_shuffle
+.set item_shuffle_jump, 0x800010b8 - 0x8020cbc0
+.set item_shuffle_return_player, 0x8020cbc0 + 8 - 0x800010b8 - 0x18
+.set item_shuffle_return_cpu, 0x8020cbc0 + 4 - 0x800010b8 - 0x1c
+WriteTo 0x8020cbc0
+b       item_shuffle_jump
+WriteTo 0x800010b8
+stw     r0, 0x24 (r1)
+cmplwi  r0, 0
+bne+    0x14
+lis     r3, gp_next_item@ha
+addi    r3, r3, gp_next_item@l
+lbzx    r3, r3, r5 # Offset by assumed special item.
+b       item_shuffle_return_player
+b       item_shuffle_return_cpu

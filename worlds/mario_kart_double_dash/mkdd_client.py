@@ -1,4 +1,5 @@
 import asyncio
+import random
 import time
 import traceback
 from typing import TYPE_CHECKING, Any, Optional
@@ -127,6 +128,11 @@ class MkddContext(CommonContext):
         self.active_characters: list[game_data.Character] = [game_data.CHARACTERS[0], game_data.CHARACTERS[0]]
         self.active_kart: game_data.Kart = game_data.KARTS[0]
         
+        self.character_item_total_weights: dict[str, list[int]] = {}
+        self.global_items_total_weights: list[int] = []
+        self.character_items: dict[game_data.Character, list[game_data.Item]] = {character:[] for character in game_data.CHARACTERS}
+        self.global_items: list[game_data.Item] = []
+
         # Name of the current stage as read from the game's memory. Sent to trackers whenever its value changes to
         # facilitate automatically switching to the map of the current stage.
         self.current_course: game_data.Course = game_data.Course()
@@ -169,6 +175,8 @@ class MkddContext(CommonContext):
             if "death_link" in slot_data:
                 Utils.async_start(self.update_death_link(bool(args["slot_data"]["death_link"])))
             self.lap_counts = slot_data.get("lap_counts")
+            self.character_item_total_weights = slot_data.get("character_item_total_weights")
+            self.global_items_total_weights = slot_data.get("global_items_total_weights")
             sync_state(self)
         elif cmd == "ReceivedItems":
             if args["index"] >= self.last_rcvd_index:
@@ -321,6 +329,12 @@ def _give_item(ctx: MkddContext, item: MkddItemData) -> bool:
     elif item.name == items.PROGRESSIVE_TIME_TRIAL_ITEM:
         ctx.time_trial_items = min(ctx.time_trial_items + 1, len(game_data.TT_ITEM_TABLE) - 1)
         dolphin.write_bytes(ctx.memory_addresses.tt_items_bx, game_data.TT_ITEM_TABLE[ctx.time_trial_items])
+    
+    elif item.item_type == ItemType.ITEM_UNLOCK:
+        if item.meta["character"] == None:
+            ctx.global_items.append(item.meta["item"])
+        else:
+            ctx.character_items[item.meta["character"]].append(item.meta["item"])
     
     return True
 
@@ -532,6 +546,40 @@ def update_game(ctx: MkddContext) -> None:
         # Use custom lap counts in grand prix.
         for c in [c for c in game_data.COURSES if c.type == game_data.CourseType.RACE]:
             dolphin.write_byte(ctx.memory_addresses.lap_count_bx + c.id, ctx.lap_counts[c.name])
+
+        # Item selection.
+        in_race_placement: int = max(0, min(7, dolphin.read_word(ctx.memory_addresses.in_race_placement_wx) - 1))
+        item_adr: list[int] = [
+            ctx.memory_addresses.gp_next_items_bx + ctx.active_characters[0].item_offset,
+            ctx.memory_addresses.gp_next_items_bx + ctx.active_characters[1].item_offset,
+        ]
+        total_weight = ctx.global_items_total_weights[in_race_placement]
+        total_weight += ctx.character_item_total_weights[ctx.active_characters[0].name][in_race_placement]
+        item_pool = ctx.global_items + ctx.character_items[ctx.active_characters[0]]
+        if item_adr[0] != item_adr[1]:
+            item_weights = [item.weight_table[in_race_placement] for item in item_pool]
+            # Yet to be unlocked items still count towards item weights.
+            weight_gap = total_weight - sum(item_weights)
+            if weight_gap > 0:
+                item_pool.append(game_data.ITEM_NONE)
+                item_weights.append(weight_gap)
+            rand_item = random.sample(item_pool, 1, counts = item_weights)[0]
+            dolphin.write_byte(item_adr[0], rand_item.id)
+
+            # Reset pool for second player only if they aren't synced.
+            total_weight = ctx.global_items_total_weights[in_race_placement]
+            item_pool = ctx.global_items
+        total_weight += ctx.character_item_total_weights[ctx.active_characters[1].name][in_race_placement]
+        item_pool += ctx.character_items[ctx.active_characters[1]]
+        item_weights = [item.weight_table[in_race_placement] for item in item_pool]
+        # Yet to be unlocked items still count towards item weights.
+        weight_gap = total_weight - sum(item_weights)
+        if weight_gap > 0:
+            item_pool.append(game_data.ITEM_NONE)
+            item_weights.append(weight_gap)
+        rand_item = random.sample(item_pool, 1, counts = item_weights)[0]
+        dolphin.write_byte(item_adr[1], rand_item.id)
+        
 
     if len(available_cups_courses) > 0:
         for c in range(len(game_data.CUPS)):
