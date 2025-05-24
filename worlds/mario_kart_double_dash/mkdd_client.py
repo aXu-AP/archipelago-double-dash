@@ -66,6 +66,12 @@ class MkddCommandProcessor(ClientCommandProcessor):
             logger.info(f"Max vehicle class: {["50cc", "100cc", "150cc", "Mirror"][self.ctx.unlocked_vehicle_class]}")
             logger.info(f"Unlocked cups: {", ".join([game_data.CUPS[c] for c in self.ctx.unlocked_cups])}")
             logger.info(f"Unlocked time trial courses: {", ".join([game_data.COURSES[c].name for c in self.ctx.unlocked_courses])}")
+            logger.info("Unlocked item box items:")
+            if len(self.ctx.global_items) > 0:
+                logger.info(f"Everybody: {", ".join([item.name for item in self.ctx.global_items])}")
+            for character, items in self.ctx.character_items.items():
+                if len(items) > 0:
+                   logger.info(f"{character.name}: {", ".join([item.name for item in items])}")
 
 
 class MkddContext(CommonContext):
