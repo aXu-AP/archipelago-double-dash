@@ -27,10 +27,7 @@ if TYPE_CHECKING:
     import kvui
 
 CONNECTION_REFUSED_GAME_STATUS = (
-    "Dolphin failed to connect. Please load a randomized ROM for Mario Kart Double Dash. Trying again in 5 seconds..."
-)
-CONNECTION_REFUSED_SAVE_STATUS = (
-    "Dolphin failed to connect. Please load into the save file. Trying again in 5 seconds..."
+    "Dolphin failed to connect. Please load a ROM for Mario Kart Double Dash (USA). Trying again in 5 seconds..."
 )
 CONNECTION_LOST_STATUS = (
     "Dolphin connection was lost. Please restart your emulator and make sure Mario Kart Double Dash is running."
@@ -151,9 +148,7 @@ class MkddContext(CommonContext):
 
         """
         self.auth = None
-        self.salvage_locations_map = {}
         self.current_course = game_data.Course()
-        self.visited_stage_names = None
         await super().disconnect(allow_autoreconnect)
 
     async def server_auth(self, password_requested: bool = False) -> None:
