@@ -59,7 +59,8 @@ class MkddCommandProcessor(ClientCommandProcessor):
         """Show list of unlocked items."""
         if isinstance(self.ctx, MkddContext):
             logger.info(f"Unlocked characters: {", ".join([game_data.CHARACTERS[c].name for c in self.ctx.unlocked_characters])}")
-            logger.info(f"Unlocked karts: {", ".join([game_data.KARTS[c].name for c in self.ctx.unlocked_karts])}")
+            logger.info(f"Unlocked karts (upgrades): {", ".join([f"{game_data.KARTS[c].name} ({", ".join(self.ctx.kart_upgrades[c])})" for c in self.ctx.unlocked_karts])}")
+            logger.info(f"Engine upgrades: {self.ctx.engine_upgrade_level}")
             logger.info(f"Max vehicle class: {["50cc", "100cc", "150cc", "Mirror"][self.ctx.unlocked_vehicle_class]}")
             logger.info(f"Unlocked cups: {", ".join([game_data.CUPS[c] for c in self.ctx.unlocked_cups])}")
             logger.info(f"Unlocked time trial courses: {", ".join([game_data.COURSES[c].name for c in self.ctx.unlocked_courses])}")
@@ -114,6 +115,8 @@ class MkddContext(CommonContext):
         self.last_selected_character: int = 0
 
         self.unlocked_karts: list[int] = []
+        self.engine_upgrade_level = 0
+        self.kart_upgrades: dict[int, list[str]] = {i:[] for i, _ in enumerate(game_data.KARTS)}
         self.last_selected_kart: int = 0
 
         self.unlocked_cups: list[int] = []
@@ -313,6 +316,12 @@ def _give_item(ctx: MkddContext, item: MkddItemData) -> bool:
         kart = game_data.KARTS[item.address]
         dolphin.write_byte(ctx.memory_addresses.available_karts_bx + kart.unlock_id, 1)
         ctx.unlocked_karts.append(item.address)
+    
+    elif item.item_type == ItemType.KART_UPGRADE:
+        ctx.kart_upgrades[item.address].append(item.meta)
+    
+    elif item.name == items.PROGRESSIVE_ENGINE:
+        ctx.engine_upgrade_level += 1
     
     elif item.item_type == ItemType.CUP:
         ctx.unlocked_cups.append(item.address)
@@ -609,6 +618,58 @@ def update_game(ctx: MkddContext) -> None:
                         break
                 dolphin.write_word(ctx.memory_addresses.menu_course_w, course)
                 ctx.last_selected_course = course
+    
+
+    kart_stats_pointer = ctx.memory_addresses.kart_stats_pointer
+    for i in range(len(game_data.KARTS)):
+        kart: game_data.Kart = game_data.KARTS[i]
+        kart_address = kart_stats_pointer + i * ctx.memory_addresses.kart_struct_size
+
+        speed_1_multiplier = 1.0
+        speed_2_multiplier = 1.0
+        speed_3_multiplier = 1.0
+        speed_4_multiplier = 1.0
+        acceleration_1_addition = 0.0
+        acceleration_2_addition = 0.0
+        mini_turbo_addition = 0.0
+        weight_addition = 0.0
+        steer_addition = 0.0
+        if kart == ctx.active_kart:
+            # Engine upgrades by levels: .9, 1, 1.05, 1.1
+            if ctx.engine_upgrade_level == 0:
+                speed_1_multiplier = .9
+            elif ctx.engine_upgrade_level > 1:
+                speed_1_multiplier = .95 + ctx.engine_upgrade_level * .05
+            for upgrade in ctx.kart_upgrades[i]:
+                if upgrade == items.KART_UPGRADE_ACC:
+                    acceleration_1_addition += 1
+                    acceleration_2_addition += .1
+                elif upgrade == items.KART_UPGRADE_OFFROAD:
+                    speed_2_multiplier *= 1.1
+                    speed_3_multiplier *= 1.2
+                    speed_4_multiplier *= 3
+                elif upgrade == items.KART_UPGRADE_WEIGHT:
+                    weight_addition += 2
+                elif upgrade == items.KART_UPGRADE_TURBO:
+                    mini_turbo_addition += 30
+                elif upgrade == items.KART_UPGRADE_STEER:
+                    steer_addition += 1
+        # Speed 1 (on road) is also general speed multiplier.
+        speed_2_multiplier *= speed_1_multiplier
+        speed_3_multiplier *= speed_1_multiplier
+        speed_4_multiplier *= speed_1_multiplier
+        stats = kart.stats
+        
+        dolphin.write_float(kart_address + ctx.memory_addresses.kart_speed_on_road_f_offset, stats.speed_on_road * speed_1_multiplier)
+        dolphin.write_float(kart_address + ctx.memory_addresses.kart_speed_off_road_sand_f_offset, stats.speed_off_road_sand * speed_2_multiplier)
+        dolphin.write_float(kart_address + ctx.memory_addresses.kart_speed_off_road_grass_f_offset, stats.speed_off_road_grass * speed_3_multiplier)
+        dolphin.write_float(kart_address + ctx.memory_addresses.kart_speed_off_road_mud_f_offset, stats.speed_off_road_mud * speed_4_multiplier)
+        dolphin.write_float(kart_address + ctx.memory_addresses.kart_acceleration_1_f_offset, stats.acceleration_1 + acceleration_1_addition)
+        dolphin.write_float(kart_address + ctx.memory_addresses.kart_acceleration_2_f_offset, stats.acceleration_2 + acceleration_2_addition)
+        dolphin.write_float(kart_address + ctx.memory_addresses.kart_mini_turbo_f_offset, stats.mini_turbo + mini_turbo_addition)
+        dolphin.write_float(kart_address + ctx.memory_addresses.kart_mass_f_offset, stats.mass + weight_addition)
+        dolphin.write_float(kart_address + ctx.memory_addresses.kart_roll_f_offset, stats.roll)
+        dolphin.write_float(kart_address + ctx.memory_addresses.kart_steer_f_offset, stats.steer + steer_addition)
 
 def wrap(value: int, max_value: int) -> int:
     if value < 0:

@@ -28,6 +28,8 @@ class MkddMemAddresses():
     """Players' and cpus' points in a table."""
     game_ticks_w: int
     """Frames since game startup. 60 per second."""
+    kart_stats_pointer: int
+    """Pointer to kart stat table."""
 
     # Vanilla offsets:
     menu_character_w_offset: int
@@ -38,12 +40,24 @@ class MkddMemAddresses():
     """Offset from menu_pointer, confirmed driver."""
     menu_rider_w_offset: int
     """Offset from menu_pointer, confirmed rider."""
+    kart_struct_size: int
+    """Use this in combination with kart_stats_pointer and stat offsets to modify karts."""
+    kart_speed_on_road_f_offset: int
+    kart_speed_off_road_sand_f_offset: int
+    kart_speed_off_road_grass_f_offset: int
+    kart_speed_off_road_mud_f_offset: int
+    kart_acceleration_1_f_offset: int
+    kart_acceleration_2_f_offset: int
+    kart_mini_turbo_f_offset: int
+    kart_mass_f_offset: int
+    kart_roll_f_offset: int
+    kart_steer_f_offset: int
 
     # Custom addresses:
     menu_pointer: int
     """Pointer to menu object. Use with character/kart offsets."""
     available_characters_bx: int
-    """Table of available characters from Mario to Petey (size 20). 1 = unlocked."""
+    """Table of available characters from Mario to King Boo (size 20). 1 = unlocked."""
     available_karts_bx: int
     """Table of available karts from Goo-Goo Buggy to Parade Kart (size 21). 1 = unlocked."""
     race_counter_w: int
@@ -74,12 +88,25 @@ class MkddMemAddressesUsa(MkddMemAddresses):
     total_ranking_w = 0x803b1260
     total_points_wx = 0x803b11cc
     game_ticks_w = 0x803b0754
+    kart_stats_pointer = 0x80bd5000
 
     # Vanilla offsets:
     menu_character_w_offset = 0x212c
     menu_kart_w_offset = 0x2140
     menu_driver_w_offset = 0x2138
     menu_rider_w_offset = 0x213c
+
+    kart_struct_size = 0x100
+    kart_speed_on_road_f_offset = 0x50
+    kart_speed_off_road_sand_f_offset = 0x54
+    kart_speed_off_road_grass_f_offset = 0x58
+    kart_speed_off_road_mud_f_offset = 0x5c
+    kart_acceleration_1_f_offset = 0x64
+    kart_acceleration_2_f_offset = 0x74
+    kart_mini_turbo_f_offset = 0x80
+    kart_mass_f_offset = 0x84
+    kart_roll_f_offset = 0xa0
+    kart_steer_f_offset = 0xb4
 
     # Custom addresses:
     menu_pointer = 0x80001030

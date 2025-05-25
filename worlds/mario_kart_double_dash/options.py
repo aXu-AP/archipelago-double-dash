@@ -30,7 +30,15 @@ class ItemsPerCharacter(Range):
     display_name = "Items per Character"
     range_start = 0
     range_end = 4
-    default = 4
+    default = 3
+
+class KartUpgrades(Range):
+    """How many random kart stat upgrades there are total.
+    Unlike progressive engine upgrades, these upgrades are tied to certain vehicles."""
+    display_name = "Kart Upgrades"
+    range_start = 0
+    range_end = 40
+    default = 10
 
 @dataclass
 class MkddOptions(PerGameCommonOptions):
@@ -41,5 +49,7 @@ class MkddOptions(PerGameCommonOptions):
 
     items_for_everybody: ItemsForEverybody
     items_per_character: ItemsPerCharacter
+
+    kart_upgrades: KartUpgrades
 
     start_inventory_from_pool: StartInventoryPool

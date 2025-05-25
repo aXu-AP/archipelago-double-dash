@@ -107,6 +107,14 @@ class MkddWorld(World):
                 for i in range(count):
                     item_pool.append(self.create_item(item.name))
         
+        # Kart upgrades generation.
+        kart_weights = [5 for _ in game_data.KARTS]
+        upgrade_weights = [math.ceil(self.options.kart_upgrades / len(items.KART_UPGRADES)) for _ in items.KART_UPGRADES]
+        up_karts = self.random.sample(game_data.KARTS, self.options.kart_upgrades, counts = kart_weights)
+        upgrades = self.random.sample(items.KART_UPGRADES, self.options.kart_upgrades, counts = upgrade_weights)
+        for i in range(self.options.kart_upgrades):
+            item_pool.append(self.create_item(items.get_item_name_kart_upgrade(upgrades[i], up_karts[i].name)))
+
         # Item box item generation.
         # Give mostly bad items as global items.
         items_left: list[game_data.Item] = [item for item in game_data.ITEMS if item != game_data.ITEM_NONE]

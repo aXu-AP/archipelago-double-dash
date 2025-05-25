@@ -31,33 +31,69 @@ CHARACTERS = [
     Character("King Boo", 2, 19, 8),       # 19
 ]
 
+class KartStats(NamedTuple):
+    speed_on_road: float
+    speed_off_road_sand: float
+    speed_off_road_grass: float
+    speed_off_road_mud: float
+    acceleration_1: float
+    acceleration_2: float
+    mini_turbo: float
+    mass: float
+    roll: float
+    steer: float
+
 class Kart(NamedTuple):
     name: str
     weight: int
     unlock_id: int
+    stats: KartStats
 
+# Kart stats table based on work by Ralf.
+#                Speed1    Speed2   Speed3   Speed4   Accel1    Accel2    Turbo     Mass    Roll   Steer
 KARTS = [
-    Kart("Goo-Goo Buggy", 0, 5),        # 00
-    Kart("Rattle Buggy", 0, 13),        # 01
-    Kart("Koopa Dasher", 0, 3),         # 02
-    Kart("Para-Wing", 0, 11),           # 03
-    Kart("Barrel Train", 0, 9),         # 04
-    Kart("Bullet Blaster", 0, 15),      # 05
-    Kart("Toad Kart", 0, 16),           # 06
-    Kart("Toadette Kart", 0, 17),       # 07
-    Kart("Red Fire", 1, 0),             # 08
-    Kart("Green Fire", 1, 8),           # 09
-    Kart("Heart Coach", 1, 4),          # 10
-    Kart("Bloom Coach", 1, 12),         # 11
-    Kart("Turbo Yoshi", 1, 2),          # 12
-    Kart("Turbo Birdo", 1, 10),         # 13
-    Kart("Waluigi Racer", 1, 14),       # 14
-    Kart("Wario Car", 2, 6),            # 15
-    Kart("DK Jumbo", 2, 1),             # 16
-    Kart("Koopa King", 2, 7),           # 17
-    Kart("Piranha Pipes", 2, 19),       # 18
-    Kart("Boo Pipes", 2, 18),           # 19
-    Kart("Parade Kart", -1, 20),        # 20
+    Kart("Goo-Goo Buggy", 0, 5,             # 00
+        KartStats(136.0,    116.0,    92.0,    20.0,    3.00,    0.010,    30.0,    1.25,    5.0,    2.0)),
+    Kart("Rattle Buggy", 0, 13,             # 01
+        KartStats(137.0,    117.0,    92.0,    20.0,    2.00,    0.010,    30.0,    1.25,    5.0,    2.0)),
+    Kart("Koopa Dasher", 0, 3,              # 02
+        KartStats(137.0,    117.0,    89.0,    20.0,    2.00,    0.010,    30.0,    1.50,    4.0,    2.0)),
+    Kart("Para-Wing", 0, 11,                # 03
+        KartStats(136.0,    116.0,    89.0,    20.0,    3.00,    0.010,    30.0,    1.50,    4.0,    2.0)),
+    Kart("Barrel Train", 0, 9,              # 04
+        KartStats(143.0,    123.0,    86.0,    20.0,    0.15,    0.005,    30.0,    2.00,    5.0,    0.9)),
+    Kart("Bullet Blaster", 0, 15,            # 05
+        KartStats(143.0,    123.0,    68.0,    20.0,    0.30,    0.005,    30.0,    1.00,    5.0,    0.8)),
+    Kart("Toad Kart", 0, 16,                # 06
+        KartStats(138.0,    118.0,    92.0,    20.0,    1.00,    0.010,    30.0,    1.25,    5.0,    3.0)),
+    Kart("Toadette Kart", 0, 17,            # 07
+        KartStats(136.0,    116.0,    92.0,    20.0,    3.00,    0.010,    30.0,    1.25,    5.0,    3.0)),
+    Kart("Red Fire", 1, 0,                  # 08
+        KartStats(140.0,    120.0,    80.0,    20.0,    0.30,    0.005,    20.0,    2.00,    4.5,    1.0)),
+    Kart("Green Fire", 1, 8,                # 09
+        KartStats(142.0,    122.0,    77.0,    20.0,    0.15,    0.005,    20.0,    1.75,    4.5,    1.0)),
+    Kart("Heart Coach", 1, 4,               # 10
+        KartStats(139.0,    119.0,    83.0,    20.0,    1.00,    0.005,    20.0,    2.00,    5.0,    1.5)),
+    Kart("Bloom Coach", 1, 12,              # 11
+        KartStats(141.0,    121.0,    77.0,    20.0,    0.50,    0.005,    20.0,    1.50,    5.0,    1.5)),
+    Kart("Turbo Yoshi", 1, 2,               # 12
+        KartStats(139.0,    119.0,    80.0,    20.0,    1.00,    0.005,    20.0,    2.25,    4.5,    1.0)),
+    Kart("Turbo Birdo", 1, 10,              # 13
+        KartStats(141.0,    121.0,    77.0,    20.0,    0.30,    0.005,    20.0,    2.50,    4.5,    1.0)),
+    Kart("Waluigi Racer", 1, 14,            # 14
+        KartStats(140.0,    120.0,    92.0,    20.0,    0.50,    0.005,    20.0,    2.25,    4.5,    1.0)),
+    Kart("Wario Car", 2, 6,                 # 15
+        KartStats(142.0,    122.0,    74.0,    20.0,    0.15,    0.005,    10.0,    2.50,    5.0,    1.0)),
+    Kart("DK Jumbo", 2, 1,                  # 16
+        KartStats(143.0,    123.0,    71.0,    20.0,    0.10,    0.005,    10.0,    2.75,    5.0,    0.9)),
+    Kart("Koopa King", 2, 7,                 # 17
+        KartStats(144.0,    124.0,    68.0,    20.0,    0.08,    0.005,    10.0,    3.00,    5.0,    0.9)),
+    Kart("Piranha Pipes", 2, 19,            # 18
+        KartStats(143.0,    123.0,    86.0,    20.0,    0.10,    0.005,    10.0,    3.00,    5.0,    0.9)),
+    Kart("Boo Pipes", 2, 18,                # 19
+        KartStats(137.0,    117.0,    92.0,    20.0,    2.00,    0.010,    10.0,    3.00,    5.0,    0.9)),
+    Kart("Parade Kart", -1, 20,             # 20
+        KartStats(142.0,    122.0,    74.0,    20.0,    0.30,    0.005,    30.0,    2.50,    5.0,    1.0)),
 ]
 
 CUPS = [
@@ -148,7 +184,7 @@ ITEMS = [
     Item(18, "Triple Mushrooms",    6, [  1,   1,  10,  20,  35,  50,  70,  90]),
     Item(19, "Triple Red Shells",   4, [  5,  40,  60,  70,  70,  50,  50,  30]),
     Item(21, "Fireballs",           2, [ 30,  70, 100, 100, 100,  90,  40,   1]),
-    Item(20, "None"),
+    Item(20, "None",                0, [  0,   0,   0,   0,   0,   0,   0,   0]),
 ]
 
 ITEM_GREEN_SHELL = ITEMS[0]
