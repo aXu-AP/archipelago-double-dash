@@ -578,7 +578,7 @@ def update_game(ctx: MkddContext) -> None:
 
             # Reset pool for second player only if they aren't synced.
             total_weight = ctx.global_items_total_weights[in_race_placement]
-            item_pool = ctx.global_items
+            item_pool = ctx.global_items.copy()
         total_weight += ctx.character_item_total_weights[ctx.active_characters[1].name][in_race_placement]
         item_pool += ctx.character_items[ctx.active_characters[1]]
         item_weights = [item.weight_table[in_race_placement] for item in item_pool]
