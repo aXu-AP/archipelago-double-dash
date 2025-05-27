@@ -59,7 +59,8 @@ class MkddCommandProcessor(ClientCommandProcessor):
         """Show list of unlocked items."""
         if isinstance(self.ctx, MkddContext):
             logger.info(f"Unlocked characters: {", ".join([game_data.CHARACTERS[c].name for c in self.ctx.unlocked_characters])}")
-            logger.info(f"Unlocked karts (upgrades): {", ".join([f"{game_data.KARTS[c].name} ({", ".join(self.ctx.kart_upgrades[c])})" for c in self.ctx.unlocked_karts])}")
+            logger.info(f"Unlocked karts (upgrades): {", ".join([f"{game_data.KARTS[c].name} ({(
+                ", ".join(u.name for u in self.ctx.kart_upgrades[c]))})" for c in self.ctx.unlocked_karts])}")
             logger.info(f"Engine upgrades: {self.ctx.engine_upgrade_level}")
             logger.info(f"Max vehicle class: {["50cc", "100cc", "150cc", "Mirror"][self.ctx.unlocked_vehicle_class]}")
             logger.info(f"Unlocked cups: {", ".join([game_data.CUPS[c] for c in self.ctx.unlocked_cups])}")
@@ -116,7 +117,7 @@ class MkddContext(CommonContext):
 
         self.unlocked_karts: list[int] = []
         self.engine_upgrade_level = 0
-        self.kart_upgrades: dict[int, list[str]] = {i:[] for i, _ in enumerate(game_data.KARTS)}
+        self.kart_upgrades: dict[int, list[game_data.KartUpgrade]] = {i:[] for i, _ in enumerate(game_data.KARTS)}
         self.last_selected_kart: int = 0
 
         self.unlocked_cups: list[int] = []
@@ -377,7 +378,7 @@ async def check_locations(ctx: MkddContext) -> None:
     :param ctx: Mario Kart Double Dash client context.
     """
     new_location_names: set[str] = set()
-
+    
     mode: int = dolphin.read_word(ctx.memory_addresses.mode_w)
     cup: str = game_data.CUPS[dolphin.read_word(ctx.memory_addresses.cup_w)]
     menu_course: int = dolphin.read_word(ctx.memory_addresses.menu_course_w)
@@ -427,8 +428,11 @@ async def check_locations(ctx: MkddContext) -> None:
                         new_location_names.add(locations.get_loc_name_win_char_kart(character.name, kart.name))
                 
                 # Win with course owner.
+                owner_count = 0
                 for character in ctx.current_course.owners:
                     if game_data.CHARACTERS[character] in ctx.active_characters:
+                        owner_count += 1
+                    if owner_count == len(ctx.current_course.owners):
                         new_location_names.add(locations.get_loc_name_win_course_char(ctx.current_course))
             
     if mode == game_data.Modes.GRANDPRIX and current_lap > 0 and in_race_placement == 0 and in_game:
@@ -641,18 +645,18 @@ def update_game(ctx: MkddContext) -> None:
             elif ctx.engine_upgrade_level > 1:
                 speed_1_multiplier = .95 + ctx.engine_upgrade_level * .05
             for upgrade in ctx.kart_upgrades[i]:
-                if upgrade == items.KART_UPGRADE_ACC:
+                if upgrade == game_data.KART_UPGRADE_ACC:
                     acceleration_1_addition += 1
                     acceleration_2_addition += .1
-                elif upgrade == items.KART_UPGRADE_OFFROAD:
+                elif upgrade == game_data.KART_UPGRADE_OFFROAD:
                     speed_2_multiplier *= 1.1
                     speed_3_multiplier *= 1.2
                     speed_4_multiplier *= 3
-                elif upgrade == items.KART_UPGRADE_WEIGHT:
+                elif upgrade == game_data.KART_UPGRADE_WEIGHT:
                     weight_addition += 2
-                elif upgrade == items.KART_UPGRADE_TURBO:
+                elif upgrade == game_data.KART_UPGRADE_TURBO:
                     mini_turbo_addition += 30
-                elif upgrade == items.KART_UPGRADE_STEER:
+                elif upgrade == game_data.KART_UPGRADE_STEER:
                     steer_addition += 1
         # Speed 1 (on road) is also general speed multiplier.
         speed_2_multiplier *= speed_1_multiplier

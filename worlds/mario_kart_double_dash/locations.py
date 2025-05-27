@@ -54,55 +54,56 @@ def get_loc_name_win_course_char(course: game_data.Course) -> str:
     if len(characters) == 1:
         return f"Win in {course.name} With {characters[0]}"
     else:
-        return f"Win in {course.name} With {characters[0]} or {characters[1]}"
+        return f"Win in {course.name} With {characters[0]} and {characters[1]}"
 
 
 data_table: list[MkddLocationData] = [MkddLocationData("", 0)] # Id 0 is reserved.
 
 for cup in game_data.CUPS:
     data_table.append(MkddLocationData(get_loc_name_finish(cup), 0, cup))
-    data_table.append(MkddLocationData(get_loc_name_perfect(cup), 5, cup))
+    data_table.append(MkddLocationData(get_loc_name_perfect(cup), 70, cup))
     # 50cc
-    data_table.append(MkddLocationData(get_loc_name_cup(cup, 2, 0),  0, cup))
-    data_table.append(MkddLocationData(get_loc_name_cup(cup, 1, 0),  1, cup))
-    data_table.append(MkddLocationData(get_loc_name_cup(cup, 0, 0),  2, cup))
+    data_table.append(MkddLocationData(get_loc_name_cup(cup, 2, 0), 10, cup))
+    data_table.append(MkddLocationData(get_loc_name_cup(cup, 1, 0), 20, cup))
+    data_table.append(MkddLocationData(get_loc_name_cup(cup, 0, 0), 40, cup))
     # 100cc
-    data_table.append(MkddLocationData(get_loc_name_cup(cup, 2, 1),  0, cup, {"Progressive Class":1}))
-    data_table.append(MkddLocationData(get_loc_name_cup(cup, 1, 1),  1, cup, {"Progressive Class":1}))
-    data_table.append(MkddLocationData(get_loc_name_cup(cup, 0, 1),  5, cup, {"Progressive Class":1}))
+    data_table.append(MkddLocationData(get_loc_name_cup(cup, 2, 1), 40, cup, {"Progressive Class":1}))
+    data_table.append(MkddLocationData(get_loc_name_cup(cup, 1, 1), 60, cup, {"Progressive Class":1}))
+    data_table.append(MkddLocationData(get_loc_name_cup(cup, 0, 1), 70, cup, {"Progressive Class":1}))
     # 150cc
-    data_table.append(MkddLocationData(get_loc_name_cup(cup, 2, 2),  3, cup, {"Progressive Class":2}))
-    data_table.append(MkddLocationData(get_loc_name_cup(cup, 1, 2),  8, cup, {"Progressive Class":2}))
-    data_table.append(MkddLocationData(get_loc_name_cup(cup, 0, 2), 10, cup, {"Progressive Class":2}))
+    data_table.append(MkddLocationData(get_loc_name_cup(cup, 2, 2), 60, cup, {"Progressive Class":2}))
+    data_table.append(MkddLocationData(get_loc_name_cup(cup, 1, 2), 80, cup, {"Progressive Class":2}))
+    data_table.append(MkddLocationData(get_loc_name_cup(cup, 0, 2), 90, cup, {"Progressive Class":2}))
     # Mirror
-    data_table.append(MkddLocationData(get_loc_name_cup(cup, 2, 3),  7, cup, {"Progressive Class":3}))
-    data_table.append(MkddLocationData(get_loc_name_cup(cup, 1, 3), 10, cup, {"Progressive Class":3}))
-    data_table.append(MkddLocationData(get_loc_name_cup(cup, 0, 3), 15, cup, {"Progressive Class":3}))
+    data_table.append(MkddLocationData(get_loc_name_cup(cup, 2, 3), 70, cup, {"Progressive Class":3}))
+    data_table.append(MkddLocationData(get_loc_name_cup(cup, 1, 3), 90, cup, {"Progressive Class":3}))
+    data_table.append(MkddLocationData(get_loc_name_cup(cup, 0, 3), 100, cup, {"Progressive Class":3}))
 
 for course in game_data.COURSES:
     if course.type == game_data.CourseType.RACE:
         data_table.append(MkddLocationData(get_loc_name_finish(course.name), 0, course.name))
-        data_table.append(MkddLocationData(get_loc_name_lead(course.name), 1, course.name + " GP"))
-        data_table.append(MkddLocationData(get_loc_name_first(course.name), 2, course.name + " GP"))
-        data_table.append(MkddLocationData(get_loc_name_good_time(course), 10, course.name + " TT"))
-        data_table.append(MkddLocationData(get_loc_name_ghost(course.name), 15, course.name + " TT"))
+        data_table.append(MkddLocationData(get_loc_name_lead(course.name), 30, course.name + " GP"))
+        data_table.append(MkddLocationData(get_loc_name_first(course.name), 40, course.name + " GP"))
+        data_table.append(MkddLocationData(get_loc_name_good_time(course), 60, course.name + " TT"))
+        data_table.append(MkddLocationData(get_loc_name_ghost(course.name), 100, course.name + " TT"))
 
 for character in game_data.CHARACTERS:
     kart = game_data.KARTS[character.default_kart]
-    data_table.append(MkddLocationData(get_loc_name_win_char_kart(character.name, kart.name), 2, "Menu", {character.name:1, kart.name:1}))
+    data_table.append(MkddLocationData(get_loc_name_win_char_kart(character.name, kart.name), 40, "Menu", {character.name:1, kart.name:1}))
 
 GOLD_LIGHT = "Win Gold With a Light Kart"
 GOLD_MEDIUM = "Win Gold With a Medium Kart"
 GOLD_HEAVY = "Win Gold With a Heavy Kart"
 GOLD_PARADE = "Win Gold With Parade Kart"
 
-data_table.append(MkddLocationData(GOLD_LIGHT, 2))
-data_table.append(MkddLocationData(GOLD_MEDIUM, 2))
-data_table.append(MkddLocationData(GOLD_HEAVY, 2))
-data_table.append(MkddLocationData(GOLD_PARADE, 2, {"Parade Kart":1}))
+# Don't define difficulty here, it will be handled by rules.
+data_table.append(MkddLocationData(GOLD_LIGHT, 0))
+data_table.append(MkddLocationData(GOLD_MEDIUM, 0))
+data_table.append(MkddLocationData(GOLD_HEAVY, 0))
+data_table.append(MkddLocationData(GOLD_PARADE, 40, {"Parade Kart":1}))
 
 # Win courses with certain characters require special rules so they are not defined here.
 for course in [course for course in game_data.COURSES if len(course.owners) > 0]:
-    data_table.append(MkddLocationData(get_loc_name_win_course_char(course), 2, course.name + " GP"))
+    data_table.append(MkddLocationData(get_loc_name_win_course_char(course), 40, course.name + " GP", {game_data.CHARACTERS[o].name:1 for o in course.owners}))
 
 name_to_id: dict[str, int] = {data.name:id for (id, data) in enumerate(data_table) if id > 0}

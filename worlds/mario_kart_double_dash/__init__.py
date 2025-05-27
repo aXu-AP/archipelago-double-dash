@@ -12,7 +12,7 @@ import warnings
 
 from . import locations, items, regions
 from .items import MkddItem
-from .locations import MkddLocation
+from .locations import MkddLocation, MkddLocationData
 from .options import MkddOptions
 from .regions import MkddRegionData
 from .rules import MkddRules
@@ -38,7 +38,7 @@ class MkddWorld(World):
     ut_can_gen_without_yaml = True
 
     def __init__(self, world, player):
-        self.current_locations: list[MkddLocation] = []
+        self.current_locations: list[MkddLocationData] = []
         self.current_regions: dict[str, MkddRegionData] = {}
         self.character_item_total_weights: dict[str, list[int]] = {}
         self.global_items_total_weights: list[int] = []
@@ -109,11 +109,11 @@ class MkddWorld(World):
         
         # Kart upgrades generation.
         kart_weights = [5 for _ in game_data.KARTS]
-        upgrade_weights = [math.ceil(self.options.kart_upgrades / len(items.KART_UPGRADES)) for _ in items.KART_UPGRADES]
+        upgrade_weights = [math.ceil(self.options.kart_upgrades / len(game_data.KART_UPGRADES)) for _ in game_data.KART_UPGRADES]
         up_karts = self.random.sample(game_data.KARTS, self.options.kart_upgrades, counts = kart_weights)
-        upgrades = self.random.sample(items.KART_UPGRADES, self.options.kart_upgrades, counts = upgrade_weights)
+        upgrades = self.random.sample(game_data.KART_UPGRADES, self.options.kart_upgrades, counts = upgrade_weights)
         for i in range(self.options.kart_upgrades):
-            item_pool.append(self.create_item(items.get_item_name_kart_upgrade(upgrades[i], up_karts[i].name)))
+            item_pool.append(self.create_item(items.get_item_name_kart_upgrade(upgrades[i].name, up_karts[i].name)))
 
         # Item box item generation.
         # Give mostly bad items as global items.
@@ -187,6 +187,18 @@ class MkddWorld(World):
         from Utils import visualize_regions
         visualize_regions(self.multiworld.get_region("Menu", self.player), "my_world.puml")
     
+    def collect(self, state, item) -> bool:
+        change = super().collect(state, item)
+        if change:
+            rules.add_item(state, self.player, item)
+        return change
+
+    def remove(self, state, item) -> bool:
+        change = super().remove(state, item)
+        if change:
+            rules.add_item(state, self.player, item, -1)
+        return change
+
     def fill_slot_data(self) -> dict[str, Any]:
         lap_counts = {course.name:course.laps for course in game_data.COURSES if course.type == game_data.CourseType.RACE}
         if self.options.shorter_courses:

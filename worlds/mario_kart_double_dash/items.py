@@ -51,18 +51,6 @@ def get_item_name_character_item(character: str, item: str) -> str:
     else:
         return f"{item} for Everybody"
 
-KART_UPGRADE_ACC = "Acceleration Boost"
-KART_UPGRADE_TURBO = "Mini-turbo Extender"
-KART_UPGRADE_OFFROAD = "Off-road Tires"
-KART_UPGRADE_WEIGHT = "Extra Weight"
-KART_UPGRADE_STEER = "Power Steering"
-KART_UPGRADES = [
-    KART_UPGRADE_ACC,
-    KART_UPGRADE_TURBO,
-    KART_UPGRADE_OFFROAD,
-    KART_UPGRADE_WEIGHT,
-    KART_UPGRADE_STEER,
-]
 def get_item_name_kart_upgrade(upgrade: str, kart: str) -> str:
     return f"{upgrade} for {kart}"
 
@@ -82,11 +70,10 @@ data_table.extend([MkddItemData(get_item_name_tt_course(course.name), PROG, Item
 
 for id, kart in enumerate(game_data.KARTS):
     data_table.append(MkddItemData(kart.name, PROG, ItemType.KART, id))
-    data_table.append(MkddItemData(get_item_name_kart_upgrade(KART_UPGRADE_ACC, kart.name), PROG, ItemType.KART_UPGRADE, id, 0, KART_UPGRADE_ACC))
-    data_table.append(MkddItemData(get_item_name_kart_upgrade(KART_UPGRADE_TURBO, kart.name), PROG, ItemType.KART_UPGRADE, id, 0, KART_UPGRADE_TURBO))
-    data_table.append(MkddItemData(get_item_name_kart_upgrade(KART_UPGRADE_OFFROAD, kart.name), PROG, ItemType.KART_UPGRADE, id, 0, KART_UPGRADE_OFFROAD))
-    data_table.append(MkddItemData(get_item_name_kart_upgrade(KART_UPGRADE_WEIGHT, kart.name), PROG, ItemType.KART_UPGRADE, id, 0, KART_UPGRADE_WEIGHT))
-    data_table.append(MkddItemData(get_item_name_kart_upgrade(KART_UPGRADE_STEER, kart.name), PROG, ItemType.KART_UPGRADE, id, 0, KART_UPGRADE_STEER))
+    data_table.extend([
+        MkddItemData(get_item_name_kart_upgrade(upgrade.name, kart.name), PROG, ItemType.KART_UPGRADE, id, 0, upgrade)
+        for upgrade in game_data.KART_UPGRADES
+    ])
 
 for item in game_data.ITEMS:
     classification = PROG if item.usefulness > 0 else FILL

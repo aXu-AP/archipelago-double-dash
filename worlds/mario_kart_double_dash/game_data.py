@@ -3,32 +3,33 @@ from typing import NamedTuple
 
 
 class Character(NamedTuple):
+    id: int
     name: str
     weight: int
     default_kart: int
     item_offset: int
 
 CHARACTERS = [
-    Character("Mario", 1, 8, 21),          # 00
-    Character("Luigi", 1, 9, 21),          # 01
-    Character("Peach", 1, 10, 14),         # 02
-    Character("Daisy", 1, 11, 14),         # 03
-    Character("Yoshi", 1, 12, 11),         # 04
-    Character("Birdo", 1, 13, 11),         # 05
-    Character("Baby Mario", 0, 0, 7),      # 06
-    Character("Baby Luigi", 0, 1, 7),      # 07
-    Character("Toad", 0, 6, 12),           # 08
-    Character("Toadette", 0, 7, 12),       # 09
-    Character("Koopa", 0, 2, 17),          # 10
-    Character("Paratroopa", 0, 3, 17),     # 11
-    Character("Donkey Kong", 2, 16, 4),    # 12
-    Character("Diddy Kong", 0, 4, 4),      # 13
-    Character("Bowser", 2, 17, 1),         # 14
-    Character("Bowser Jr.", 0, 5, 1),      # 15
-    Character("Wario", 2, 15, 8),          # 16
-    Character("Waluigi", 1, 14, 8),        # 17
-    Character("Petey Piranha", 2, 18, 8),  # 18
-    Character("King Boo", 2, 19, 8),       # 19
+    Character(0, "Mario", 1, 8, 21),
+    Character(1, "Luigi", 1, 9, 21),
+    Character(2, "Peach", 1, 10, 14),
+    Character(3, "Daisy", 1, 11, 14),
+    Character(4, "Yoshi", 1, 12, 11),
+    Character(5, "Birdo", 1, 13, 11),
+    Character(6, "Baby Mario", 0, 0, 7),
+    Character(7, "Baby Luigi", 0, 1, 7),
+    Character(8, "Toad", 0, 6, 12),
+    Character(9, "Toadette", 0, 7, 12),
+    Character(10, "Koopa", 0, 2, 17),
+    Character(11, "Paratroopa", 0, 3, 17),
+    Character(12, "Donkey Kong", 2, 16, 4),
+    Character(13, "Diddy Kong", 0, 4, 4),
+    Character(14, "Bowser", 2, 17, 1),
+    Character(15, "Bowser Jr.", 0, 5, 1),
+    Character(16, "Wario", 2, 15, 8),
+    Character(17, "Waluigi", 1, 14, 8),
+    Character(18, "Petey Piranha", 2, 18, 8),
+    Character(19, "King Boo", 2, 19, 8),
 ]
 
 class KartStats(NamedTuple):
@@ -169,16 +170,16 @@ ITEMS = [
     Item(2, "Red Shell",            3, [ 10,  55,  70,  70,  70,  50,  40,  20]),
     Item(3, "Banana",               1, [ 70,  35,  15,   5,   1,   1,   1,   1]),
     Item(4, "Giant Banana",         2, [120, 100,  90,  60,  30,   1,   1,   1]),
-    Item(5, "Mushroom",             5, [  1,  40,  65,  75,  65,  35,  10,   1]),
-    Item(6, "Star",                 7, [  1,   1,   1,  10,  20,  30,  40,  40]),
-    Item(7, "Chain Chomp",          6, [  0,   0,   1,   3,  20,  60, 130, 180]),
+    Item(5, "Mushroom",             4, [  1,  40,  65,  75,  65,  35,  10,  10]),
+    Item(6, "Star",                 5, [  1,   1,   1,  10,  20,  30,  40,  40]),
+    Item(7, "Chain Chomp",          4, [  0,   0,   1,   3,  20,  60, 130, 180]),
     Item(8, "Bob-omb",              1, [ 10,  70, 100, 100, 100,  90,  40,   0]),
     Item(9, "Fireball",             1, [ 90,  50,  25,  10,   1,   1,   1,   1]),
-    Item(10, "Lightning",           5, [  0,   0,   1,   1,   3,  10,  20,  30]),
+    Item(10, "Lightning",           3, [  0,   0,   1,   1,   3,  10,  20,  30]),
     Item(11, "Yoshi Egg",           4, [ 50,  70,  80,  80,  80,  70,  60,  40]),
-    Item(12, "Golden Mushroom",     8, [  0,   3,  10,  30,  50,  80, 100, 120]),
+    Item(12, "Golden Mushroom",     6, [  0,   3,  10,  30,  50,  80, 100, 120]),
     Item(13, "Spiny Shell",         0, [  0,   0,   5,  10,  10,  20,  20,  20]),
-    Item(14, "Heart",               5, [  1,   1,   3,  10,  30,  90, 110, 130]),
+    Item(14, "Heart",               4, [  1,   1,   3,  10,  30,  90, 110, 130]),
     Item(15, "Fake Item",           0, [ 30,  20,  10,   0,   0,   0,   0,   1]),
     Item(17, "Triple Green Shells", 3, [ 20,  50, 100, 100, 100,  90,  40,   1]),
     Item(18, "Triple Mushrooms",    6, [  1,   1,  10,  20,  35,  50,  70,  90]),
@@ -215,3 +216,25 @@ TT_ITEM_TABLE = [
     bytes([ITEM_NONE.id, ITEM_TRIPLE_MUSHROOMS.id]),
     bytes([ITEM_STAR.id, ITEM_TRIPLE_MUSHROOMS.id]),
 ]
+
+
+class KartUpgrade(NamedTuple):
+    id: int
+    name: str
+    usefulness: int
+
+KART_UPGRADES = [
+    KartUpgrade(0, "Acceleration Boost", 10),
+    KartUpgrade(1, "Mini-turbo Extender", 10),
+    KartUpgrade(2, "Off-road Tires", 8),
+    KartUpgrade(3, "Extra Weight", 2),
+    KartUpgrade(4, "Power Steering", 8),
+]
+
+KART_UPGRADE_ACC = KART_UPGRADES[0]
+KART_UPGRADE_TURBO = KART_UPGRADES[1]
+KART_UPGRADE_OFFROAD = KART_UPGRADES[2]
+KART_UPGRADE_WEIGHT = KART_UPGRADES[3]
+KART_UPGRADE_STEER = KART_UPGRADES[4]
+
+ENGINE_UPGRADE_USEFULNESS = 50
