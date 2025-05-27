@@ -10,7 +10,7 @@ import Utils
 from CommonClient import get_base_parser, gui_enabled, logger, server_loop
 from NetUtils import ClientStatus, NetworkItem
 
-from . import game_data, items, locations, patches, mem_addresses, ar_codes
+from . import game_data, items, locations, patches, mem_addresses, ar_codes, version
 from .locations import MkddLocationData
 from .items import ItemType, MkddItemData
 
@@ -182,6 +182,13 @@ class MkddContext(CommonContext):
             self.lap_counts = slot_data.get("lap_counts")
             self.character_item_total_weights = slot_data.get("character_item_total_weights")
             self.global_items_total_weights = slot_data.get("global_items_total_weights")
+            host_version = slot_data.get("version")
+            if host_version != version.get_str():
+                logger.warning(
+                    f"The seed was generated using version {host_version} of MKDDAP.\n" +
+                    f"The client is using version {version.get_str()}.\n" +
+                    "If there are any issues, consider changing your client to matching version."
+                )
             sync_state(self)
         elif cmd == "ReceivedItems":
             if args["index"] >= self.last_rcvd_index:
@@ -220,9 +227,9 @@ class MkddContext(CommonContext):
         class MkddManager(GameManager):
             source = ""
             logging_pairs = [("Client", "Archipelago")]
-            base_title = "Mario Kart: Double Dash!! Client"
+            base_title = f"Mario Kart: Double Dash!! Client v{version.get_str()}"
             if tracker_loaded:
-                base_title += f" | Universal Tracker v{UT_VERSION}"
+                base_title += f" | Universal Tracker {UT_VERSION}"
             base_title +=  " | Archipelago v"
 
             def build(self):

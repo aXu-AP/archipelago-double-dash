@@ -16,7 +16,7 @@ from .locations import MkddLocation, MkddLocationData
 from .options import MkddOptions
 from .regions import MkddRegionData
 from .rules import MkddRules
-from . import game_data
+from . import game_data, version
 
 class MkddWebWorld(WebWorld):
     theme = "ocean"
@@ -211,6 +211,7 @@ class MkddWorld(World):
             "lap_counts": lap_counts,
             "character_item_total_weights": self.character_item_total_weights,
             "global_items_total_weights": self.global_items_total_weights,
+            "version": version.get_str(),
         }
 
 
@@ -220,13 +221,12 @@ def launch_client():
 
 
 def add_client_to_launcher() -> None:
-    version = "0.0.1"
     found = False
     for c in components:
         if c.display_name == "Mario Kart Double Dash Client":
             found = True
-            if getattr(c, "version", 0) < version:
-                c.version = version
+            if getattr(c, "version", 0) < version.get_str():
+                c.version = version.get_str()
                 c.func = launch_client
                 return
     if not found:
