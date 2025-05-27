@@ -30,6 +30,8 @@ class MkddMemAddresses():
     """Frames since game startup. 60 per second."""
     kart_stats_pointer: int
     """Pointer to kart stat table."""
+    gp_race_no_w: int
+    """Current race # inside a cup. 0 = first race, 16 = all cup tour awards."""
 
     # Vanilla offsets:
     menu_character_w_offset: int
@@ -89,6 +91,7 @@ class MkddMemAddressesUsa(MkddMemAddresses):
     total_points_wx = 0x803b11cc
     game_ticks_w = 0x803b0754
     kart_stats_pointer = 0x80bd5000
+    gp_race_no_w = 0x803b0fc8
 
     # Vanilla offsets:
     menu_character_w_offset = 0x212c

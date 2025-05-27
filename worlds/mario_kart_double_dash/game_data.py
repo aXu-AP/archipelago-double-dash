@@ -104,6 +104,7 @@ CUPS = [
     "Special Cup",
     "All Cup Tour",
 ]
+CUP_ALL_CUP_TOUR = 4
 
 class CourseType(IntEnum):
     RACE = 0

@@ -131,6 +131,7 @@ class MkddContext(CommonContext):
         self.time_trial_items: int = 0
 
         self.lap_counts: dict[str, int]
+        self.all_cup_tour_length: int
 
         self.active_characters: list[game_data.Character] = [game_data.CHARACTERS[0], game_data.CHARACTERS[0]]
         self.active_kart: game_data.Kart = game_data.KARTS[0]
@@ -176,12 +177,14 @@ class MkddContext(CommonContext):
         if cmd == "Connected":
             self.items_received_2 = []
             self.last_rcvd_index = -1
-            slot_data = args.get("slot_data")
+            slot_data: dict = args.get("slot_data")
             if "death_link" in slot_data:
                 Utils.async_start(self.update_death_link(bool(args["slot_data"]["death_link"])))
             self.lap_counts = slot_data.get("lap_counts")
             self.character_item_total_weights = slot_data.get("character_item_total_weights")
             self.global_items_total_weights = slot_data.get("global_items_total_weights")
+            self.all_cup_tour_length = slot_data.get("all_cup_tour_length", 8)
+
             host_version = slot_data.get("version")
             if host_version != version.get_str():
                 logger.warning(
@@ -600,7 +603,11 @@ def update_game(ctx: MkddContext) -> None:
             item_weights.append(weight_gap)
         rand_item = random.sample(item_pool, 1, counts = item_weights)[0]
         dolphin.write_byte(item_adr[1], rand_item.id)
-        
+
+        # Set All Cup Tour lenght by skipping to the second-last race. This ensures that Rainbow Road is still the last.
+        if (dolphin.read_word(ctx.memory_addresses.cup_w) == game_data.CUP_ALL_CUP_TOUR and
+            dolphin.read_word(ctx.memory_addresses.gp_race_no_w) == ctx.all_cup_tour_length - 2):
+            dolphin.write_word(ctx.memory_addresses.gp_race_no_w, 14)
 
     if len(available_cups_courses) > 0:
         for c in range(len(game_data.CUPS)):

@@ -211,6 +211,7 @@ class MkddWorld(World):
             "lap_counts": lap_counts,
             "character_item_total_weights": self.character_item_total_weights,
             "global_items_total_weights": self.global_items_total_weights,
+            "all_cup_tour_length": int(self.options.all_cup_tour_length),
             "version": version.get_str(),
         }
 
