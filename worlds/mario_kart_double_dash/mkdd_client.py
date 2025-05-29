@@ -546,7 +546,7 @@ def update_game(ctx: MkddContext) -> None:
 
         if character >= 0 and character < len(game_data.CHARACTERS) and not character in ctx.unlocked_characters:
             direction: int = character - ctx.last_selected_character
-            direction = 1 if direction == 0 else int(direction / abs(direction))
+            direction = 1 if direction == 0 or direction == 1 else -1
             while not character in ctx.unlocked_characters:
                 character = wrap(character + direction, len(game_data.CHARACTERS))
                 if character == ctx.last_selected_character:
@@ -566,7 +566,7 @@ def update_game(ctx: MkddContext) -> None:
             dolphin.write_word(menu_pointer + ctx.memory_addresses.menu_kart_w_offset, kart)
         ctx.last_selected_kart = kart
 
-    # Force cup and course selection.
+
     mode: int = int(dolphin.read_word(ctx.memory_addresses.mode_w))
     available_cups_courses: dict[int, set[int]] = {}
     if mode == game_data.Modes.TIMETRIAL:
@@ -636,33 +636,33 @@ def update_game(ctx: MkddContext) -> None:
             dolphin.read_word(ctx.memory_addresses.gp_race_no_w) == ctx.all_cup_tour_length - 2):
             dolphin.write_word(ctx.memory_addresses.gp_race_no_w, 14)
 
+
+    # Force cup and course selection.
     if len(available_cups_courses) > 0:
+        cup: int = int(dolphin.read_word(ctx.memory_addresses.cup_w))
+        if not cup in available_cups_courses:
+            direction: int = cup - ctx.last_selected_cup
+            direction = 1 if direction == 0 or direction == 1 else -1
+            while not cup in available_cups_courses:
+                cup = wrap(cup + direction, len(game_data.CUPS))
+                if cup == ctx.last_selected_cup:
+                    break
+            dolphin.write_word(ctx.memory_addresses.cup_w, cup)
+            ctx.last_selected_cup = cup
+
         for c in range(len(game_data.CUPS)):
-            dolphin.write_byte(ctx.memory_addresses.available_cups_bx + c, int(c in ctx.unlocked_cups))
-            cup: int = int(dolphin.read_word(ctx.memory_addresses.cup_w))
-            if not cup in available_cups_courses:
-                direction: int = cup - ctx.last_selected_cup
-                direction = 1 if direction == 0 else int(direction / abs(direction))
-                while not cup in available_cups_courses:
-                    cup = wrap(cup + direction, len(game_data.CUPS))
-                    if cup == ctx.last_selected_cup:
-                        break
-                dolphin.write_word(ctx.memory_addresses.cup_w, cup)
-                ctx.last_selected_cup = cup
+            dolphin.write_byte(ctx.memory_addresses.available_cups_bx + c, int(c in available_cups_courses))
 
-            for c in range(len(game_data.CUPS)):
-                dolphin.write_byte(ctx.memory_addresses.available_cups_bx + c, int(c in available_cups_courses))
-
-            course: int = int(dolphin.read_word(ctx.memory_addresses.menu_course_w))
-            if not course in available_cups_courses[cup]:
-                direction: int = cup - ctx.last_selected_course
-                direction = 1 if direction == 0 else int(direction / abs(direction))
-                while not course in available_cups_courses[cup]:
-                    course = wrap(course + direction, 4)
-                    if course == ctx.last_selected_course:
-                        break
-                dolphin.write_word(ctx.memory_addresses.menu_course_w, course)
-                ctx.last_selected_course = course
+        course: int = int(dolphin.read_word(ctx.memory_addresses.menu_course_w))
+        if not course in available_cups_courses[cup]:
+            direction: int = course - ctx.last_selected_course
+            direction = 1 if direction == 0 or direction == 1 else -1
+            while not course in available_cups_courses[cup]:
+                course = wrap(course + direction, 4)
+                if course == ctx.last_selected_course:
+                    break
+            dolphin.write_word(ctx.memory_addresses.menu_course_w, course)
+            ctx.last_selected_course = course
     
 
     kart_stats_pointer = ctx.memory_addresses.kart_stats_pointer
