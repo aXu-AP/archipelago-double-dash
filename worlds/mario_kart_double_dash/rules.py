@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 from BaseClasses import CollectionState, Item, MultiWorld
 from worlds.generic.Rules import add_rule, set_rule, CollectionRule
 from worlds.AutoWorld import LogicMixin
-from . import locations, items, regions, game_data
+from . import locations, items, regions, game_data, options
 
 if TYPE_CHECKING:
     from . import MkddWorld
@@ -44,11 +44,11 @@ class MkddRules:
                         calculate_player_level(state, self.player, kart, character_1, character_2) >= difficulty)
  
         for cup in game_data.CUPS:
-            # Exclude All Cup Tour
-            if cup == "All Cup Tour" and self.world.options.all_cup_tour_length == 0:
-                continue
             self.set_ent_rule(f"Menu -> {cup}",
                     lambda state, cup = cup: state.has(cup, self.player))
+        
+        self.set_loc_rule(locations.TROPHY_GOAL,
+                lambda state: state.has(items.TROPHY, self.player, self.world.options.trophy_amount))
 
         for course in game_data.COURSES:
             self.set_ent_rule(f"Menu -> {course.name} TT",

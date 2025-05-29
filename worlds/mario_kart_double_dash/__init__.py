@@ -45,11 +45,8 @@ class MkddWorld(World):
         super(MkddWorld, self).__init__(world, player)
 
     def create_regions(self) -> None:
-        
         # Create regions.
         for region_name, region_data in regions.data_table.items():
-            if region_name == "All Cup Tour" and self.options.all_cup_tour_length == 0:
-                continue
             region = Region(region_name, self.player, self.multiworld)
             self.multiworld.regions.append(region)
             self.current_regions[region_name] = region_data
@@ -69,32 +66,40 @@ class MkddWorld(World):
             ])
 
             region.add_exits([exit for exit in region_data.connecting_regions if exit in self.current_regions.keys()])
-            if region_name in game_data.CUPS:
+            if region_name in game_data.NORMAL_CUPS:
                 cup_no = game_data.CUPS.index(region_name)
-                if cup_no < 4:
-                    region.add_exits([game_data.COURSES[cup_no * 4 + i].name + " GP" for i in range(4)])
-                else: # All Cup Tour
-                    region.add_exits([c.name + " GP" for c in game_data.COURSES])
-
-        self.get_location("Special Cup Gold 150cc").place_locked_item(self.create_item("Victory"))
+                region.add_exits([game_data.COURSES[cup_no * 4 + i].name + " GP" for i in range(4)])
+            if region_name == game_data.CUPS[game_data.CUP_ALL_CUP_TOUR]:
+                region.add_exits([c.name + " GP" for c in game_data.COURSES])
+        
+        # Locked items.
+        for cup in game_data.NORMAL_CUPS:
+            for vehicle_class in range(4):
+                self.get_location(locations.get_loc_name_trophy(cup, vehicle_class))\
+                    .place_locked_item(self.create_item(items.TROPHY))
+        if self.options.goal == options.Goal.option_all_cup_tour:
+            self.get_location(locations.TROPHY_GOAL).place_locked_item(self.create_item(game_data.CUPS[game_data.CUP_ALL_CUP_TOUR]))
+            self.get_location(locations.WIN_ALL_CUP_TOUR).place_locked_item(self.create_item("Victory"))
+        elif self.options.goal == options.Goal.option_trophies:
+            self.get_location(locations.TROPHY_GOAL).place_locked_item(self.create_item("Victory"))
         
     
     def create_items(self) -> None:
         # (item_name, count)
         precollected: list[str] = []
         # Give 1 cup, can't be All Star Cup.
-        precollected.append(game_data.CUPS[self.random.randrange(4)])
+        precollected.append(self.random.choice(game_data.NORMAL_CUPS))
         # Give 2 random characters to begin.
         precollected_characters = 0
         while precollected_characters < 2:
-            character_name: str = game_data.CHARACTERS[self.random.randrange(len(game_data.CHARACTERS))].name
+            character_name: str = self.random.choice(game_data.CHARACTERS).name
             if not character_name in precollected:
                 precollected.append(character_name)
                 precollected_characters += 1
         # Give 1 kart in each weight class.
         for weight in range(3):
             karts: list[str] = [kart.name for kart in game_data.KARTS if kart.weight == weight]
-            precollected.append(karts[self.random.randrange(len(karts))])
+            precollected.append(self.random.choice(karts))
         for item in precollected:
             self.multiworld.push_precollected(self.create_item(item))
 
@@ -208,11 +213,12 @@ class MkddWorld(World):
             if laps > 0:
                 lap_counts[course] = laps
         return {
+            "version": version.get_str(),
+            "trophy_amount": int(self.options.trophy_amount),
+            "all_cup_tour_length": int(self.options.all_cup_tour_length),
             "lap_counts": lap_counts,
             "character_item_total_weights": self.character_item_total_weights,
             "global_items_total_weights": self.global_items_total_weights,
-            "all_cup_tour_length": int(self.options.all_cup_tour_length),
-            "version": version.get_str(),
         }
 
 

@@ -97,13 +97,13 @@ KARTS = [
         KartStats(142.0,    122.0,    74.0,    20.0,    0.30,    0.005,    30.0,    2.50,    5.0,    1.0)),
 ]
 
-CUPS = [
+NORMAL_CUPS = [
     "Mushroom Cup",
     "Flower Cup",
     "Star Cup",
     "Special Cup",
-    "All Cup Tour",
 ]
+CUPS = NORMAL_CUPS + ["All Cup Tour"]
 CUP_ALL_CUP_TOUR = 4
 
 class CourseType(IntEnum):

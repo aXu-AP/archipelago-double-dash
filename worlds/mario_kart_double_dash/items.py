@@ -40,6 +40,7 @@ PROGRESSIVE_CUP_SKIP = "Progressive Cup Skip"
 PROGRESSIVE_TIME_TRIAL_ITEM = "Progressive Time Trial Item"
 PROGRESSIVE_ENGINE = "Progressive Engine Upgrade"
 RANDOM_ITEM = "Random Item"
+TROPHY = "Trophy"
 VICTORY = "Victory"
 
 def get_item_name_tt_course(course: str) -> str:
@@ -62,10 +63,11 @@ data_table: list[MkddItemData] = [
     MkddItemData(PROGRESSIVE_TIME_TRIAL_ITEM, PROG, count = 3),
     MkddItemData(PROGRESSIVE_ENGINE, PROG, count = 3),
     MkddItemData(RANDOM_ITEM, FILL),
+    MkddItemData(TROPHY, PROG, count = 0),
     MkddItemData(VICTORY, PROG, count = 0),
 ]
 data_table.extend([MkddItemData(char.name, PROG, ItemType.CHARACTER, id) for id, char in enumerate(game_data.CHARACTERS)])
-data_table.extend([MkddItemData(name, PROG, ItemType.CUP, id) for id, name in enumerate(game_data.CUPS)])
+data_table.extend([MkddItemData(name, PROG, ItemType.CUP, id, 1 if id != game_data.CUP_ALL_CUP_TOUR else 0) for id, name in enumerate(game_data.CUPS)])
 data_table.extend([MkddItemData(get_item_name_tt_course(course.name), PROG, ItemType.TT_COURSE, id) for id, course in enumerate(game_data.COURSES) if course.type == game_data.CourseType.RACE])
 
 for id, kart in enumerate(game_data.KARTS):

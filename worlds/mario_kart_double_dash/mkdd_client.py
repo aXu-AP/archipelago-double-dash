@@ -10,7 +10,7 @@ import Utils
 from CommonClient import get_base_parser, gui_enabled, logger, server_loop
 from NetUtils import ClientStatus, NetworkItem
 
-from . import game_data, items, locations, patches, mem_addresses, ar_codes, version
+from . import game_data, items, locations, patches, mem_addresses, ar_codes, version, options
 from .locations import MkddLocationData
 from .items import ItemType, MkddItemData
 
@@ -58,6 +58,7 @@ class MkddCommandProcessor(ClientCommandProcessor):
     def _cmd_unlocked(self) -> None:
         """Show list of unlocked items."""
         if isinstance(self.ctx, MkddContext):
+            logger.info(f"Trophies: {self.ctx.trophies}/{self.ctx.trophy_goal}")
             logger.info(f"Unlocked characters: {", ".join([game_data.CHARACTERS[c].name for c in self.ctx.unlocked_characters])}")
             logger.info(f"Unlocked karts (upgrades): {", ".join([f"{game_data.KARTS[c].name} ({(
                 ", ".join(u.name for u in self.ctx.kart_upgrades[c]))})" for c in self.ctx.unlocked_karts])}")
@@ -91,8 +92,8 @@ class MkddContext(CommonContext):
         :param server_address: Address of the Archipelago server.
         :param password: Password for server authentication.
         """
-
         super().__init__(server_address, password)
+        # Client data.
         self.items_received_2: list[tuple[NetworkItem, int]] = []
         self.last_item_handled: int = -1
         self.dolphin_sync_task: Optional[asyncio.Task[None]] = None
@@ -100,8 +101,19 @@ class MkddContext(CommonContext):
         self.awaiting_rom: bool = False
         self.last_rcvd_index: int = -1
         self.has_send_death: bool = False
+        self.victory_sent: bool = False
 
         self.memory_addresses = mem_addresses.MkddMemAddressesUsa
+
+        # Options.
+        self.goal: options.Goal
+        self.trophy_goal: int
+        self.all_cup_tour_length: int
+        self.lap_counts: dict[str, int]
+
+        # Game data.
+        self.victory: bool = False
+        self.trophies: int = 0
 
         self.last_race_timer: int = 0
         self.last_in_game: bool = False
@@ -129,9 +141,6 @@ class MkddContext(CommonContext):
         self.last_selected_course: int = 0
         
         self.time_trial_items: int = 0
-
-        self.lap_counts: dict[str, int]
-        self.all_cup_tour_length: int
 
         self.active_characters: list[game_data.Character] = [game_data.CHARACTERS[0], game_data.CHARACTERS[0]]
         self.active_kart: game_data.Kart = game_data.KARTS[0]
@@ -180,10 +189,13 @@ class MkddContext(CommonContext):
             slot_data: dict = args.get("slot_data")
             if "death_link" in slot_data:
                 Utils.async_start(self.update_death_link(bool(args["slot_data"]["death_link"])))
+            
+            self.trophy_goal = slot_data.get("trophy_amount")
+            self.all_cup_tour_length = slot_data.get("all_cup_tour_length", 8)
             self.lap_counts = slot_data.get("lap_counts")
+
             self.character_item_total_weights = slot_data.get("character_item_total_weights")
             self.global_items_total_weights = slot_data.get("global_items_total_weights")
-            self.all_cup_tour_length = slot_data.get("all_cup_tour_length", 8)
 
             host_version = slot_data.get("version")
             if host_version != version.get_str():
@@ -356,6 +368,12 @@ def _give_item(ctx: MkddContext, item: MkddItemData) -> bool:
             ctx.global_items.append(item.meta["item"])
         else:
             ctx.character_items[item.meta["character"]].append(item.meta["item"])
+
+    elif item.name == items.TROPHY:
+        ctx.trophies += 1
+    
+    elif item.name == items.VICTORY:
+        ctx.victory = True
     
     return True
 
@@ -388,6 +406,9 @@ async def check_locations(ctx: MkddContext) -> None:
     :param ctx: Mario Kart Double Dash client context.
     """
     new_location_names: set[str] = set()
+
+    if ctx.trophies >= ctx.trophy_goal:
+        new_location_names.add(locations.TROPHY_GOAL)
     
     mode: int = dolphin.read_word(ctx.memory_addresses.mode_w)
     cup: str = game_data.CUPS[dolphin.read_word(ctx.memory_addresses.cup_w)]
@@ -450,25 +471,31 @@ async def check_locations(ctx: MkddContext) -> None:
 
     # Cup related locations.
     if mode == game_data.Modes.CEREMONY:
-        new_location_names.add(locations.get_loc_name_finish(cup))
-        # Bronze or better. Add all variants that are considered easier than current (ie. 50 bronze for 150 gold finish).
-        if total_ranking <= 2:
-            for r in range(2, total_ranking - 1, -1):
-                for c in range(vehicle_class + 1):
-                    new_location_names.add(locations.get_loc_name_cup(cup, r, c))
-        # Gold for various vehicles.
-        if total_ranking == 0:
-            if ctx.active_kart.weight == 0:
-                new_location_names.add(locations.GOLD_LIGHT)
-            elif ctx.active_kart.weight == 1:
-                new_location_names.add(locations.GOLD_MEDIUM)
-            elif ctx.active_kart.weight == 2:
-                new_location_names.add(locations.GOLD_HEAVY)
-            elif ctx.active_kart.weight == -1:
-                new_location_names.add(locations.GOLD_PARADE)
-        
-        if total_points == 40:
-            new_location_names.add(locations.get_loc_name_perfect(cup))
+        if cup == game_data.CUPS[game_data.CUP_ALL_CUP_TOUR]:
+            if total_ranking == 0:
+                new_location_names.add(locations.WIN_ALL_CUP_TOUR)
+        else:
+            new_location_names.add(locations.get_loc_name_finish(cup))
+            # Bronze or better. Add all variants that are considered easier than current (ie. 50 bronze for 150 gold finish).
+            if total_ranking <= 2:
+                for r in range(2, total_ranking - 1, -1):
+                    for c in range(vehicle_class + 1):
+                        new_location_names.add(locations.get_loc_name_cup(cup, r, c))
+                        if r == 0:
+                            new_location_names.add(locations.get_loc_name_trophy(cup, c))
+            # Gold for various vehicles.
+            if total_ranking == 0:
+                if ctx.active_kart.weight == 0:
+                    new_location_names.add(locations.GOLD_LIGHT)
+                elif ctx.active_kart.weight == 1:
+                    new_location_names.add(locations.GOLD_MEDIUM)
+                elif ctx.active_kart.weight == 2:
+                    new_location_names.add(locations.GOLD_HEAVY)
+                elif ctx.active_kart.weight == -1:
+                    new_location_names.add(locations.GOLD_PARADE)
+            
+            if total_points == 40:
+                new_location_names.add(locations.get_loc_name_perfect(cup))
         
     new_locations = {locations.name_to_id.get(loc_name) for loc_name in new_location_names}
     new_locations.discard(None)
@@ -770,9 +797,11 @@ async def dolphin_sync_task(ctx: MkddContext) -> None:
                     await check_current_course_changed(ctx)
                     await check_locations(ctx)
                     update_game(ctx)
+
+                    if ctx.victory and not ctx.victory_sent:
+                        await ctx.send_msgs([{"cmd": "StatusUpdate", "status": ClientStatus.CLIENT_GOAL}])
+                        ctx.victory_sent = True
                 else:
-                    # if not ctx.auth:
-                    #     ctx.auth = read_string(SLOT_NAME_ADDR, 0x40)
                     if ctx.awaiting_rom:
                         await ctx.server_auth()
                 if dolphin.read_bytes(0x80000000, 6) != b"GM4E01":

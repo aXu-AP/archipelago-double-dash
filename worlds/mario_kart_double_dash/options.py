@@ -1,10 +1,26 @@
 from dataclasses import dataclass
 from Options import Choice, OptionDict, Range, Toggle, PerGameCommonOptions, StartInventoryPool
 
-class AllCupTourLength(Range):
-    """How many courses are in the All Cup Tour? 0 = disable, 16 = vanilla. Default 8."""
-    display_name = "All Cup Tour Length"
+class Goal(Choice):
+    """Victory condition for the game.
+    All Cup Tour: Collect set amount of gold trophies to unlock All Cup Tour. Get gold in All Cup Tour to win.
+    Trophies: Collect set amount of gold trophies to win."""
+    display_name = "Goal"
+    option_all_cup_tour = 0
+    option_trophies = 1
+
+class TrophyAmount(Range):
+    """How many gold trophies are needed for goal completion.
+    Recommended: 9-12 if you aim to complete the game on 150cc. 13-16 if you aim to complete the game on Mirror."""
+    display_name = "Trophy Amount"
     range_start = 0
+    range_end = 16
+    default = 10
+
+class AllCupTourLength(Range):
+    """How many races are in the All Cup Tour? 16 = vanilla. Default 8."""
+    display_name = "All Cup Tour Length"
+    range_start = 2
     range_end = 16
     default = 8
 
@@ -42,6 +58,8 @@ class KartUpgrades(Range):
 
 @dataclass
 class MkddOptions(PerGameCommonOptions):
+    goal: Goal
+    trophy_amount: TrophyAmount
     all_cup_tour_length: AllCupTourLength
 
     shorter_courses: ShorterCourses
