@@ -109,6 +109,7 @@ class MkddContext(CommonContext):
         self.goal: options.Goal
         self.trophy_goal: int
         self.all_cup_tour_length: int
+        self.mirror_200cc: bool
         self.lap_counts: dict[str, int]
 
         # Game data.
@@ -191,6 +192,7 @@ class MkddContext(CommonContext):
                 Utils.async_start(self.update_death_link(bool(args["slot_data"]["death_link"])))
             
             self.trophy_goal = slot_data.get("trophy_amount")
+            self.mirror_200cc = bool(slot_data.get("mirror_200cc"))
             self.all_cup_tour_length = slot_data.get("all_cup_tour_length", 8)
             self.lap_counts = slot_data.get("lap_counts")
 
@@ -664,6 +666,13 @@ def update_game(ctx: MkddContext) -> None:
             dolphin.write_word(ctx.memory_addresses.menu_course_w, course)
             ctx.last_selected_course = course
     
+    vehicle_class: int = dolphin.read_word(ctx.memory_addresses.vehicle_class_w)
+    if mode == game_data.Modes.GRANDPRIX and vehicle_class == 3 and ctx.mirror_200cc:
+        dolphin.write_float(ctx.memory_addresses.speed_multiplier_150cc_f, 1.4)
+        dolphin.write_float(ctx.memory_addresses.max_speed_f, 250)
+    else:
+        dolphin.write_float(ctx.memory_addresses.speed_multiplier_150cc_f, 1.15)
+        dolphin.write_float(ctx.memory_addresses.max_speed_f, 200)
 
     kart_stats_pointer = ctx.memory_addresses.kart_stats_pointer
     for i in range(len(game_data.KARTS)):

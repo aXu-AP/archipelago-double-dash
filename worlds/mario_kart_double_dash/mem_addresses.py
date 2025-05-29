@@ -32,6 +32,10 @@ class MkddMemAddresses():
     """Pointer to kart stat table."""
     gp_race_no_w: int
     """Current race # inside a cup. 0 = first race, 16 = all cup tour awards."""
+    speed_multiplier_150cc_f: int
+    """Speed multiplier when playing on 150cc or Mirror. Default 1.15."""
+    max_speed_f: int
+    """Max kart speed which cannot be exceeded even with mushrooms. Default 200."""
 
     # Vanilla offsets:
     menu_character_w_offset: int
@@ -92,6 +96,8 @@ class MkddMemAddressesUsa(MkddMemAddresses):
     game_ticks_w = 0x803b0754
     kart_stats_pointer = 0x80bd5000
     gp_race_no_w = 0x803b0fc8
+    speed_multiplier_150cc_f = 0x80361d4c
+    max_speed_f = 0x803d1894
 
     # Vanilla offsets:
     menu_character_w_offset = 0x212c

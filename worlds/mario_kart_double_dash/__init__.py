@@ -216,6 +216,7 @@ class MkddWorld(World):
             "version": version.get_str(),
             "trophy_amount": int(self.options.trophy_amount),
             "all_cup_tour_length": int(self.options.all_cup_tour_length),
+            "mirror_200cc": int(self.options.mirror_200cc),
             "lap_counts": lap_counts,
             "character_item_total_weights": self.character_item_total_weights,
             "global_items_total_weights": self.global_items_total_weights,

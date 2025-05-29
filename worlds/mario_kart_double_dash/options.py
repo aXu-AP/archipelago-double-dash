@@ -24,6 +24,10 @@ class AllCupTourLength(Range):
     range_end = 16
     default = 8
 
+class Mirror200cc(Toggle):
+    """Mirror mode is 200cc if enabled."""
+    display_name = "Mirror is 200cc"
+
 class ShorterCourses(Toggle):
     """Makes most courses 2 laps long. Might make the flow of the game better."""
     display_name = "Shorter Courses"
@@ -62,6 +66,7 @@ class MkddOptions(PerGameCommonOptions):
     trophy_amount: TrophyAmount
     all_cup_tour_length: AllCupTourLength
 
+    mirror_200cc: Mirror200cc
     shorter_courses: ShorterCourses
     custom_lap_counts: CustomLapCounts
 
