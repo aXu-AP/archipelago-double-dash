@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from Options import Choice, OptionDict, Range, Toggle, PerGameCommonOptions, StartInventoryPool
+from Options import Choice, NamedRange, OptionDict, PerGameCommonOptions, Range, StartInventoryPool, Toggle, Visibility
 
 class Goal(Choice):
     """Victory condition for the game.
@@ -16,6 +16,27 @@ class TrophyAmount(Range):
     range_start = 0
     range_end = 16
     default = 10
+
+class LogicDifficulty(NamedRange):
+    """Balances the difficulty modeling, how many upgrades you are presumed to have to win races.
+    Use normal (0) if you can comfortably win 100cc races.
+    Unrestricted places locations in logic as soon as they are technically possible."""
+    display_name = "Logic Difficulty."  
+    range_start = -50
+    range_end = 100
+    default = 0
+    special_range_names = {
+        "baby": -50,
+        "easy": -25,
+        "normal": 0,
+        "hard": 50,
+        "unrestricted": 100,
+    }
+
+class TrackerUnrestrictedLogic(Toggle):
+    """If enabled, the Universal Tracker will show all locations that are techically accessible (as if Logic Difficulty was set to unrestricted)."""
+    display_name = "Tracker Unrestricted Logic"
+    visibility = Visibility.complex_ui | Visibility.template | Visibility.spoiler
 
 class AllCupTourLength(Range):
     """How many races are in the All Cup Tour? 16 = vanilla. Default 8."""
@@ -64,6 +85,8 @@ class KartUpgrades(Range):
 class MkddOptions(PerGameCommonOptions):
     goal: Goal
     trophy_amount: TrophyAmount
+    logic_difficulty: LogicDifficulty
+    tracker_unrestricted_logic: TrackerUnrestrictedLogic
     all_cup_tour_length: AllCupTourLength
 
     mirror_200cc: Mirror200cc

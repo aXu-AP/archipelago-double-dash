@@ -34,7 +34,9 @@ class MkddRules:
             if locations.TAG_TT in location.tags:
                 self.add_loc_rule(location.name,
                         lambda state, difficulty = location.difficulty:
-                        calculate_player_level(state, self.player, kart_only = True) + state.count(items.PROGRESSIVE_TIME_TRIAL_ITEM, self.player) * 4 >= difficulty)
+                            calculate_player_level(state, self.player, kart_only = True) + 
+                            self.world.options.logic_difficulty +
+                            state.count(items.PROGRESSIVE_TIME_TRIAL_ITEM, self.player) * 4 >= difficulty)
             elif location.difficulty > 0:
                 required_items_data = [items.data_table[items.name_to_id[item]] for item in location.required_items]
                 req_characters = [game_data.CHARACTERS[item.address] for item in required_items_data if item.item_type == items.ItemType.CHARACTER]
@@ -45,7 +47,8 @@ class MkddRules:
                 self.add_loc_rule(location.name,
                         lambda state, difficulty = location.difficulty, 
                         kart = kart, character_1 = character_1, character_2 = character_2:
-                        calculate_player_level(state, self.player, kart, character_1, character_2) >= difficulty)
+                            calculate_player_level(state, self.player, kart, character_1, character_2) +
+                            self.world.options.logic_difficulty >= difficulty)
  
         for cup in game_data.CUPS:
             self.set_ent_rule(f"Menu -> {cup}",
@@ -59,11 +62,11 @@ class MkddRules:
                     lambda state, course = course.name: state.has(f"{course} Time Trial", self.player))
 
         self.add_loc_rule(locations.GOLD_LIGHT,
-            lambda state: calculate_player_level(state, self.player, 0) >= 50)
+            lambda state: calculate_player_level(state, self.player, 0) + self.world.options.logic_difficulty >= 50)
         self.add_loc_rule(locations.GOLD_MEDIUM,
-            lambda state: calculate_player_level(state, self.player, 1) >= 50)
+            lambda state: calculate_player_level(state, self.player, 1) + self.world.options.logic_difficulty >= 50)
         self.add_loc_rule(locations.GOLD_HEAVY,
-            lambda state: calculate_player_level(state, self.player, 2) >= 50)
+            lambda state: calculate_player_level(state, self.player, 2) + self.world.options.logic_difficulty >= 50)
 
 
 class MkddState(LogicMixin):

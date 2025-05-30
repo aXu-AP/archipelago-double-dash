@@ -45,6 +45,11 @@ class MkddWorld(World):
         self.global_items_total_weights: list[int] = []
         super(MkddWorld, self).__init__(world, player)
 
+    def generate_early(self):
+        if hasattr(self.multiworld, "re_gen_passthrough"):
+            slot_data = self.multiworld.re_gen_passthrough["Mario Kart Double Dash"]
+            self.options.logic_difficulty = slot_data["logic_difficulty"]
+
     def create_regions(self) -> None:
         # Create regions.
         for region_name, region_data in regions.data_table.items():
@@ -216,12 +221,18 @@ class MkddWorld(World):
         return {
             "version": version.get_str(),
             "trophy_amount": int(self.options.trophy_amount),
+            "logic_difficulty": int(self.options.logic_difficulty) if not self.options.tracker_unrestricted_logic else 100,
             "all_cup_tour_length": int(self.options.all_cup_tour_length),
             "mirror_200cc": int(self.options.mirror_200cc),
             "lap_counts": lap_counts,
             "character_item_total_weights": self.character_item_total_weights,
             "global_items_total_weights": self.global_items_total_weights,
         }
+    
+    # Rerun Universal Tracker with received options.
+    @staticmethod
+    def interpret_slot_data(slot_data: dict[str:Any]) -> dict[str:Any]:
+        return slot_data
 
 
 def launch_client():
