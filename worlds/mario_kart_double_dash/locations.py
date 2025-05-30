@@ -106,13 +106,12 @@ for cup in game_data.NORMAL_CUPS:
     data_table.append(MkddLocationData(get_loc_name_trophy(cup, 3), 100, cup, {"Progressive Class":3}))
 
 # Course related locations.
-for course in game_data.COURSES:
-    if course.type == game_data.CourseType.RACE:
-        data_table.append(MkddLocationData(get_loc_name_finish(course.name), 0, course.name, tags = {course.name, TAG_COURSE_FINISH}))
-        data_table.append(MkddLocationData(get_loc_name_lead(course.name), 30, course.name + " GP", tags = {course.name, TAG_COURSE_LEAD}))
-        data_table.append(MkddLocationData(get_loc_name_first(course.name), 40, course.name + " GP", tags = {course.name, TAG_COURSE_FIRST}))
-        data_table.append(MkddLocationData(get_loc_name_good_time(course), 60, course.name + " TT", tags = {course.name, TAG_TT, TAG_TT_GOOD}))
-        data_table.append(MkddLocationData(get_loc_name_ghost(course.name), 100, course.name + " TT", tags = {course.name, TAG_TT, TAG_TT_GHOST}))
+for course in game_data.RACE_COURSES:
+    data_table.append(MkddLocationData(get_loc_name_finish(course.name), 0, course.name, tags = {course.name, TAG_COURSE_FINISH}))
+    data_table.append(MkddLocationData(get_loc_name_lead(course.name), 30, course.name + " GP", tags = {course.name, TAG_COURSE_LEAD}))
+    data_table.append(MkddLocationData(get_loc_name_first(course.name), 40, course.name + " GP", tags = {course.name, TAG_COURSE_FIRST}))
+    data_table.append(MkddLocationData(get_loc_name_good_time(course), 60, course.name + " TT", tags = {course.name, TAG_TT, TAG_TT_GOOD}))
+    data_table.append(MkddLocationData(get_loc_name_ghost(course.name), 100, course.name + " TT", tags = {course.name, TAG_TT, TAG_TT_GHOST}))
 
 # Win with a default kart + character combination.
 for character in game_data.CHARACTERS:
@@ -120,7 +119,7 @@ for character in game_data.CHARACTERS:
     data_table.append(MkddLocationData(get_loc_name_win_char_kart(character.name, kart.name), 40, "Menu", {character.name:1, kart.name:1}))
 
 # Win courses with certain characters.
-for course in [course for course in game_data.COURSES if len(course.owners) > 0]:
+for course in [course for course in game_data.RACE_COURSES if len(course.owners) > 0]:
     data_table.append(MkddLocationData(get_loc_name_win_course_char(course), 40, course.name + " GP", {game_data.CHARACTERS[o].name:1 for o in course.owners}, {course.name}))
 
 # Misc locations.

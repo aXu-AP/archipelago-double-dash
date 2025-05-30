@@ -57,7 +57,7 @@ class MkddRules:
         self.set_loc_rule(locations.TROPHY_GOAL,
                 lambda state: state.has(items.TROPHY, self.player, self.world.options.trophy_amount))
 
-        for course in game_data.COURSES:
+        for course in game_data.RACE_COURSES:
             self.set_ent_rule(f"Menu -> {course.name} TT",
                     lambda state, course = course.name: state.has(f"{course} Time Trial", self.player))
 

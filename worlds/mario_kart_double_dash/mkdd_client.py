@@ -441,7 +441,6 @@ async def check_locations(ctx: MkddContext) -> None:
     if in_game and current_lap >= ctx.current_course.laps:
         if mode == game_data.Modes.TIMETRIAL:
             new_location_names.add(locations.get_loc_name_finish(ctx.current_course.name))
-            logger.info(f"{race_timer_s} / {race_timer}")
             if race_timer_s < ctx.current_course.good_time:
                 new_location_names.add(locations.get_loc_name_good_time(ctx.current_course))
             if race_timer_s < ctx.current_course.staff_time:
@@ -586,7 +585,7 @@ def update_game(ctx: MkddContext) -> None:
             dolphin.write_word(ctx.memory_addresses.mode_w, mode)
 
         # Use vanilla lap counts in time trials.
-        for c in [c for c in game_data.COURSES if c.type == game_data.CourseType.RACE]:
+        for c in [c for c in game_data.RACE_COURSES]:
             dolphin.write_byte(ctx.memory_addresses.lap_count_bx + c.id, c.laps)
 
     
@@ -597,7 +596,7 @@ def update_game(ctx: MkddContext) -> None:
             available_cups_courses[cup] = courses
 
         # Use custom lap counts in grand prix.
-        for c in [c for c in game_data.COURSES if c.type == game_data.CourseType.RACE]:
+        for c in [c for c in game_data.RACE_COURSES]:
             dolphin.write_byte(ctx.memory_addresses.lap_count_bx + c.id, ctx.lap_counts[c.name])
 
         # Item selection.

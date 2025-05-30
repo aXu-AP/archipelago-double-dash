@@ -122,7 +122,7 @@ class Course(NamedTuple):
     laps: int = 3
 
 
-COURSES = [
+RACE_COURSES = [
     # Race courses:
     Course("Luigi Circuit",     0x24, staff_time =  86.277, good_time = 95, owners = [1]),
     Course("Peach Beach",       0x22, staff_time =  80.404, good_time = 90, owners = [2]),
@@ -140,6 +140,9 @@ COURSES = [
     Course("Dino Dino Jungle",  0x2c, staff_time = 120.908, good_time = 140),
     Course("Bowser's Castle",   0x2f, staff_time = 164.690, good_time = 185, owners = [14]),
     Course("Rainbow Road",      0x31, staff_time = 196.476, good_time = 210),
+]
+
+COURSES = RACE_COURSES + [
     # Battle courses:
     Course("Cookie Land", 0x3a, CourseType.BATTLE),
     Course("Pipe Plaza", 0x3b, CourseType.BATTLE),

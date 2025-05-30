@@ -74,9 +74,9 @@ class MkddWorld(World):
             region.add_exits([exit for exit in region_data.connecting_regions if exit in self.current_regions.keys()])
             if region_name in game_data.NORMAL_CUPS:
                 cup_no = game_data.CUPS.index(region_name)
-                region.add_exits([game_data.COURSES[cup_no * 4 + i].name + " GP" for i in range(4)])
+                region.add_exits([game_data.RACE_COURSES[cup_no * 4 + i].name + " GP" for i in range(4)])
             if region_name == game_data.CUPS[game_data.CUP_ALL_CUP_TOUR]:
-                region.add_exits([c.name + " GP" for c in game_data.COURSES])
+                region.add_exits([c.name + " GP" for c in game_data.RACE_COURSES])
         
         # Locked items.
         for cup in game_data.NORMAL_CUPS:
@@ -195,8 +195,6 @@ class MkddWorld(World):
         rules = MkddRules(self)
         rules.set_rules()
         self.multiworld.completion_condition[self.player] = lambda state: state.has("Victory", self.player)
-        from Utils import visualize_regions
-        visualize_regions(self.multiworld.get_region("Menu", self.player), "my_world.puml")
     
     def collect(self, state, item) -> bool:
         change = super().collect(state, item)
@@ -211,7 +209,7 @@ class MkddWorld(World):
         return change
 
     def fill_slot_data(self) -> dict[str, Any]:
-        lap_counts = {course.name:course.laps for course in game_data.COURSES if course.type == game_data.CourseType.RACE}
+        lap_counts = {course.name:course.laps for course in game_data.RACE_COURSES}
         if self.options.shorter_courses:
             for course, laps in lap_counts.items():
                 lap_counts[course] = int(math.ceil(laps * 2 / 3))

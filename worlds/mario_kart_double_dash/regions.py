@@ -11,7 +11,7 @@ cup_regions: dict[str, MkddRegionData] = {cup:MkddRegionData() for cup in game_d
 course_regions: dict[str, MkddRegionData] = {}
 course_gp_regions: dict[str, MkddRegionData] = {}
 course_tt_regions: dict[str, MkddRegionData] = {}
-for course in game_data.COURSES:
+for course in game_data.RACE_COURSES:
     course_regions[course.name] = MkddRegionData()
     course_gp_regions[course.name + " GP"] = MkddRegionData([course.name])
     course_tt_regions[course.name + " TT"] = MkddRegionData([course.name])

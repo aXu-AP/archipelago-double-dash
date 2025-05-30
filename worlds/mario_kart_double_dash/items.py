@@ -68,7 +68,7 @@ data_table: list[MkddItemData] = [
 ]
 data_table.extend([MkddItemData(char.name, PROG, ItemType.CHARACTER, id) for id, char in enumerate(game_data.CHARACTERS)])
 data_table.extend([MkddItemData(name, PROG, ItemType.CUP, id, 1 if id != game_data.CUP_ALL_CUP_TOUR else 0) for id, name in enumerate(game_data.CUPS)])
-data_table.extend([MkddItemData(get_item_name_tt_course(course.name), PROG, ItemType.TT_COURSE, id) for id, course in enumerate(game_data.COURSES) if course.type == game_data.CourseType.RACE])
+data_table.extend([MkddItemData(get_item_name_tt_course(course.name), PROG, ItemType.TT_COURSE, id) for id, course in enumerate(game_data.RACE_COURSES)])
 
 for id, kart in enumerate(game_data.KARTS):
     data_table.append(MkddItemData(kart.name, PROG, ItemType.KART, id))
