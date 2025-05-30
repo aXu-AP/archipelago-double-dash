@@ -34,7 +34,8 @@ class MkddWorld(World):
 
     item_name_to_id = items.name_to_id
     location_name_to_id = locations.name_to_id
-    
+    location_name_groups = locations.groups    
+
     ut_can_gen_without_yaml = True
 
     def __init__(self, world, player):
