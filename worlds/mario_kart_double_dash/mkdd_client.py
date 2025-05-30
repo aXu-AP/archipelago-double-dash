@@ -833,7 +833,6 @@ async def dolphin_sync_task(ctx: MkddContext) -> None:
                         ctx.dolphin_status = CONNECTION_CONNECTED_STATUS
                         apply_patch(ctx)
                         sync_state(ctx)
-                        ctx.last_item_handled = -1
                         give_items(ctx)
                         ctx.locations_checked = set()
                 else:
