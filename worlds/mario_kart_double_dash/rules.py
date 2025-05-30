@@ -31,7 +31,11 @@ class MkddRules:
             if len(location.required_items) > 0:
                 self.add_loc_rule(location.name,
                         lambda state, items = location.required_items: state.has_all_counts(items, self.player))
-            if location.difficulty > 0:
+            if locations.TAG_TT in location.tags:
+                self.add_loc_rule(location.name,
+                        lambda state, difficulty = location.difficulty:
+                        calculate_player_level(state, self.player, kart_only = True) + state.count(items.PROGRESSIVE_TIME_TRIAL_ITEM, self.player) * 4 >= difficulty)
+            elif location.difficulty > 0:
                 required_items_data = [items.data_table[items.name_to_id[item]] for item in location.required_items]
                 req_characters = [game_data.CHARACTERS[item.address] for item in required_items_data if item.item_type == items.ItemType.CHARACTER]
                 req_karts = [game_data.KARTS[item.address] for item in required_items_data if item.item_type == items.ItemType.KART]
@@ -130,7 +134,7 @@ def calculate_player_level(state: CollectionState, player: int,
                             kart: game_data.Kart|int|None = None,
                             character_1: game_data.Character|None = None,
                             character_2: game_data.Character|None = None,
-                            *, recalculate: bool = False, iterative_characters: bool = False) -> int:
+                            *, recalculate: bool = False, iterative_characters: bool = False, kart_only: bool = False) -> int:
     """
     Evaluate the best possible combination the player has with given constraints.
 
@@ -140,7 +144,7 @@ def calculate_player_level(state: CollectionState, player: int,
     """
     # First try to fetch precalculated result.
     # Only unrestricted selection is cached as it's the most taxing to calculate and most often needed.
-    if kart == None and character_1 == None and character_2 == None and not recalculate:
+    if kart == None and character_1 == None and character_2 == None and not kart_only and not recalculate:
         if state.mkdd_state_is_stale[player]:
             state.mkdd_best_combo_level[player] = calculate_player_level(state, player, recalculate = True)
             state.mkdd_state_is_stale[player] = False
@@ -162,7 +166,7 @@ def calculate_player_level(state: CollectionState, player: int,
         elif character_2 != None:
             min_weight = max(min_weight, character_2.weight)
         return max([
-            calculate_player_level(state, player, weight, character_1, character_2, iterative_characters = True) for weight in range(min_weight, max_weight + 1)
+            calculate_player_level(state, player, weight, character_1, character_2, iterative_characters = True, kart_only = kart_only) for weight in range(min_weight, max_weight + 1)
         ])
     
     # Kart's weight class is determined, check each kart individually (don't forget to include Parade Kart, weight -1).
@@ -171,9 +175,20 @@ def calculate_player_level(state: CollectionState, player: int,
         karts = [kart2 for kart2 in game_data.KARTS if kart2.weight == kart]
         if iterative_characters:
             karts += [kart2 for kart2 in game_data.KARTS if kart2.weight == -1]
-        return max([
-            calculate_player_level(state, player, kart2, character_1, character_2) for kart2 in karts
-        ])
+        best_kart: game_data.Kart = None
+        best_points: int = -1000
+        for k in karts:
+            if not state.mkdd_unlocked_karts[player][k.id]:
+                continue
+            if state.mkdd_kart_levels[player][k.id] > best_points:
+                best_kart = k
+                best_points = state.mkdd_kart_levels[player][k.id]
+        if best_kart == None:
+            return -1000
+        if kart_only:
+            return best_points + state.count(items.PROGRESSIVE_ENGINE, player) * game_data.ENGINE_UPGRADE_USEFULNESS
+        else:
+            return calculate_player_level(state, player, best_kart, character_1, character_2)
     
     # Try to pick characters which can fit in the correct vehicle. The first character will determine the weight.
     if character_1 == None:
@@ -206,16 +221,13 @@ def calculate_player_level(state: CollectionState, player: int,
             calculate_player_level(state, player, kart, character_1, character) for character in characters
         ])
     
-    kart_id = game_data.KARTS.index(kart)
-    char_1_id = game_data.CHARACTERS.index(character_1)
-    char_2_id = game_data.CHARACTERS.index(character_2)
-    if (not state.mkdd_unlocked_karts[player][kart_id] or
-        not state.mkdd_unlocked_characters[player][char_1_id] or
-        not state.mkdd_unlocked_characters[player][char_2_id]):
+    if (not state.mkdd_unlocked_karts[player][kart.id] or
+        not state.mkdd_unlocked_characters[player][character_1.id] or
+        not state.mkdd_unlocked_characters[player][character_2.id]):
         return -1000
     return (
-        state.mkdd_kart_levels[player][kart_id] +
-        state.mkdd_character_levels[player][char_1_id] +
-        state.mkdd_character_levels[player][char_2_id] +
+        state.mkdd_kart_levels[player][kart.id] +
+        state.mkdd_character_levels[player][character_1.id] +
+        state.mkdd_character_levels[player][character_2.id] +
         state.count(items.PROGRESSIVE_ENGINE, player) * game_data.ENGINE_UPGRADE_USEFULNESS
     )
