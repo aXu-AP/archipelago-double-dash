@@ -39,7 +39,7 @@ PROGRESSIVE_CLASS = "Progressive Class"
 PROGRESSIVE_CUP_SKIP = "Progressive Cup Skip"
 PROGRESSIVE_TIME_TRIAL_ITEM = "Progressive Time Trial Item"
 PROGRESSIVE_ENGINE = "Progressive Engine Upgrade"
-RANDOM_ITEM = "Random Item"
+RANDOM_ITEM = "Nothing"
 TROPHY = "Trophy"
 VICTORY = "Victory"
 
