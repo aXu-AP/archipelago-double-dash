@@ -44,6 +44,7 @@ class CourseShuffle(Choice):
     option_vanilla = 0
     option_shuffle_once = 1
     #option_shuffle_per_class = 2
+    default = 1
 
 class AllCupTourLength(Range):
     """How many races are in the All Cup Tour? 16 = vanilla. Default 8."""
@@ -61,7 +62,8 @@ class ShorterCourses(Toggle):
     display_name = "Shorter Courses"
 
 class CustomLapCounts(OptionDict):
-    """Set custom amount of laps on each course."""
+    """Set custom amount of laps on each course.
+    Write each course on its own line, followed by : and number of laps."""
     display_name = "Custom Lap Counts"
     default = {"Luigi Circuit": 3}
     
@@ -74,7 +76,7 @@ class ItemsForEverybody(Range):
 
 class ItemsPerCharacter(Range):
     """How many item unlocks there are per character.
-    Note: this setting raises the amount of items considerably and will be automatically lowered if there is not enough locations."""
+    Note: this setting raises the amount of items in item pool considerably, and might cause the generation to fail."""
     display_name = "Items per Character"
     range_start = 0
     range_end = 4

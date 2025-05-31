@@ -1,0 +1,128 @@
+﻿# Q. What is this file?
+# A. This file contains options which allow you to configure your multiworld experience while allowing
+#    others to play how they want as well.
+
+# Your name in-game, limited to 16 characters.
+#     {player} will be replaced with the player's slot number.
+#     {PLAYER} will be replaced with the player's slot number, if that slot number is greater than 1.
+#     {number} will be replaced with the counter value of the name.
+#     {NUMBER} will be replaced with the counter value of the name, if the counter value is greater than 1.
+name: Player{number}
+
+# Used to describe your yaml. Useful if you have multiple files.
+description: Default Mario Kart Double Dash Template
+
+game: Mario Kart Double Dash
+requires:
+  version: 0.6.0 # Version of Archipelago required for this yaml to work as expected.
+
+Mario Kart Double Dash:
+  # Game Options
+  progression_balancing: normal
+    # A system that can move progression earlier, to try and prevent the player from getting stuck and bored early.
+    # A lower setting means more getting stuck. A higher setting means less getting stuck.
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is 0
+    # Maximum value is 99
+    # Possible values: disabled, normal, extreme
+
+  accessibility: full
+    # Set rules for reachability of your items/locations.
+    # **Full:** ensure everything can be reached and acquired.
+    # **Minimal:** ensure what is needed to reach your goal can be acquired.
+    # Possible values: full, minimal
+
+  goal: all_cup_tour
+    # Victory condition for the game.
+    # All Cup Tour: Collect set amount of gold trophies to unlock All Cup Tour. Get gold in All Cup Tour to win.
+    # Trophies: Collect set amount of gold trophies to win.
+    # Possible values: all_cup_tour, trophies
+
+  trophy_amount: 10
+    # How many gold trophies are needed for goal completion.
+    # Recommended: 9-12 if you aim to complete the game on 150cc. 13-16 if you aim to complete the game on Mirror.
+    # Minimum value is 0
+    # Maximum value is 16
+
+  logic_difficulty: normal
+    # Balances the difficulty modeling, how many upgrades you are presumed to have to win races.
+    # Use normal (0) if you can comfortably win 100cc races.
+    # Unrestricted places locations in logic as soon as they are technically possible.
+    #
+    # You can define additional values between the minimum and maximum values.
+    # Minimum value is -50
+    # Maximum value is 100
+    # Possible values: baby (=-50), easy (=-25), normal (=0), hard (=50), unrestricted (=100)
+
+  tracker_unrestricted_logic: false
+    # If enabled, the Universal Tracker will show all locations that are techically accessible (as if Logic Difficulty was set to unrestricted).
+    # Possible values: true, false
+
+  course_shuffle: shuffle_once
+    # How the courses are shuffled in cups.
+    # Possible values: vanilla, shuffle_once
+
+  all_cup_tour_length: 8
+    # How many races are in the All Cup Tour? 16 = vanilla.
+    # Minimum value is 2
+    # Maximum value is 16
+
+  mirror_200cc: false
+    # Mirror mode is 200cc if enabled.
+    # Possible values: true, false
+
+  shorter_courses: false
+    # Makes most courses 2 laps long. Might make the flow of the game better.
+    # Possible values: true, false
+
+  custom_lap_counts:
+    Luigi Circuit: 3
+    # Set custom amount of laps on each course.
+    # Write each course on its own line, followed by : and number of laps.
+
+  items_for_everybody: 4
+    # How many global item unlocks there are.
+    # Minimum value is 0
+    # Maximum value is 19
+
+  items_per_character: 3
+    # How many item unlocks there are per character.
+    # Note: this setting raises the amount of items in item pool considerably, and might cause the generation to fail.
+    # Minimum value is 0
+    # Maximum value is 4
+
+  kart_upgrades: 10
+    # How many random kart stat upgrades there are total.
+    # Unlike progressive engine upgrades, these upgrades are tied to certain vehicles.
+    # Minimum value is 0
+    # Maximum value is 40
+
+  # Item & Location Options
+  local_items: []
+    # Forces these items to be in their native world.
+
+  non_local_items: []
+    # Forces these items to be outside their native world.
+
+  start_inventory: {}
+    # Start with these items.
+
+  start_inventory_from_pool: {}
+    # Start with these items and don't place them in the world.
+    # 
+    # The game decides what the replacement items will be.
+
+  start_hints: []
+    # Start with these item's locations prefilled into the ``!hint`` command.
+
+  start_location_hints: []
+    # Start with these locations and their item prefilled into the ``!hint`` command.
+
+  exclude_locations: []
+    # Prevent these locations from having an important item.
+
+  priority_locations: []
+    # Prevent these locations from having an unimportant item.
+
+  item_links: []
+    # Share part of your item pool with other players.
