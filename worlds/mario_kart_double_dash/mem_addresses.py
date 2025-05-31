@@ -3,7 +3,7 @@ class MkddMemAddresses():
     Collection of memory addresses of relevant data.
     Inherit this class to specify addresses for different versions.
 
-    Property suffixes tell the data type (b = byte, h = half word, w = word, x = table).
+    Property suffixes tell the data type (b = byte, h = half word, w = word, s = string, f = float, x = table).
     Pointers are always words.
     """
     # Vanilla addresses:
@@ -36,6 +36,13 @@ class MkddMemAddresses():
     """Speed multiplier when playing on 150cc or Mirror. Default 1.15."""
     max_speed_f: int
     """Max kart speed which cannot be exceeded even with mushrooms. Default 200."""
+    cup_contents_wx: int
+    """Table of cup course ids, name and preview images in cup order (ie. from Luigi Circuit to Rainbow Road).
+    Example: Mushroom cup course 3: course id = 2*12, name = 2*12+4, preview = 2*12+8."""
+    course_names_s: list[int]
+    """List of course name image files for the menu."""
+    course_previews_s: list[int]
+    """List of course preview image files for the menu."""
 
     # Vanilla offsets:
     menu_character_w_offset: int
@@ -98,6 +105,43 @@ class MkddMemAddressesUsa(MkddMemAddresses):
     gp_race_no_w = 0x803b0fc8
     speed_multiplier_150cc_f = 0x80361d4c
     max_speed_f = 0x803d1894
+    cup_contents_wx = 0x803322e8
+    course_names_s = [
+        0x80331fd0, # Luigi Circuit
+        0x80332004, # Peach Beach
+        0x80332030, # Baby Park
+        0x8033205c, # Dry Dry Desert
+        0x80332094, # Mushroom Bridge
+        0x803320c8, # Mario Circuit
+        0x803320fc, # Daisy Cruiser
+        0x80332128, # Waluigi Stadium
+        0x8033215c, # Sherbet Land
+        0x8033218c, # Mushroom City
+        0x803321b8, # Yoshi Circuit
+        0x803321ec, # DK Mountain
+        0x80332218, # Wario Colosseum
+        0x8033224c, # Dino Dino Jungle
+        0x80332284, # Bowser's Castle
+        0x803322b8, # Rainbow Road
+    ]
+    course_previews_s = [
+        0x80331fec, # Luigi Circuit
+        0x8033201c, # Peach Beach
+        0x80332048, # Baby Park
+        0x80332078, # Dry Dry Desert
+        0x803320b0, # Mushroom Bridge
+        0x803320e4, # Mario Circuit
+        0x80332114, # Daisy Cruiser
+        0x80332144, # Waluigi Stadium
+        0x80332174, # Sherbet Land
+        0x803321a4, # Mushroom City
+        0x803321d4, # Yoshi Circuit
+        0x80332204, # DK Mountain
+        0x80332234, # Wario Colosseum
+        0x80332268, # Dino Dino Jungle
+        0x803322a0, # Bowser's Castle
+        0x803322d0, # Rainbow Road
+    ]
 
     # Vanilla offsets:
     menu_character_w_offset = 0x212c

@@ -109,6 +109,7 @@ class MkddContext(CommonContext):
         self.goal: options.Goal
         self.trophy_goal: int
         self.all_cup_tour_length: int
+        self.cups_courses: list[list[int]]
         self.mirror_200cc: bool
         self.lap_counts: dict[str, int]
 
@@ -192,8 +193,9 @@ class MkddContext(CommonContext):
                 Utils.async_start(self.update_death_link(bool(args["slot_data"]["death_link"])))
             
             self.trophy_goal = slot_data.get("trophy_amount")
-            self.mirror_200cc = bool(slot_data.get("mirror_200cc"))
+            self.cups_courses = slot_data["cups_courses"]
             self.all_cup_tour_length = slot_data.get("all_cup_tour_length", 8)
+            self.mirror_200cc = bool(slot_data.get("mirror_200cc"))
             self.lap_counts = slot_data.get("lap_counts")
 
             self.character_item_total_weights = slot_data.get("character_item_total_weights")
@@ -567,17 +569,27 @@ def update_game(ctx: MkddContext) -> None:
             dolphin.write_word(menu_pointer + ctx.memory_addresses.menu_kart_w_offset, kart)
         ctx.last_selected_kart = kart
 
+    vehicle_class = dolphin.read_word(ctx.memory_addresses.vehicle_class_w)
+    if vehicle_class != ctx.last_selected_vehicle_class:
+        ctx.last_selected_vehicle_class = vehicle_class
+        offset = ctx.memory_addresses.cup_contents_wx
+        for cup in ctx.cups_courses:
+            for course in cup:
+                dolphin.write_word(offset, game_data.COURSES[course].id)
+                dolphin.write_word(offset + 4, ctx.memory_addresses.course_names_s[course])
+                dolphin.write_word(offset + 8, ctx.memory_addresses.course_previews_s[course])
+                offset += 12
+
 
     mode: int = int(dolphin.read_word(ctx.memory_addresses.mode_w))
     available_cups_courses: dict[int, set[int]] = {}
     if mode == game_data.Modes.TIMETRIAL:
-        course_order: list[list[int]] = [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11], [12, 13, 14, 15]]
-        for cu in range(4):
-            for c in ctx.unlocked_courses:
-                if c in course_order[cu]:
-                    if not cu in available_cups_courses:
-                        available_cups_courses[cu] = set()
-                    available_cups_courses[cu].add(c - cu * 4)
+        for i_cup in range(4):
+            for i_course in ctx.unlocked_courses:
+                if i_course in ctx.cups_courses[i_cup]:
+                    if not i_cup in available_cups_courses:
+                        available_cups_courses[i_cup] = set()
+                    available_cups_courses[i_cup].add(ctx.cups_courses[i_cup].index(i_course))
         if len(available_cups_courses) == 0:
             # Failsafe if no tt tracks are unlocked.
             logger.info("No Time Trials unlocked yet! Changed mode to Grand Prix.")
@@ -586,8 +598,8 @@ def update_game(ctx: MkddContext) -> None:
             dolphin.write_word(ctx.memory_addresses.vehicle_class_w, ctx.unlocked_vehicle_class)
 
         # Use vanilla lap counts in time trials.
-        for c in [c for c in game_data.RACE_COURSES]:
-            dolphin.write_byte(ctx.memory_addresses.lap_count_bx + c.id, c.laps)
+        for i_course in [c for c in game_data.RACE_COURSES]:
+            dolphin.write_byte(ctx.memory_addresses.lap_count_bx + i_course.id, i_course.laps)
 
     
     if mode == game_data.Modes.GRANDPRIX:
@@ -597,8 +609,8 @@ def update_game(ctx: MkddContext) -> None:
             available_cups_courses[cup] = courses
 
         # Use custom lap counts in grand prix.
-        for c in [c for c in game_data.RACE_COURSES]:
-            dolphin.write_byte(ctx.memory_addresses.lap_count_bx + c.id, ctx.lap_counts[c.name])
+        for i_course in [c for c in game_data.RACE_COURSES]:
+            dolphin.write_byte(ctx.memory_addresses.lap_count_bx + i_course.id, ctx.lap_counts[i_course.name])
 
         # Item selection.
         in_race_placement: int = max(0, min(7, dolphin.read_word(ctx.memory_addresses.in_race_placement_wx) - 1))
@@ -652,8 +664,8 @@ def update_game(ctx: MkddContext) -> None:
             dolphin.write_word(ctx.memory_addresses.cup_w, cup)
             ctx.last_selected_cup = cup
 
-        for c in range(len(game_data.CUPS)):
-            dolphin.write_byte(ctx.memory_addresses.available_cups_bx + c, int(c in available_cups_courses))
+        for i_cup in range(len(game_data.CUPS)):
+            dolphin.write_byte(ctx.memory_addresses.available_cups_bx + i_cup, int(i_cup in available_cups_courses))
 
         course: int = int(dolphin.read_word(ctx.memory_addresses.menu_course_w))
         if not course in available_cups_courses[cup]:

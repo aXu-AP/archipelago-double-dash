@@ -38,6 +38,13 @@ class TrackerUnrestrictedLogic(Toggle):
     display_name = "Tracker Unrestricted Logic"
     visibility = Visibility.complex_ui | Visibility.template | Visibility.spoiler
 
+class CourseShuffle(Choice):
+    """How the courses are shuffled in cups."""
+    display_name = "Course Shuffle"
+    option_vanilla = 0
+    option_shuffle_once = 1
+    #option_shuffle_per_class = 2
+
 class AllCupTourLength(Range):
     """How many races are in the All Cup Tour? 16 = vanilla. Default 8."""
     display_name = "All Cup Tour Length"
@@ -87,6 +94,7 @@ class MkddOptions(PerGameCommonOptions):
     trophy_amount: TrophyAmount
     logic_difficulty: LogicDifficulty
     tracker_unrestricted_logic: TrackerUnrestrictedLogic
+    course_shuffle: CourseShuffle
     all_cup_tour_length: AllCupTourLength
 
     mirror_200cc: Mirror200cc
