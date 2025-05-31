@@ -548,9 +548,9 @@ def update_game(ctx: MkddContext) -> None:
         if character >= 0 and character < len(game_data.CHARACTERS) and not character in ctx.unlocked_characters:
             direction: int = character - ctx.last_selected_character
             direction = 1 if direction == 0 or direction == 1 else -1
-            while not character in ctx.unlocked_characters:
+            for i in range(20):
                 character = wrap(character + direction, len(game_data.CHARACTERS))
-                if character == ctx.last_selected_character:
+                if character in ctx.unlocked_characters:
                     break
             dolphin.write_word(menu_pointer + ctx.memory_addresses.menu_character_w_offset, character)
         ctx.last_selected_character = character
@@ -560,9 +560,9 @@ def update_game(ctx: MkddContext) -> None:
             # weight = game_data.KARTS[kart].weight
             direction: int = kart - ctx.last_selected_kart
             direction = 1 if direction == 0 else int(direction / abs(direction))
-            while (game_data.KARTS[kart].weight != -1 and game_data.KARTS[kart].weight != weight) or not kart in ctx.unlocked_karts:
+            for i in range(21):
                 kart = wrap(kart + direction, len(game_data.KARTS))
-                if kart == ctx.last_selected_kart:
+                if kart in ctx.unlocked_karts and (game_data.KARTS[kart].weight == weight or game_data.KARTS[kart].weight == -1):
                     break
             dolphin.write_word(menu_pointer + ctx.memory_addresses.menu_kart_w_offset, kart)
         ctx.last_selected_kart = kart
@@ -583,6 +583,7 @@ def update_game(ctx: MkddContext) -> None:
             logger.info("No Time Trials unlocked yet! Changed mode to Grand Prix.")
             mode = int(game_data.Modes.GRANDPRIX)
             dolphin.write_word(ctx.memory_addresses.mode_w, mode)
+            dolphin.write_word(ctx.memory_addresses.vehicle_class_w, ctx.unlocked_vehicle_class)
 
         # Use vanilla lap counts in time trials.
         for c in [c for c in game_data.RACE_COURSES]:
@@ -644,9 +645,9 @@ def update_game(ctx: MkddContext) -> None:
         if not cup in available_cups_courses:
             direction: int = cup - ctx.last_selected_cup
             direction = 1 if direction == 0 or direction == 1 else -1
-            while not cup in available_cups_courses:
+            for i in range(5):
                 cup = wrap(cup + direction, len(game_data.CUPS))
-                if cup == ctx.last_selected_cup:
+                if cup in available_cups_courses:
                     break
             dolphin.write_word(ctx.memory_addresses.cup_w, cup)
             ctx.last_selected_cup = cup
@@ -658,9 +659,9 @@ def update_game(ctx: MkddContext) -> None:
         if not course in available_cups_courses[cup]:
             direction: int = course - ctx.last_selected_course
             direction = 1 if direction == 0 or direction == 1 else -1
-            while not course in available_cups_courses[cup]:
+            for i in range(4):
                 course = wrap(course + direction, 4)
-                if course == ctx.last_selected_course:
+                if course in available_cups_courses[cup]:
                     break
             dolphin.write_word(ctx.memory_addresses.menu_course_w, course)
             ctx.last_selected_course = course
