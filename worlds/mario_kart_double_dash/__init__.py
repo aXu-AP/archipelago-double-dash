@@ -209,7 +209,7 @@ class MkddWorld(World):
         return MkddItem(name, item_data.classification, id, self.player)
 
     def get_filler_item_name(self) -> str:
-        return "Random Item"
+        return items.RANDOM_ITEM
     
     def set_rules(self) -> None:
         rules = MkddRules(self)
