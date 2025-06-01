@@ -11,3 +11,7 @@ Collect enough gold trophies and finish All Cup Tour.
 ## When the player receives an item, what happens?
 
 Currently there is no in-game notification system and the game generally doesn't have any visual indication of what's unlocked. You can refer to the client to see what's unlocked (there's a nifty `/unlocked` command which tells you what do you have).
+
+## What game modes are available?
+
+Grand Prix and Time Trial. 2 players on one kart should work, but is untested (you may want to enable 2 player time trials cheat code to be able to get all the checks). 3-4 players is unsupported.

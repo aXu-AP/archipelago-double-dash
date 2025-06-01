@@ -14,6 +14,10 @@ Collect enough gold trophies and finish All Cup Tour.
 
 Currently there is no in-game notification system and the game generally doesn't have any visual indication of what's unlocked. You can refer to the client to see what's unlocked (there's a nifty `/unlocked` command which tells you what do you have).
 
+## What game modes are available?
+
+Grand Prix and Time Trial. 2 players on one kart should work, but is untested (you may want to enable 2 player time trials cheat code to be able to get all the checks). 3-4 players is unsupported.
+
 ## Setup
 
 See [setup guide](worlds/mario_kart_double_dash/docs/setup_en.md) for a throughout explanation and troubleshooting.
@@ -30,3 +34,4 @@ You're good to go!
 
 * To **Yoshi2** for patiently showing me the ropes of reverse engineering! This is my first romhacking project so help was really needed!
 * To **Ralph@gc-forever** for making tons of cheat codes for MKDD and allowing me to use them for the randomizator! Some of them are used by the project as is (see [ar_codes.py](worlds/mario_kart_double_dash/ar_codes.py) for complete list) and many of them have given insight to make some custom features myself.
+* To **ItzRonsku** and **Hugeli** for testing.
