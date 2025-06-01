@@ -606,7 +606,10 @@ def update_game(ctx: MkddContext) -> None:
         # Give option to skip x first courses.
         courses = [c for c in range(ctx.unlocked_cup_skips + 1)]
         for cup in ctx.unlocked_cups:
-            available_cups_courses[cup] = courses
+            if cup == game_data.CUP_ALL_CUP_TOUR:
+                available_cups_courses[cup] = [0]
+            else:
+                available_cups_courses[cup] = courses
 
         # Use custom lap counts in grand prix.
         for i_course in [c for c in game_data.RACE_COURSES]:
