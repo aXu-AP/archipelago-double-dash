@@ -557,15 +557,14 @@ def update_game(ctx: MkddContext) -> None:
             dolphin.write_word(menu_pointer + ctx.memory_addresses.menu_character_w_offset, character)
         ctx.last_selected_character = character
 
-        if kart >= 0 and kart < len(game_data.KARTS) and not kart in ctx.unlocked_karts:
+        if kart >= 0 and kart < len(game_data.KARTS):
             weight = max(ctx.active_characters[0].weight, ctx.active_characters[1].weight)
-            # weight = game_data.KARTS[kart].weight
             direction: int = kart - ctx.last_selected_kart
             direction = 1 if direction == 0 else int(direction / abs(direction))
             for i in range(21):
-                kart = wrap(kart + direction, len(game_data.KARTS))
                 if kart in ctx.unlocked_karts and (game_data.KARTS[kart].weight == weight or game_data.KARTS[kart].weight == -1):
                     break
+                kart = wrap(kart + direction, len(game_data.KARTS))
             dolphin.write_word(menu_pointer + ctx.memory_addresses.menu_kart_w_offset, kart)
         ctx.last_selected_kart = kart
 
