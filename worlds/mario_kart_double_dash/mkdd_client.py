@@ -848,7 +848,7 @@ async def dolphin_sync_task(ctx: MkddContext) -> None:
                         ctx.dolphin_status = CONNECTION_CONNECTED_STATUS
                         apply_patch(ctx)
                         sync_state(ctx)
-                        give_items(ctx)
+                        await give_items(ctx)
                         ctx.locations_checked = set()
                 else:
                     logger.info("Connection to Dolphin failed, attempting again in 5 seconds...")
