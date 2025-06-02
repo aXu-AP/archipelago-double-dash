@@ -53,6 +53,8 @@ class MkddMemAddresses():
     """Offset from menu_pointer, confirmed driver."""
     menu_rider_w_offset: int
     """Offset from menu_pointer, confirmed rider."""
+    menu_player_struct_size: int
+    """Size of player menu struct. Add this to menu offsets to get different players' selections."""
     kart_struct_size: int
     """Use this in combination with kart_stats_pointer and stat offsets to modify karts."""
     kart_speed_on_road_f_offset: int
@@ -148,6 +150,7 @@ class MkddMemAddressesUsa(MkddMemAddresses):
     menu_kart_w_offset = 0x2140
     menu_driver_w_offset = 0x2138
     menu_rider_w_offset = 0x213c
+    menu_player_struct_size = 28
 
     kart_struct_size = 0x100
     kart_speed_on_road_f_offset = 0x50
