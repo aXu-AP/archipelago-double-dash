@@ -127,12 +127,9 @@ class MkddContext(CommonContext):
         self.last_selected_vehicle_class: int = 0
 
         self.unlocked_characters: list[int] = []
-        self.last_selected_character: int = 0
-
         self.unlocked_karts: list[int] = []
         self.engine_upgrade_level = 0
         self.kart_upgrades: dict[int, list[game_data.KartUpgrade]] = {i:[] for i, _ in enumerate(game_data.KARTS)}
-        self.last_selected_kart: int = 0
 
         self.unlocked_cups: list[int] = []
         self.last_selected_cup: int = 0
@@ -143,6 +140,10 @@ class MkddContext(CommonContext):
         self.last_selected_course: int = 0
         
         self.time_trial_items: int = 0
+
+        # These are per player.
+        self.last_selected_character: list[int] = [0 for _ in range(4)]
+        self.last_selected_kart: list[int] = [0 for _ in range(4)]
 
         self.active_characters: list[game_data.Character] = [game_data.CHARACTERS[0], game_data.CHARACTERS[0]]
         self.active_kart: game_data.Kart = game_data.KARTS[0]
@@ -536,37 +537,40 @@ def update_game(ctx: MkddContext) -> None:
     if menu_pointer != 0:
         driver = dolphin.read_word(menu_pointer + ctx.memory_addresses.menu_driver_w_offset)
         rider = dolphin.read_word(menu_pointer + ctx.memory_addresses.menu_rider_w_offset)
-        character: int = int(dolphin.read_word(menu_pointer + ctx.memory_addresses.menu_character_w_offset))
-        kart: int = int(dolphin.read_word(menu_pointer + ctx.memory_addresses.menu_kart_w_offset))
-        
         # Save selections for later use (when menu pointer becomes invalid).
         if driver >= 0 and driver < len(game_data.CHARACTERS):
             ctx.active_characters[0] = game_data.CHARACTERS[driver]
         if rider >= 0 and rider < len(game_data.CHARACTERS):
             ctx.active_characters[1] = game_data.CHARACTERS[rider]
-        if kart >= 0 and kart < len(game_data.KARTS):
-            ctx.active_kart = game_data.KARTS[kart]
+        
+        for player in range(4):
+            player_offset = player * ctx.memory_addresses.menu_player_struct_size
+            character: int = int(dolphin.read_word(menu_pointer + ctx.memory_addresses.menu_character_w_offset + player_offset))
+            kart: int = int(dolphin.read_word(menu_pointer + ctx.memory_addresses.menu_kart_w_offset + player_offset))
+            
+            if kart >= 0 and kart < len(game_data.KARTS):
+                ctx.active_kart = game_data.KARTS[kart]
 
-        if character >= 0 and character < len(game_data.CHARACTERS) and not character in ctx.unlocked_characters:
-            direction: int = character - ctx.last_selected_character
-            direction = 1 if direction == 0 or direction == 1 else -1
-            for i in range(20):
-                character = wrap(character + direction, len(game_data.CHARACTERS))
-                if character in ctx.unlocked_characters:
-                    break
-            dolphin.write_word(menu_pointer + ctx.memory_addresses.menu_character_w_offset, character)
-        ctx.last_selected_character = character
+            if character >= 0 and character < len(game_data.CHARACTERS) and not character in ctx.unlocked_characters:
+                direction: int = character - ctx.last_selected_character[player]
+                direction = 1 if direction == 0 or direction == 1 else -1
+                for i in range(20):
+                    character = wrap(character + direction, len(game_data.CHARACTERS))
+                    if character in ctx.unlocked_characters:
+                        break
+                dolphin.write_word(menu_pointer + ctx.memory_addresses.menu_character_w_offset + player_offset, character)
+            ctx.last_selected_character[player] = character
 
-        if kart >= 0 and kart < len(game_data.KARTS):
-            weight = max(ctx.active_characters[0].weight, ctx.active_characters[1].weight)
-            direction: int = kart - ctx.last_selected_kart
-            direction = 1 if direction == 0 else int(direction / abs(direction))
-            for i in range(21):
-                if kart in ctx.unlocked_karts and (game_data.KARTS[kart].weight == weight or game_data.KARTS[kart].weight == -1):
-                    break
-                kart = wrap(kart + direction, len(game_data.KARTS))
-            dolphin.write_word(menu_pointer + ctx.memory_addresses.menu_kart_w_offset, kart)
-        ctx.last_selected_kart = kart
+            if kart >= 0 and kart < len(game_data.KARTS):
+                weight = max(ctx.active_characters[0].weight, ctx.active_characters[1].weight)
+                direction: int = kart - ctx.last_selected_kart[player]
+                direction = 1 if direction == 0 else int(direction / abs(direction))
+                for i in range(21):
+                    if kart in ctx.unlocked_karts and (game_data.KARTS[kart].weight == weight or game_data.KARTS[kart].weight == -1):
+                        break
+                    kart = wrap(kart + direction, len(game_data.KARTS))
+                dolphin.write_word(menu_pointer + ctx.memory_addresses.menu_kart_w_offset + player_offset, kart)
+            ctx.last_selected_kart[player] = kart
 
     vehicle_class = dolphin.read_word(ctx.memory_addresses.vehicle_class_w)
     if vehicle_class != ctx.last_selected_vehicle_class:
