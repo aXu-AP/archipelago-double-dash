@@ -1,14 +1,12 @@
 """
 Archipelago init file for Mario Kart Double Dash!!
 """
-import random
 import math
 from typing import Any
 
 from BaseClasses import Region, ItemClassification
 from worlds.AutoWorld import WebWorld, World
 from worlds.LauncherComponents import Component, components, launch_subprocess
-import warnings
 
 from . import locations, items, regions
 from .items import MkddItem
@@ -116,6 +114,7 @@ class MkddWorld(World):
         
     
     def create_items(self) -> None:
+        total_locations = len(self.multiworld.get_unfilled_locations(self.player))
         # (item_name, count)
         precollected: list[str] = []
         # Give 1 cup, can't be All Star Cup.
@@ -166,6 +165,7 @@ class MkddWorld(World):
             items_left.pop(id)
             weights.pop(id)
 
+        # Character specific items.
         # Ensure that every item is in pool at least once.
         items_left_characters_pool = items_left.copy()
         weights = [1 for _ in items_left]
@@ -193,6 +193,11 @@ class MkddWorld(World):
                     # Refill the pool with some balancing.
                     items_left = items_left_characters_pool.copy()
                     weights = [10 - item.usefulness for item in items_left]
+                # There can be too much of these, so generate only as long as there's enough locations.
+                if len(item_pool) == total_locations:
+                    break
+            if len(item_pool) == total_locations:
+                break
 
         self.character_item_total_weights = {character.name:[] for character in game_data.CHARACTERS}
         for i in range(8):
@@ -201,10 +206,6 @@ class MkddWorld(World):
                 self.character_item_total_weights[character.name].append(
                     sum([item.weight_table[i] for item in items_per_character[character]])
                 )
-
-        total_locations = len(self.multiworld.get_unfilled_locations(self.player))
-        if len(item_pool) > total_locations:
-            warnings.warn("Number of total available items exceeds the number of locations, likely there is a bug in the generation.")
 
         item_pool += [self.create_item(self.get_filler_item_name()) for _ in range(total_locations - len(item_pool))]
         
