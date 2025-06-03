@@ -157,6 +157,10 @@ cmpwi   r5, 0
 beq     -6 * 4
 b       cup_selection_right_return
 
+# Make All Cup Tour visible even in time trials (because we are using tt menu for gp also).
+WriteTo 0x80169f20
+nop
+
 # Move left
 .set cup_selection_left_jump, 0x80001080 - 0x8016b028 - 0xc
 .set cup_selection_left_return, 0x8016b028 + 0x10 - 0x8000109c
