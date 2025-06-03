@@ -58,6 +58,12 @@ Mario Kart Double Dash:
     # If enabled, the Universal Tracker will show all locations that are techically accessible (as if Logic Difficulty was set to unrestricted).
     # Possible values: true, false
 
+  time_trials: basic
+    # Are time trials in logic? If enabled, item pool has course unlocks for time trials.
+    # Basic adds locations for beating certain times.
+    # Include Staff Ghosts enables staff ghosts into logic. For experts only!
+    # Possible values: disable, basic, include_staff_ghosts
+
   course_shuffle: shuffle_once
     # How the courses are shuffled in cups.
     # Possible values: vanilla, shuffle_once

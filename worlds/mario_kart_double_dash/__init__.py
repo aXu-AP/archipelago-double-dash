@@ -42,7 +42,7 @@ class MkddWorld(World):
         self.current_locations: list[MkddLocationData] = []
         self.current_regions: dict[str, MkddRegionData] = {}
         self.current_entrances: set[str] = set()
-        
+
         self.cups_courses: list[list[int]] = []
         self.character_item_total_weights: dict[str, list[int]] = {}
         self.global_items_total_weights: list[int] = []
@@ -50,8 +50,10 @@ class MkddWorld(World):
 
     def generate_early(self):
         if hasattr(self.multiworld, "re_gen_passthrough"):
-            slot_data = self.multiworld.re_gen_passthrough["Mario Kart Double Dash"]
+            slot_data: dict = self.multiworld.re_gen_passthrough["Mario Kart Double Dash"]
             self.options.logic_difficulty = slot_data["logic_difficulty"]
+            # Staff ghosts were on by default before this option was introduced.
+            self.options.time_trials = slot_data.get("time_trials", options.TimeTrials.option_include_staff_ghosts)
 
     def create_regions(self) -> None:
         # Course shuffle (entrance rando). If using Universal Tracker, get shuffled tracks from slot data.
@@ -76,6 +78,8 @@ class MkddWorld(World):
         for region_name, region_data in regions.data_table.items():
             if self.options.goal == options.Goal.option_trophies and region_name == game_data.CUPS[game_data.CUP_ALL_CUP_TOUR]:
                 continue
+            if self.options.time_trials == options.TimeTrials.option_disable and regions.TAG_TIME_TRIALS in region_data.tags:
+                continue
             region = Region(region_name, self.player, self.multiworld)
             self.multiworld.regions.append(region)
             self.current_regions[region_name] = region_data
@@ -92,16 +96,12 @@ class MkddWorld(World):
             self.current_entrances.update([e.name for e in region.exits])
 
             # Create locations.
-            region.add_locations({
-                location_data.name: id
-                for id, location_data in enumerate(locations.data_table)
-                if id > 0 and location_data.region == region_name
-            }, MkddLocation)
-            self.current_locations.extend([
-                location_data
-                for id, location_data in enumerate(locations.data_table)
-                if id > 0 and location_data.region == region_name
-            ])
+            for id, location_data in enumerate(locations.data_table):
+                if self.options.time_trials != options.TimeTrials.option_include_staff_ghosts and locations.TAG_TT_GHOST in location_data.tags:
+                    continue
+                if id > 0 and location_data.region == region_name:
+                    region.add_locations({location_data.name: id})
+                    self.current_locations.append(location_data)
         
         # Locked items.
         for cup in game_data.NORMAL_CUPS:
@@ -137,6 +137,8 @@ class MkddWorld(World):
         # Generic items by predetermined counts.
         item_pool: list[MkddItem] = []
         for item in items.data_table:
+            if self.options.time_trials == options.TimeTrials.option_disable and item.item_type == items.ItemType.TT_COURSE or item.name == items.PROGRESSIVE_TIME_TRIAL_ITEM:
+                continue
             if item.classification != ItemClassification.filler:
                 count = item.count
                 count -= precollected.count(item.name)
@@ -245,6 +247,7 @@ class MkddWorld(World):
             "version": version.get_str(),
             "trophy_amount": int(self.options.trophy_amount),
             "logic_difficulty": int(self.options.logic_difficulty) if not self.options.tracker_unrestricted_logic else 100,
+            "time_trials": int(self.options.time_trials),
             "cups_courses": self.cups_courses,
             "all_cup_tour_length": int(self.options.all_cup_tour_length),
             "mirror_200cc": int(self.options.mirror_200cc),
