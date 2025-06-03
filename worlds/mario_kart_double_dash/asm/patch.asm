@@ -38,7 +38,39 @@ addi    r5, r5, 1
 bdnz+   -0x10
 blr
 
-# This function's space has been used to the last byte.
+# Select left. After checking if we can move left once, continue in zig zag pattern.
+.set select_left_jump, 0x800010d8 - 0x801636cc
+.set select_left_return, 0x801636cc + 4 - 0x800010d8 - 0x24
+WriteTo 0x801636cc
+b   select_left_jump
+WriteTo 0x800010d8
+bne-    0x24
+addi    r4, r29, 19
+divw    r0, r4, r3
+mullw   r0, r0, r3
+sub     r29, r4, r0
+addi    r0, r29, 0x228c
+lbzx    r0, r28, r0
+cmplwi  r0, 0
+beq+    -0x1c
+b       select_left_return
+
+# Select right. After checking if we can move right once, continue in zig zag pattern.
+.set select_right_jump, 0x80001100 - 0x801636f8
+.set select_right_return, 0x801636f8 + 4 - 0x80001100 - 0x24
+WriteTo 0x801636f8
+b   select_right_jump
+WriteTo 0x80001100
+bne-    0x24
+addi    r4, r29, 21
+divw    r0, r4, r3
+mullw   r0, r0, r3
+sub     r29, r4, r0
+addi    r0, r29, 0x228c
+lbzx    r0, r28, r0
+cmplwi  r0, 0
+beq+    -0x1c
+b       select_right_return
 
 # Intercept cursor moving function checking flags for valid characters.
 WriteTo 0x801639bc
