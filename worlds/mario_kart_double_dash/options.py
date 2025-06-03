@@ -38,6 +38,16 @@ class TrackerUnrestrictedLogic(Toggle):
     display_name = "Tracker Unrestricted Logic"
     visibility = Visibility.complex_ui | Visibility.template | Visibility.spoiler
 
+class TimeTrials(Choice):
+    """Are time trials in logic? If enabled, item pool has course unlocks for time trials.
+    Basic adds locations for beating certain times.
+    Include Staff Ghosts enables staff ghosts into logic. For experts only!"""
+    display_name = "Time Trials"
+    option_disable = 0
+    option_basic = 1
+    option_include_staff_ghosts = 2
+    default = 1
+
 class CourseShuffle(Choice):
     """How the courses are shuffled in cups."""
     display_name = "Course Shuffle"
@@ -96,6 +106,8 @@ class MkddOptions(PerGameCommonOptions):
     trophy_amount: TrophyAmount
     logic_difficulty: LogicDifficulty
     tracker_unrestricted_logic: TrackerUnrestrictedLogic
+    time_trials: TimeTrials
+
     course_shuffle: CourseShuffle
     all_cup_tour_length: AllCupTourLength
 
