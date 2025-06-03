@@ -65,7 +65,7 @@ class CustomLapCounts(OptionDict):
     """Set custom amount of laps on each course.
     Write each course on its own line, followed by : and number of laps."""
     display_name = "Custom Lap Counts"
-    default = {"Luigi Circuit": 3}
+    default = {"Wario Colosseum": 2}
     
 class ItemsForEverybody(Range):
     """How many global item unlocks there are."""
