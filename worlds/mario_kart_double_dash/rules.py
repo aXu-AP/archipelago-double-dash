@@ -23,6 +23,8 @@ class MkddRules:
         add_rule(location, rule, combine)
 
     def set_ent_rule(self, entrance_name: str, rule: CollectionRule) -> None:
+        if not entrance_name in self.world.current_entrances:
+            return
         entrance = self.world.multiworld.get_entrance(entrance_name, self.player)
         set_rule(entrance, rule)
 

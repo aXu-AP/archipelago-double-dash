@@ -41,6 +41,8 @@ class MkddWorld(World):
     def __init__(self, world, player):
         self.current_locations: list[MkddLocationData] = []
         self.current_regions: dict[str, MkddRegionData] = {}
+        self.current_entrances: set[str] = set()
+        
         self.cups_courses: list[list[int]] = []
         self.character_item_total_weights: dict[str, list[int]] = {}
         self.global_items_total_weights: list[int] = []
@@ -72,6 +74,8 @@ class MkddWorld(World):
 
         # Create regions.
         for region_name, region_data in regions.data_table.items():
+            if self.options.goal == options.Goal.option_trophies and region_name == game_data.CUPS[game_data.CUP_ALL_CUP_TOUR]:
+                continue
             region = Region(region_name, self.player, self.multiworld)
             self.multiworld.regions.append(region)
             self.current_regions[region_name] = region_data
@@ -85,6 +89,7 @@ class MkddWorld(World):
                 region.add_exits([game_data.RACE_COURSES[self.cups_courses[cup_no][i]].name + " GP" for i in range(4)])
             if region_name == game_data.CUPS[game_data.CUP_ALL_CUP_TOUR]:
                 region.add_exits([c.name + " GP" for c in game_data.RACE_COURSES])
+            self.current_entrances.update([e.name for e in region.exits])
 
             # Create locations.
             region.add_locations({
