@@ -3,7 +3,7 @@
 ## Requirements
 
 You'll need the following components to be able to play MKDD AP:
-* [Archipelago](https://archipelago.gg/tutorial/Archipelago/setup/en)
+* [Archipelago](https://archipelago.gg/tutorial/Archipelago/setup/en) 0.6.1 or newer
     * If you are new to Archipelago it is recommended to read the guide above.
 * [Mario Kart Double Dash APWorld](https://github.com/aXu-AP/archipelago-double-dash/releases)
     * The apworld should install simply by double clicking it if you have Archipelago installed.
@@ -50,7 +50,6 @@ You should now get checks whenever you finish races. To see what is currently un
   * You probably aren't connected to a server. Restart the game and ensure you have connection.
 * I can't select character X.
   * The characters need to be unlocked by completing checks. The game currently doesn't give any visual indication what is unlocked, but you can use `/unlocked` command in the client to see your current status.
-  * At the beginning you may have only a few characters unlocked on a specific row. There might not be a path for the cursor to go there. Try picking characters via random (L+R) until you get what you want. Think of this as a part of the game :)
 * The client doesn't register any checks.
   * Restart both the game and the client.
 * Where's my patch?
@@ -58,5 +57,8 @@ You should now get checks whenever you finish races. To see what is currently un
 * Can I use ar/gecko cheat codes?
   * Most of them should work.
   * If you find a cheat that doesn't work and you would like it to work, you can open an issue and we'll try to look into it.
-* I unlocked All Cup Tour but it doesn't show up.
-  * This is a visual bug. The cup should still be selectable even if it's invisible.
+* The client can't connect to Dolphin.
+  * Make sure you are using USA version of MKDD.
+  * Use Archipelago 0.6.1 or newer.
+  * Try running the client with admin privileges.
+  * As a last resort try resetting your settings (MAKE BACKUP FIRST - deleting `%appdata%/Dolphin Emulator` deletes your saves as well).
