@@ -247,7 +247,7 @@ class MkddContext(CommonContext):
         class MkddManager(GameManager):
             source = ""
             logging_pairs = [("Client", "Archipelago")]
-            base_title = f"Mario Kart: Double Dash!! Client v{version.get_str()}"
+            base_title = f"Mario Kart: Double Dash!! Client {version.get_str()}"
             if tracker_loaded:
                 base_title += f" | Universal Tracker {UT_VERSION}"
             base_title +=  " | Archipelago v"
