@@ -455,7 +455,15 @@ async def check_locations(ctx: MkddContext) -> None:
             new_location_names.add(locations.get_loc_name_finish(ctx.current_course.name))
             if in_race_placement == 0:
                 new_location_names.add(locations.get_loc_name_first(ctx.current_course.name))
-            
+
+                # Win with default character pairs.
+                character1 = min(c.id for c in ctx.active_characters)
+                character2 = max(c.id for c in ctx.active_characters)
+                if character1 % 2 == 0 and character1 + 1 == character2:
+                    new_location_names.add(locations.get_loc_name_win_characters(
+                        game_data.CHARACTERS[character1].name, game_data.CHARACTERS[character2].name
+                    ))
+
                 # Win with default character + kart combination.
                 for character in ctx.active_characters:
                     kart = game_data.KARTS[character.default_kart]
