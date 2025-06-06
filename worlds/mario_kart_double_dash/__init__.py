@@ -4,7 +4,7 @@ Archipelago init file for Mario Kart Double Dash!!
 import math
 from typing import Any
 
-from BaseClasses import Region, ItemClassification
+from BaseClasses import Region, ItemClassification, Tutorial
 from worlds.AutoWorld import WebWorld, World
 from worlds.LauncherComponents import Component, components, launch_subprocess
 
@@ -18,6 +18,16 @@ from . import game_data, version
 
 class MkddWebWorld(WebWorld):
     theme = "ocean"
+    tutorials = [
+        Tutorial(
+            tutorial_name="Setup Guide",
+            description="A guide to setting up Mario Kart Double Dash for MultiworldGG.",
+            language="English",
+            file_name="setup_en.md",
+            link="setup/en",
+            authors=["aXu"],
+        )
+    ]
 
 
 class MkddWorld(World):
@@ -279,7 +289,7 @@ def add_client_to_launcher() -> None:
                 c.func = launch_client
                 return
     if not found:
-        components.append(Component("Mario Kart Double Dash Client", "MKDDClient", func=launch_client))
+        components.append(Component("Mario Kart Double Dash Client", func=launch_client))
 
 
 add_client_to_launcher()
