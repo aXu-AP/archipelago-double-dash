@@ -36,6 +36,8 @@ class MkddMemAddresses():
     """Speed multiplier when playing on 150cc or Mirror. Default 1.15."""
     max_speed_f: int
     """Max kart speed which cannot be exceeded even with mushrooms. Default 200."""
+    all_cup_tour_contents_wx: int
+    """All cup tour course ids - uses ids 0 (Luigi Circuit) - 16 (Rainbow Road). Lenght 16, first value is unused."""
     cup_contents_wx: int
     """Table of cup course ids, name and preview images in cup order (ie. from Luigi Circuit to Rainbow Road).
     Example: Mushroom cup course 3: course id = 2*12, name = 2*12+4, preview = 2*12+8."""
@@ -107,6 +109,7 @@ class MkddMemAddressesUsa(MkddMemAddresses):
     gp_race_no_w = 0x803b0fc8
     speed_multiplier_150cc_f = 0x80361d4c
     max_speed_f = 0x803d1894
+    all_cup_tour_contents_wx = 0x803b1300
     cup_contents_wx = 0x803322e8
     course_names_s = [
         0x80331fd0, # Luigi Circuit

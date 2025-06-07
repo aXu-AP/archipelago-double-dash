@@ -665,6 +665,20 @@ def update_game(ctx: MkddContext) -> None:
                 if selected_course in available_cups_courses[selected_cup]:
                     break
             dolphin.write_word(ctx.memory_addresses.menu_course_w, selected_course)
+    
+    # Shuffle All Cup Tour properly with randomized courses.
+    if selected_cup == game_data.CUP_ALL_CUP_TOUR and selected_cup != ctx.last_selected_cup:
+        course_order = list(range(1, 15)) # First is LC, last is RR - shuffle everything between.
+        random.shuffle(course_order)
+        course_order = [0, *course_order, 15]
+        flat_course_list = [i_course for i_cup in ctx.cups_courses for i_course in i_cup]
+        offset = 0
+        for i_course in course_order:
+            dolphin.write_word(ctx.memory_addresses.all_cup_tour_contents_wx + offset,
+                               flat_course_list.index(i_course))
+            offset += 4
+        
+
     ctx.last_selected_cup = selected_cup
     ctx.last_selected_course = selected_course
 
