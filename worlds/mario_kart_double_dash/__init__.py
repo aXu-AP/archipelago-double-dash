@@ -23,7 +23,7 @@ class MkddWebWorld(WebWorld):
             tutorial_name="Setup Guide",
             description="A guide to setting up Mario Kart Double Dash for Archipelago.",
             language="English",
-            file_name="setup_en.md",
+            file_name="en_Setup.md",
             link="setup/en",
             authors=["aXu"],
         )
