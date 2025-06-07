@@ -561,11 +561,11 @@ def update_game(ctx: MkddContext) -> None:
     if vehicle_class != ctx.last_selected_vehicle_class:
         ctx.last_selected_vehicle_class = vehicle_class
         offset = ctx.memory_addresses.cup_contents_wx
-        for cup in ctx.cups_courses:
-            for course in cup:
-                dolphin.write_word(offset, game_data.COURSES[course].id)
-                dolphin.write_word(offset + 4, ctx.memory_addresses.course_names_s[course])
-                dolphin.write_word(offset + 8, ctx.memory_addresses.course_previews_s[course])
+        for i_cup in ctx.cups_courses:
+            for i_course in i_cup:
+                dolphin.write_word(offset, game_data.COURSES[i_course].id)
+                dolphin.write_word(offset + 4, ctx.memory_addresses.course_names_s[i_course])
+                dolphin.write_word(offset + 8, ctx.memory_addresses.course_previews_s[i_course])
                 offset += 12
 
 
@@ -593,11 +593,11 @@ def update_game(ctx: MkddContext) -> None:
     if mode == game_data.Modes.GRANDPRIX:
         # Give option to skip x first courses.
         courses = [c for c in range(ctx.unlocked_cup_skips + 1)]
-        for cup in ctx.unlocked_cups:
-            if cup == game_data.CUP_ALL_CUP_TOUR:
-                available_cups_courses[cup] = [0]
+        for i_cup in ctx.unlocked_cups:
+            if i_cup == game_data.CUP_ALL_CUP_TOUR:
+                available_cups_courses[i_cup] = [0]
             else:
-                available_cups_courses[cup] = courses
+                available_cups_courses[i_cup] = courses
 
         # Use custom lap counts in grand prix.
         for i_course in [c for c in game_data.RACE_COURSES]:
@@ -641,34 +641,34 @@ def update_game(ctx: MkddContext) -> None:
             dolphin.read_word(ctx.memory_addresses.gp_race_no_w) == ctx.all_cup_tour_length - 2):
             dolphin.write_word(ctx.memory_addresses.gp_race_no_w, 14)
 
-
     # Force cup and course selection.
+    selected_cup: int = int(dolphin.read_word(ctx.memory_addresses.cup_w))
+    selected_course: int = int(dolphin.read_word(ctx.memory_addresses.menu_course_w))
     if len(available_cups_courses) > 0:
-        cup: int = int(dolphin.read_word(ctx.memory_addresses.cup_w))
-        if not cup in available_cups_courses:
-            direction: int = cup - ctx.last_selected_cup
+        if not selected_cup in available_cups_courses:
+            direction: int = selected_cup - ctx.last_selected_cup
             direction = 1 if direction == 0 or direction == 1 else -1
             for i in range(5):
-                cup = wrap(cup + direction, len(game_data.CUPS))
-                if cup in available_cups_courses:
+                selected_cup = wrap(selected_cup + direction, len(game_data.CUPS))
+                if selected_cup in available_cups_courses:
                     break
-            dolphin.write_word(ctx.memory_addresses.cup_w, cup)
-            ctx.last_selected_cup = cup
+            dolphin.write_word(ctx.memory_addresses.cup_w, selected_cup)
 
         for i_cup in range(len(game_data.CUPS)):
             dolphin.write_byte(ctx.memory_addresses.available_cups_bx + i_cup, int(i_cup in available_cups_courses))
 
-        course: int = int(dolphin.read_word(ctx.memory_addresses.menu_course_w))
-        if not course in available_cups_courses[cup]:
-            direction: int = course - ctx.last_selected_course
+        if not selected_course in available_cups_courses[selected_cup]:
+            direction: int = selected_course - ctx.last_selected_course
             direction = 1 if direction == 0 or direction == 1 else -1
             for i in range(4):
-                course = wrap(course + direction, 4)
-                if course in available_cups_courses[cup]:
+                selected_course = wrap(selected_course + direction, 4)
+                if selected_course in available_cups_courses[selected_cup]:
                     break
-            dolphin.write_word(ctx.memory_addresses.menu_course_w, course)
-            ctx.last_selected_course = course
-    
+            dolphin.write_word(ctx.memory_addresses.menu_course_w, selected_course)
+    ctx.last_selected_cup = selected_cup
+    ctx.last_selected_course = selected_course
+
+    # Set kart stats.
     vehicle_class: int = dolphin.read_word(ctx.memory_addresses.vehicle_class_w)
     if mode == game_data.Modes.GRANDPRIX and vehicle_class == 3 and ctx.mirror_200cc:
         dolphin.write_float(ctx.memory_addresses.speed_multiplier_150cc_f, 1.4)
@@ -727,6 +727,7 @@ def update_game(ctx: MkddContext) -> None:
         dolphin.write_float(kart_address + ctx.memory_addresses.kart_mass_f_offset, stats.mass + weight_addition)
         dolphin.write_float(kart_address + ctx.memory_addresses.kart_roll_f_offset, stats.roll)
         dolphin.write_float(kart_address + ctx.memory_addresses.kart_steer_f_offset, stats.steer + steer_addition)
+
 
 def wrap(value: int, max_value: int) -> int:
     if value < 0:
