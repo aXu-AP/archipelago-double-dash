@@ -240,8 +240,8 @@ class MkddContext(CommonContext):
         ui = super().make_gui()
         ui.base_title = f"Archipelago Mario Kart Double Dash Client {version.get_str()}"
         if tracker_loaded:
-            base_title += f" | Universal Tracker {UT_VERSION}"
-        base_title +=  " | Archipelago v"
+            ui.base_title += f" | Universal Tracker {UT_VERSION}"
+        ui.base_title +=  " | Archipelago v"
         return ui
 
 ###### Dolphin connection ######
