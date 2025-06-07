@@ -99,8 +99,6 @@ class MkddWorld(World):
             if region_name in game_data.NORMAL_CUPS:
                 cup_no = game_data.CUPS.index(region_name)
                 region.add_exits([game_data.RACE_COURSES[self.cups_courses[cup_no][i]].name + " GP" for i in range(4)])
-            if region_name == game_data.CUPS[game_data.CUP_ALL_CUP_TOUR]:
-                region.add_exits([c.name + " GP" for c in game_data.RACE_COURSES])
             self.current_entrances.update([e.name for e in region.exits])
 
             # Create locations.
