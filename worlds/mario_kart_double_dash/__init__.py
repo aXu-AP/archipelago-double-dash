@@ -279,7 +279,7 @@ def add_client_to_launcher() -> None:
                 c.func = launch_client
                 return
     if not found:
-        components.append(Component("Mario Kart Double Dash Client", "MKDDClient", func=launch_client))
+        components.append(Component("Mario Kart Double Dash Client", func=launch_client))
 
 
 add_client_to_launcher()
