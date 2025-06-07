@@ -238,34 +238,11 @@ class MkddContext(CommonContext):
         :return: The client's GUI.
         """
         ui = super().make_gui()
-        ui.base_title = "Archipelago Mario Kart Double Dash Client"
-        return ui
-    
-    def run_gui(self):
-        from kvui import GameManager
-
-        class MkddManager(GameManager):
-            source = ""
-            logging_pairs = [("Client", "Archipelago")]
-            base_title = f"Mario Kart: Double Dash!! Client {version.get_str()}"
-            if tracker_loaded:
-                base_title += f" | Universal Tracker {UT_VERSION}"
-            base_title +=  " | Archipelago v"
-
-            def build(self):
-                container = super().build()
-                if tracker_loaded:
-                    self.ctx.build_gui(self)
-                else:
-                    logger.info("To enable a tracker, install Universal Tracker")
-
-                return container
-
-        self.ui = MkddManager(self)
+        ui.base_title = f"Archipelago Mario Kart Double Dash Client {version.get_str()}"
         if tracker_loaded:
-            self.load_kv()
-        self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
-
+            base_title += f" | Universal Tracker {UT_VERSION}"
+        base_title +=  " | Archipelago v"
+        return ui
 
 ###### Dolphin connection ######
 def _apply_ar_code(code: list[int]):
