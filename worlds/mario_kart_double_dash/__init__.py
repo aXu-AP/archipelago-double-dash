@@ -59,6 +59,7 @@ class MkddWorld(World):
     def generate_early(self):
         if hasattr(self.multiworld, "re_gen_passthrough"):
             slot_data: dict = self.multiworld.re_gen_passthrough["Mario Kart Double Dash"]
+            self.options.trophy_amount = slot_data["trophy_amount"]
             self.options.logic_difficulty = slot_data["logic_difficulty"]
             # Staff ghosts were on by default before this option was introduced.
             self.options.time_trials = slot_data.get("time_trials", options.TimeTrials.option_include_staff_ghosts)
