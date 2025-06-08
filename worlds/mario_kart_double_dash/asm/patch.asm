@@ -3,7 +3,6 @@
 .long \address
 .endm
 
-# Spare space from the function below.
 .set char_unlock_table, 0x80001000
 .set kart_unlock_table, 0x80001000 + 0x14
 .set race_counter, 0x80001000 + 0x2c
@@ -14,6 +13,11 @@
 .set tt_driver_item, 0x80001000 + 0x41
 .set tt_rider_item, 0x80001000 + 0x42
 .set gp_next_item, 0x80001000 + 0x43
+
+# 4 bytes for position, 44 for string per text. text_table points to the start of the string, x and y are offset -4 and -2.
+.set text_table, 0x80000da0 + 4
+.set text_size, 0x30
+.set text_amount, 5
 
 
 # SECTION character_selection
@@ -252,3 +256,54 @@ addi    r3, r3, gp_next_item@l
 lbzx    r3, r3, r5 # Offset by assumed special item.
 b       item_shuffle_return_player
 b       item_shuffle_return_cpu
+
+# SECTION draw_string
+.set jutreport_jump, 0x80019c4c - 0x80001128 - 10*4
+WriteTo 0x80001128
+# Push stack.
+stwu    sp, -0x10 (sp)
+mflr    r0
+stw     r0, 0x14 (sp)
+stw     r31, 0x8 (sp)
+# Draw texts.
+li      r31, 0
+lis     r5, text_table@ha   # String address
+addi    r5, r5, text_table@l
+add     r5, r5, r31
+lhz     r3, -4 (r5)         # X position
+lhz     r4, -2 (r5)         # Y position
+bl      jutreport_jump
+addi    r31, r31, text_size
+cmplwi  r31, text_size * text_amount
+blt+    -0x20
+# Pop stack.
+lwz     r31, 0x8 (sp)
+lwz     r0, 0x14 (sp)
+mtlr    r0
+addi    sp, sp, 0x10
+blr
+# Call the print function in the character selection screen.
+.set draw_string_character_jump, 0x80001128 + 19*4 - 0x80159434
+.set draw_string_character_return, 0x80159434 + 4 - 0x80001128 - 21*4
+bl      -19 * 4
+lwz     r0, 0x20E0 (r31)    # default code
+b       draw_string_character_return
+# Call the print function in the course selection screen.
+.set draw_string_course_jump, 0x80001128 + 22*4 - 0x8016a380
+.set draw_string_course_return, 0x8016a380 + 4 - 0x80001128 - 24*4
+bl      -22 * 4
+lfs     f1, -0x603C (rtoc)  # default code
+b       draw_string_course_return
+# Call the print function during race.
+.set draw_string_race_jump, 0x80001128 + 25*4 - 0x801cd91c
+.set draw_string_race_return, 0x801cd91c + 4 - 0x80001128 - 27*4
+bl      -25 * 4
+lwz     r0, 0x0014 (sp)     # default code
+b       draw_string_race_return
+
+WriteTo 0x80159434
+b       draw_string_character_jump
+WriteTo 0x8016a380
+b       draw_string_course_jump
+WriteTo 0x801cd91c
+b       draw_string_race_jump

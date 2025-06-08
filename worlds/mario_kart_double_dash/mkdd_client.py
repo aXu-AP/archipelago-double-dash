@@ -511,7 +511,10 @@ def update_game(ctx: MkddContext) -> None:
     :param ctx: Mario Kart Double Dash client context.
     """
     _apply_ar_code(ar_codes.unlock_everything)
-
+    
+    text_s: list[str] = ["" for _ in range(3)]
+    text_x: list[int] = [0 for _ in range(3)]
+    text_y: list[int] = [0 for _ in range(3)]
     # Force character and kart selection.
     # The game is modded to do this autonomically to some degree, but some edge cases is handled by client.
     # TODO: Handle the rest of the cases in-game:
@@ -547,6 +550,9 @@ def update_game(ctx: MkddContext) -> None:
             ctx.last_selected_character[player] = character
 
             if kart >= 0 and kart < len(game_data.KARTS):
+                text_s[0] = game_data.KARTS[kart].name + " " + ", ".join(u.short_name for u in ctx.kart_upgrades[kart])
+                text_x[0] = 92
+                text_y[0] = 215
                 weight = max(ctx.active_characters[0].weight, ctx.active_characters[1].weight)
                 direction: int = kart - ctx.last_selected_kart[player]
                 direction = 1 if direction == 0 else int(direction / abs(direction))
@@ -741,6 +747,9 @@ def update_game(ctx: MkddContext) -> None:
         dolphin.write_float(kart_address + ctx.memory_addresses.kart_mass_f_offset, stats.mass + weight_addition)
         dolphin.write_float(kart_address + ctx.memory_addresses.kart_roll_f_offset, stats.roll)
         dolphin.write_float(kart_address + ctx.memory_addresses.kart_steer_f_offset, stats.steer + steer_addition)
+    
+    for i in range(len(text_s)):
+        print_ingame(ctx, text_x[i], text_y[i], text_s[i], i)
 
 
 def wrap(value: int, max_value: int) -> int:
@@ -804,6 +813,47 @@ def check_ingame() -> bool:
     # TODO: Check if a race is on.
     return True
 
+
+def dolphin_write_half(address: int, value: int) -> None:
+    """
+    Write a half-word/short (2 bytes) into memory.
+    """
+    dolphin.write_bytes(address, value.to_bytes(2, byteorder="big"))
+
+
+def dolphin_write_str(address: int, value: str) -> None:
+    """
+    Write a string into memory.
+    """
+    dolphin.write_bytes(address, bytes(value, "ascii", "replace"))
+    dolphin.write_byte(address + len(value), 0)
+
+
+def print_ingame(ctx: MkddContext, x: int, y: int, text: str, msg_id: int, justification: int = 0) -> None:
+    """
+    Print text in game.
+
+    :param ctx: Mario Kart Double Dash client context.
+    :param x: X coorditate, from 0 (left) to 608 (right).
+    :param y: Y coordinate, from 12 (top) to 450 (bottom).
+    :param text: The text to show. One line only, max 43 characters.
+    :param msg_id: Id for the text. From 0 upwards. Using same id replaces the text.
+    """
+    address = ctx.memory_addresses.text_sx + msg_id * ctx.memory_addresses.text_size
+    font_size = 12
+    dolphin_write_half(address + ctx.memory_addresses.text_x_offset_h, x)
+    dolphin_write_half(address + ctx.memory_addresses.text_y_offset_h, y)
+    text = text[:43]
+    dolphin_write_str(address, text)
+
+
+def queue_ingame_message(ctx: MkddContext, message: str) -> None:
+    """
+    Show message in game. If there's multiple messages, they will be shown one after another.
+
+    :param ctx: Mario Kart Double Dash client context.
+    :param message: The message to show. Can be 2 lines long.
+    """
 
 async def dolphin_sync_task(ctx: MkddContext) -> None:
     """

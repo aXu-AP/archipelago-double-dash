@@ -91,6 +91,14 @@ class MkddMemAddresses():
     """Items for driver and rider in time trials (size 2)."""
     gp_next_items_bx: int
     """Item for player in grand prix. Offset by character's special item id (size 22)."""
+    text_sx: int
+    """Text to print."""
+    text_size: int
+    """Max lenght of the text."""
+    text_x_offset_h: int
+    """Offset from text, x coordinate for the text."""
+    text_y_offset_h: int
+    """Offset from text, y coordinate for the text."""
 
 class MkddMemAddressesUsa(MkddMemAddresses):
     # Vanilla addresses:
@@ -178,3 +186,8 @@ class MkddMemAddressesUsa(MkddMemAddresses):
     available_cups_bx = 0x8000103c
     tt_items_bx = 0x80001041
     gp_next_items_bx = 0x80001043
+
+    text_sx = 0x80000da4
+    text_size = 0x30
+    text_x_offset_h = -4
+    text_y_offset_h = -2

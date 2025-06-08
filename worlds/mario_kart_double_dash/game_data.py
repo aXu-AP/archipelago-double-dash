@@ -226,14 +226,15 @@ TT_ITEM_TABLE = [
 class KartUpgrade(NamedTuple):
     id: int
     name: str
+    short_name: str
     usefulness: int
 
 KART_UPGRADES = [
-    KartUpgrade(0, "Acceleration Boost", 10),
-    KartUpgrade(1, "Mini-turbo Extender", 10),
-    KartUpgrade(2, "Off-road Tires", 8),
-    KartUpgrade(3, "Extra Weight", 2),
-    KartUpgrade(4, "Power Steering", 8),
+    KartUpgrade(0, "Acceleration Boost", "ACC", 10),
+    KartUpgrade(1, "Mini-turbo Extender", "TUR", 10),
+    KartUpgrade(2, "Off-road Tires", "OFR", 8),
+    KartUpgrade(3, "Extra Weight", "WEI", 2),
+    KartUpgrade(4, "Power Steering", "STE", 8),
 ]
 
 KART_UPGRADE_ACC = KART_UPGRADES[0]
