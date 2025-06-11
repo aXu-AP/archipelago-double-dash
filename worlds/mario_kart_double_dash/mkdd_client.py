@@ -515,44 +515,54 @@ def update_game(ctx: MkddContext) -> None:
     text_s: list[str] = ["" for _ in range(3)]
     text_x: list[int] = [0 for _ in range(3)]
     text_y: list[int] = [0 for _ in range(3)]
-    # Force character and kart selection.
-    # The game is modded to do this autonomically to some degree, but some edge cases is handled by client.
-    # TODO: Handle the rest of the cases in-game:
-    #       - Default character is still Mario
-    #       - Default kart is chosen from the character
-    #       - Random choice kart
+
     menu_pointer = dolphin.read_word(ctx.memory_addresses.menu_pointer)
     if menu_pointer != 0:
         driver = dolphin.read_word(menu_pointer + ctx.memory_addresses.menu_driver_w_offset)
         rider = dolphin.read_word(menu_pointer + ctx.memory_addresses.menu_rider_w_offset)
+        # Save active selections for printing info.
+        p1_character: game_data.Character | None = None
+        p2_character: game_data.Character | None = None
+        p1_kart: game_data.Kart | None = None
         # Save selections for later use (when menu pointer becomes invalid).
         if driver >= 0 and driver < len(game_data.CHARACTERS):
             ctx.active_characters[0] = game_data.CHARACTERS[driver]
+            p1_character = ctx.active_characters[0]
         if rider >= 0 and rider < len(game_data.CHARACTERS):
             ctx.active_characters[1] = game_data.CHARACTERS[rider]
+            p2_character = ctx.active_characters[1]
         
         for player in range(4):
             player_offset = player * ctx.memory_addresses.menu_player_struct_size
             character: int = int(dolphin.read_word(menu_pointer + ctx.memory_addresses.menu_character_w_offset + player_offset))
             kart: int = int(dolphin.read_word(menu_pointer + ctx.memory_addresses.menu_kart_w_offset + player_offset))
             
-            if kart >= 0 and kart < len(game_data.KARTS):
-                ctx.active_kart = game_data.KARTS[kart]
+            if character >= 0 and character < len(game_data.CHARACTERS):
+                if player == 0:
+                    if not p1_character:
+                        # Player 1 is choosing the driver.
+                        p1_character = game_data.CHARACTERS[character]
+                    else:
+                        # Player 1 is choosing the rider.
+                        p2_character = game_data.CHARACTERS[character]
+                elif player == 1:
+                    # Player 2 can choose only the rider.
+                    p2_character = game_data.CHARACTERS[character]
 
-            if character >= 0 and character < len(game_data.CHARACTERS) and not character in ctx.unlocked_characters:
-                direction: int = character - ctx.last_selected_character[player]
-                direction = 1 if direction == 0 or direction == 1 else -1
-                for i in range(20):
-                    character = wrap(character + direction, len(game_data.CHARACTERS))
-                    if character in ctx.unlocked_characters:
-                        break
-                dolphin.write_word(menu_pointer + ctx.memory_addresses.menu_character_w_offset + player_offset, character)
+                # Force character selection.
+                if not character in ctx.unlocked_characters:
+                    direction: int = character - ctx.last_selected_character[player]
+                    direction = 1 if direction == 0 or direction == 1 else -1
+                    for i in range(20):
+                        character = wrap(character + direction, len(game_data.CHARACTERS))
+                        if character in ctx.unlocked_characters:
+                            break
+                    dolphin.write_word(menu_pointer + ctx.memory_addresses.menu_character_w_offset + player_offset, character)
+
             ctx.last_selected_character[player] = character
-
+            
             if kart >= 0 and kart < len(game_data.KARTS):
-                text_s[0] = game_data.KARTS[kart].name + " " + ", ".join(u.short_name for u in ctx.kart_upgrades[kart])
-                text_x[0] = 92
-                text_y[0] = 215
+                # Force kart selection.
                 weight = max(ctx.active_characters[0].weight, ctx.active_characters[1].weight)
                 direction: int = kart - ctx.last_selected_kart[player]
                 direction = 1 if direction == 0 else int(direction / abs(direction))
@@ -561,8 +571,54 @@ def update_game(ctx: MkddContext) -> None:
                         break
                     kart = wrap(kart + direction, len(game_data.KARTS))
                 dolphin.write_word(menu_pointer + ctx.memory_addresses.menu_kart_w_offset + player_offset, kart)
+
+                if player == 0:
+                    ctx.active_kart = game_data.KARTS[kart]
+                    p1_kart = ctx.active_kart
             ctx.last_selected_kart[player] = kart
 
+        # Print selected kart or characters and their items.
+        if p1_kart:
+            text_s[0] = p1_kart.name + " " + ", ".join(u.short_name for u in ctx.kart_upgrades[p1_kart.id])
+            text_x[0] = 92
+            text_y[0] = 215
+        elif p1_character:
+            p1_items: list[game_data.Item] = ctx.character_items.get(p1_character, []).copy()
+            p1_items.extend(ctx.global_items)
+            if p2_character:
+                p2_items: list[game_data.Item] = ctx.character_items.get(p2_character, []).copy()
+                p2_items.extend(ctx.global_items)
+                # Check for synergy (default character combo).
+                character1 = min(p1_character.id, p2_character.id)
+                character2 = max(p1_character.id, p2_character.id)
+                if character1 % 2 == 0 and character1 + 1 == character2:
+                    p1_items = p2_items
+                    if len(p2_items) > 0:
+                        text_x[2] = 92
+                        text_y[2] = 265
+                        text_s[2] = "Item synergy"
+                text_x[1] = 92
+                text_y[1] = 240
+                if len(p2_items) > 0:
+                    text_s[1] = f"{p2_character.name}: {", ".join([item.name for item in p2_items])}"
+                    if len(text_s[1]) > 40:
+                        text_s[1] = f"{p2_character.name}: {", ".join([item.short_name for item in p2_items])}"
+                    if len(text_s[1]) > 43:
+                        text_s[1] = text_s[1][:41] + ".."
+                else:
+                    text_s[1] = f"{p2_character.name} (no items)"
+            text_x[0] = 92
+            text_y[0] = 215
+            if len(p1_items) > 0:
+                text_s[0] = f"{p1_character.name}: {", ".join([item.name for item in p1_items])}"
+                if len(text_s[0]) > 40:
+                    text_s[0] = f"{p1_character.name}: {", ".join([item.short_name for item in p1_items])}"
+                if len(text_s[0]) > 43:
+                    text_s[0] = text_s[0][:41] + ".."
+            else:
+                text_s[0] = f"{p1_character.name} (no items)"
+
+    # Apply shuffled courses upon selecting vehicle class.
     vehicle_class = dolphin.read_word(ctx.memory_addresses.vehicle_class_w)
     if vehicle_class != ctx.last_selected_vehicle_class:
         ctx.last_selected_vehicle_class = vehicle_class

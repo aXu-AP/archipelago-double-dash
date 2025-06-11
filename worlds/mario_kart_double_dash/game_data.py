@@ -166,31 +166,32 @@ class Modes(IntEnum):
 class Item(NamedTuple):
     id: int
     name: str
+    short_name: str
     usefulness: int = 0
     weight_table: list[int] = []
 
 ITEMS = [
-    Item(0, "Green Shell",          2, [ 90,  50,  25,  10,   1,   1,   1,   1]),
-    Item(1, "Bowser's Shell",       3, [ 30,  60, 100, 100, 100,  90,  40,   1]),
-    Item(2, "Red Shell",            3, [ 10,  55,  70,  70,  70,  50,  40,  20]),
-    Item(3, "Banana",               1, [ 70,  35,  15,   5,   1,   1,   1,   1]),
-    Item(4, "Giant Banana",         2, [120, 100,  90,  60,  30,   1,   1,   1]),
-    Item(5, "Mushroom",             4, [  1,  40,  65,  75,  65,  35,  10,  10]),
-    Item(6, "Star",                 5, [  1,   1,   1,  10,  20,  30,  40,  40]),
-    Item(7, "Chain Chomp",          4, [  0,   0,   1,   3,  20,  60, 130, 180]),
-    Item(8, "Bob-omb",              1, [ 10,  70, 100, 100, 100,  90,  40,   0]),
-    Item(9, "Fireball",             1, [ 90,  50,  25,  10,   1,   1,   1,   1]),
-    Item(10, "Lightning",           3, [  0,   0,   1,   1,   3,  10,  20,  30]),
-    Item(11, "Yoshi Egg",           4, [ 50,  70,  80,  80,  80,  70,  60,  40]),
-    Item(12, "Golden Mushroom",     6, [  0,   3,  10,  30,  50,  80, 100, 120]),
-    Item(13, "Spiny Shell",         0, [  0,   0,   5,  10,  10,  20,  20,  20]),
-    Item(14, "Heart",               4, [  1,   1,   3,  10,  30,  90, 110, 130]),
-    Item(15, "Fake Item",           0, [ 30,  20,  10,   0,   0,   0,   0,   1]),
-    Item(17, "Triple Green Shells", 3, [ 20,  50, 100, 100, 100,  90,  40,   1]),
-    Item(18, "Triple Mushrooms",    6, [  1,   1,  10,  20,  35,  50,  70,  90]),
-    Item(19, "Triple Red Shells",   4, [  5,  40,  60,  70,  70,  50,  50,  30]),
-    Item(21, "Fireballs",           2, [ 30,  70, 100, 100, 100,  90,  40,   1]),
-    Item(20, "None",                0, [  0,   0,   0,   0,   0,   0,   0,   0]),
+    Item(0, "Green Shell", "GrSh",          2, [ 90,  50,  25,  10,   1,   1,   1,   1]),
+    Item(1, "Bowser's Shell", "BoSh",       3, [ 30,  60, 100, 100, 100,  90,  40,   1]),
+    Item(2, "Red Shell", "ReSh",            3, [ 10,  55,  70,  70,  70,  50,  40,  20]),
+    Item(3, "Banana", "Ba",                 1, [ 70,  35,  15,   5,   1,   1,   1,   1]),
+    Item(4, "Giant Banana", "GBa",          2, [120, 100,  90,  60,  30,   1,   1,   1]),
+    Item(5, "Mushroom", "Mu",               4, [  1,  40,  65,  75,  65,  35,  10,  10]),
+    Item(6, "Star", "St",                   5, [  1,   1,   1,  10,  20,  30,  40,  40]),
+    Item(7, "Chain Chomp", "CC",            4, [  0,   0,   1,   3,  20,  60, 130, 180]),
+    Item(8, "Bob-omb", "Bo",                1, [ 10,  70, 100, 100, 100,  90,  40,   0]),
+    Item(9, "Fireball", "Fi",               1, [ 90,  50,  25,  10,   1,   1,   1,   1]),
+    Item(10, "Lightning", "Li",             3, [  0,   0,   1,   1,   3,  10,  20,  30]),
+    Item(11, "Yoshi Egg", "Eg",             4, [ 50,  70,  80,  80,  80,  70,  60,  40]),
+    Item(12, "Golden Mushroom", "GMu",      6, [  0,   3,  10,  30,  50,  80, 100, 120]),
+    Item(13, "Spiny Shell", "SpSh",         0, [  0,   0,   5,  10,  10,  20,  20,  20]),
+    Item(14, "Heart", "He",                 4, [  1,   1,   3,  10,  30,  90, 110, 130]),
+    Item(15, "Fake Item", "FI",             0, [ 30,  20,  10,   0,   0,   0,   0,   1]),
+    Item(17, "Triple Green Shells", "3GS",  3, [ 20,  50, 100, 100, 100,  90,  40,   1]),
+    Item(18, "Triple Mushrooms", "3Mu",     6, [  1,   1,  10,  20,  35,  50,  70,  90]),
+    Item(19, "Triple Red Shells", "3RS",    4, [  5,  40,  60,  70,  70,  50,  50,  30]),
+    Item(21, "Fireballs", "Fi",             2, [ 30,  70, 100, 100, 100,  90,  40,   1]),
+    Item(20, "None", "",                    0, [  0,   0,   0,   0,   0,   0,   0,   0]),
 ]
 
 ITEM_GREEN_SHELL = ITEMS[0]
