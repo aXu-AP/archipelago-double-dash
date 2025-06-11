@@ -20,7 +20,7 @@ Grand Prix and Time Trial. 2 players on one kart should work, but is untested (y
 
 ## Setup
 
-See [setup guide](worlds/mario_kart_double_dash/docs/setup_en.md) for a throughout explanation and troubleshooting.
+See [setup guide](worlds/mario_kart_double_dash/docs/en_Setup.md) for a throughout explanation and troubleshooting.
 
 If you are familiar with the general Archipelago workflow, here's a super quick guide:
 * Install the apworld and set up your multiworld as usual. Having [Universal Tracker](https://github.com/FarisTheAncient/Archipelago/releases) is recommended.
