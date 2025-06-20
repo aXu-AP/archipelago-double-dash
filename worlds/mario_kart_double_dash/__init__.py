@@ -111,10 +111,11 @@ class MkddWorld(World):
                     self.current_locations.append(location_data)
         
         # Locked items.
-        for cup in game_data.NORMAL_CUPS:
-            for vehicle_class in range(4):
-                self.get_location(locations.get_loc_name_trophy(cup, vehicle_class))\
-                    .place_locked_item(self.create_item(items.TROPHY))
+        if not self.options.trophy_shuffle:
+            for cup in game_data.NORMAL_CUPS:
+                for vehicle_class in range(4):
+                    self.get_location(locations.get_loc_name_trophy(cup, vehicle_class))\
+                        .place_locked_item(self.create_item(items.TROPHY))
         if self.options.goal == options.Goal.option_all_cup_tour:
             self.get_location(locations.TROPHY_GOAL).place_locked_item(self.create_item(game_data.CUPS[game_data.CUP_ALL_CUP_TOUR]))
             self.get_location(locations.WIN_ALL_CUP_TOUR).place_locked_item(self.create_item("Victory"))
@@ -145,13 +146,18 @@ class MkddWorld(World):
         # Generic items by predetermined counts.
         item_pool: list[MkddItem] = []
         for item in items.data_table:
-            if self.options.time_trials == options.TimeTrials.option_disable and item.item_type == items.ItemType.TT_COURSE or item.name == items.PROGRESSIVE_TIME_TRIAL_ITEM:
+            item_name: str = item.name
+            if self.options.time_trials == options.TimeTrials.option_disable and item.item_type == items.ItemType.TT_COURSE or item_name == items.PROGRESSIVE_TIME_TRIAL_ITEM:
                 continue
-            if item.classification != ItemClassification.filler:
-                count = item.count
-                count -= precollected.count(item.name)
-                for i in range(count):
-                    item_pool.append(self.create_item(item.name))
+
+            count: int = 0
+            if self.options.trophy_shuffle and item_name == items.TROPHY:
+                count = self.options.trophy_amount - precollected.count(item_name)
+            elif item.classification != ItemClassification.filler:
+                count = item.count - precollected.count(item_name)
+
+            for i in range(count):
+                item_pool.append(self.create_item(item_name))
         
         # Kart upgrades generation.
         if self.options.kart_upgrades > 0:
@@ -257,6 +263,7 @@ class MkddWorld(World):
         return {
             "version": version.get_str(),
             "trophy_amount": int(self.options.trophy_amount),
+            "trophy_shuffle": int(self.options.trophy_shuffle),
             "logic_difficulty": int(self.options.logic_difficulty) if not self.options.tracker_unrestricted_logic else 100,
             "time_trials": int(self.options.time_trials),
             "cups_courses": self.cups_courses,

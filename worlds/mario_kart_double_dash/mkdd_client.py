@@ -110,6 +110,7 @@ class MkddContext(CommonContext):
         self.trophy_goal: int
         self.all_cup_tour_length: int
         self.cups_courses: list[list[int]]
+        self.trophy_shuffle: bool
         self.mirror_200cc: bool
         self.lap_counts: dict[str, int]
 
@@ -196,6 +197,7 @@ class MkddContext(CommonContext):
             self.trophy_goal = slot_data.get("trophy_amount")
             self.cups_courses = slot_data["cups_courses"]
             self.all_cup_tour_length = slot_data.get("all_cup_tour_length", 8)
+            self.trophy_shuffle = bool(slot_data.get("trophy_shuffle"))
             self.mirror_200cc = bool(slot_data.get("mirror_200cc"))
             self.lap_counts = slot_data.get("lap_counts")
 

@@ -44,6 +44,9 @@ Mario Kart Double Dash:
     # Minimum value is 0
     # Maximum value is 16
 
+  trophy_shuffle: false
+    # If enabled, gold trophies will be shuffled throughout the multiworld
+
   logic_difficulty: normal
     # Balances the difficulty modeling, how many upgrades you are presumed to have to win races.
     # Use normal (0) if you can comfortably win 100cc races.

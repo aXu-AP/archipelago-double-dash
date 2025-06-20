@@ -17,6 +17,10 @@ class TrophyAmount(Range):
     range_end = 16
     default = 10
 
+class TrophyShuffle(Toggle):
+    """If enabled, gold trophies will be shuffled throughout the multiworld"""
+    display_name = "Trophy Shuffle"
+
 class LogicDifficulty(NamedRange):
     """Balances the difficulty modeling, how many upgrades you are presumed to have to win races.
     Use normal (0) if you can comfortably win 100cc races.
@@ -104,6 +108,8 @@ class KartUpgrades(Range):
 class MkddOptions(PerGameCommonOptions):
     goal: Goal
     trophy_amount: TrophyAmount
+    trophy_shuffle: TrophyShuffle
+
     logic_difficulty: LogicDifficulty
     tracker_unrestricted_logic: TrackerUnrestrictedLogic
     time_trials: TimeTrials
