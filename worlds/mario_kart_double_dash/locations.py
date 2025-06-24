@@ -1,7 +1,7 @@
 from typing import NamedTuple, TYPE_CHECKING
 
 from BaseClasses import Location
-from . import game_data
+from . import game_data, items
 
 if TYPE_CHECKING:
     from . import MkddWorld
@@ -94,20 +94,20 @@ for cup in game_data.NORMAL_CUPS:
     data_table.append(MkddLocationData(get_loc_name_cup(cup, 0, 0), 40, cup, tags = {cup, TAG_CUP_GOLD}))
     data_table.append(MkddLocationData(get_loc_name_trophy(cup, 0), 40, cup))
     # 100cc
-    data_table.append(MkddLocationData(get_loc_name_cup(cup, 2, 1), 40, cup, {"Progressive Class":1}, {cup, TAG_CUP_BRONZE}))
-    data_table.append(MkddLocationData(get_loc_name_cup(cup, 1, 1), 60, cup, {"Progressive Class":1}, {cup, TAG_CUP_SILVER}))
-    data_table.append(MkddLocationData(get_loc_name_cup(cup, 0, 1), 70, cup, {"Progressive Class":1}, {cup, TAG_CUP_GOLD}))
-    data_table.append(MkddLocationData(get_loc_name_trophy(cup, 1), 70, cup, {"Progressive Class":1}))
+    data_table.append(MkddLocationData(get_loc_name_cup(cup, 2, 1), 40, cup, {items.PROGRESSIVE_CLASS:1}, {cup, TAG_CUP_BRONZE}))
+    data_table.append(MkddLocationData(get_loc_name_cup(cup, 1, 1), 60, cup, {items.PROGRESSIVE_CLASS:1}, {cup, TAG_CUP_SILVER}))
+    data_table.append(MkddLocationData(get_loc_name_cup(cup, 0, 1), 70, cup, {items.PROGRESSIVE_CLASS:1}, {cup, TAG_CUP_GOLD}))
+    data_table.append(MkddLocationData(get_loc_name_trophy(cup, 1), 70, cup, {items.PROGRESSIVE_CLASS:1}))
     # 150cc
-    data_table.append(MkddLocationData(get_loc_name_cup(cup, 2, 2), 60, cup, {"Progressive Class":2}, {cup, TAG_CUP_BRONZE}))
-    data_table.append(MkddLocationData(get_loc_name_cup(cup, 1, 2), 80, cup, {"Progressive Class":2}, {cup, TAG_CUP_SILVER}))
-    data_table.append(MkddLocationData(get_loc_name_cup(cup, 0, 2), 90, cup, {"Progressive Class":2}, {cup, TAG_CUP_GOLD}))
-    data_table.append(MkddLocationData(get_loc_name_trophy(cup, 2), 90, cup, {"Progressive Class":2}))
+    data_table.append(MkddLocationData(get_loc_name_cup(cup, 2, 2), 60, cup, {items.PROGRESSIVE_CLASS:2}, {cup, TAG_CUP_BRONZE}))
+    data_table.append(MkddLocationData(get_loc_name_cup(cup, 1, 2), 80, cup, {items.PROGRESSIVE_CLASS:2}, {cup, TAG_CUP_SILVER}))
+    data_table.append(MkddLocationData(get_loc_name_cup(cup, 0, 2), 90, cup, {items.PROGRESSIVE_CLASS:2}, {cup, TAG_CUP_GOLD}))
+    data_table.append(MkddLocationData(get_loc_name_trophy(cup, 2), 90, cup, {items.PROGRESSIVE_CLASS:2}))
     # Mirror
-    data_table.append(MkddLocationData(get_loc_name_cup(cup, 2, 3), 70, cup, {"Progressive Class":3}, {cup, TAG_CUP_BRONZE}))
-    data_table.append(MkddLocationData(get_loc_name_cup(cup, 1, 3), 90, cup, {"Progressive Class":3}, {cup, TAG_CUP_SILVER}))
-    data_table.append(MkddLocationData(get_loc_name_cup(cup, 0, 3), 100, cup, {"Progressive Class":3}, {cup, TAG_CUP_GOLD}))
-    data_table.append(MkddLocationData(get_loc_name_trophy(cup, 3), 100, cup, {"Progressive Class":3}))
+    data_table.append(MkddLocationData(get_loc_name_cup(cup, 2, 3), 70, cup, {items.PROGRESSIVE_CLASS:3}, {cup, TAG_CUP_BRONZE}))
+    data_table.append(MkddLocationData(get_loc_name_cup(cup, 1, 3), 90, cup, {items.PROGRESSIVE_CLASS:3}, {cup, TAG_CUP_SILVER}))
+    data_table.append(MkddLocationData(get_loc_name_cup(cup, 0, 3), 100, cup, {items.PROGRESSIVE_CLASS:3}, {cup, TAG_CUP_GOLD}))
+    data_table.append(MkddLocationData(get_loc_name_trophy(cup, 3), 100, cup, {items.PROGRESSIVE_CLASS:3}))
 
 # Course related locations.
 for course in game_data.RACE_COURSES:

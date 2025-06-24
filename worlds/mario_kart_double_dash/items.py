@@ -35,10 +35,10 @@ class MkddItemData(NamedTuple):
     meta: Any = None
 
 
-PROGRESSIVE_CLASS = "Progressive Class"
-PROGRESSIVE_CUP_SKIP = "Progressive Cup Skip"
+PROGRESSIVE_CLASS = "Progressive CC"
+PROGRESSIVE_CUP_SKIP = "Progressive GP Race Skip"
 PROGRESSIVE_TIME_TRIAL_ITEM = "Progressive Time Trial Item"
-PROGRESSIVE_ENGINE = "Progressive Engine Upgrade"
+PROGRESSIVE_ENGINE = "Progressive Speed Upgrade"
 RANDOM_ITEM = "Nothing"
 TROPHY = "Trophy"
 VICTORY = "Victory"
