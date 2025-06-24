@@ -54,10 +54,6 @@ Mario Kart Double Dash:
     # Maximum value is 100
     # Possible values: baby (=-50), easy (=-25), normal (=0), hard (=50), unrestricted (=100)
 
-  tracker_unrestricted_logic: false
-    # If enabled, the Universal Tracker will show all locations that are techically accessible (as if Logic Difficulty was set to unrestricted).
-    # Possible values: true, false
-
   time_trials: basic
     # Are time trials in logic? If enabled, item pool has course unlocks for time trials.
     # Basic adds locations for beating certain times.

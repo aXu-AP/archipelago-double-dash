@@ -42,9 +42,11 @@ class MkddWorld(World):
 
     item_name_to_id = items.name_to_id
     location_name_to_id = locations.name_to_id
-    location_name_groups = locations.groups    
+    location_name_groups = locations.groups
 
+    # Universal Tracker.
     ut_can_gen_without_yaml = True
+    glitches_item_name = items.SKIP_DIFFICULTY
 
     def __init__(self, world, player):
         self.current_locations: list[MkddLocationData] = []

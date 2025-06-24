@@ -130,6 +130,10 @@ def add_item(state: CollectionState, player: int, item: Item, count: int = 1) ->
         state.mkdd_best_combo_level[player] += game_data.ENGINE_UPGRADE_USEFULNESS * count
         # Engine upgrade applies to all combos equally so no need to recalculate.
         return
+    elif item_data.name == items.SKIP_DIFFICULTY:
+        # Used for Universal Tracker glitched logic.
+        state.mkdd_best_combo_level[player] += game_data.SKIP_DIFFICULTY_USEFULNESS * count
+        return
     else:
         return
     state.mkdd_state_is_stale[player] = True
@@ -191,7 +195,11 @@ def calculate_player_level(state: CollectionState, player: int,
         if best_kart == None:
             return -1000
         if kart_only:
-            return best_points + state.count(items.PROGRESSIVE_ENGINE, player) * game_data.ENGINE_UPGRADE_USEFULNESS
+            return (
+                best_points + 
+                state.count(items.PROGRESSIVE_ENGINE, player) * game_data.ENGINE_UPGRADE_USEFULNESS +
+                state.count(items.SKIP_DIFFICULTY, player) * game_data.SKIP_DIFFICULTY_USEFULNESS
+            )
         else:
             return calculate_player_level(state, player, best_kart, character_1, character_2)
     
@@ -234,5 +242,6 @@ def calculate_player_level(state: CollectionState, player: int,
         state.mkdd_kart_levels[player][kart.id] +
         state.mkdd_character_levels[player][character_1.id] +
         state.mkdd_character_levels[player][character_2.id] +
-        state.count(items.PROGRESSIVE_ENGINE, player) * game_data.ENGINE_UPGRADE_USEFULNESS
+        state.count(items.PROGRESSIVE_ENGINE, player) * game_data.ENGINE_UPGRADE_USEFULNESS +
+        state.count(items.SKIP_DIFFICULTY, player) * game_data.SKIP_DIFFICULTY_USEFULNESS
     )

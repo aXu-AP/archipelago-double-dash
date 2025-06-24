@@ -42,6 +42,7 @@ PROGRESSIVE_ENGINE = "Progressive Speed Upgrade"
 RANDOM_ITEM = "Nothing"
 TROPHY = "Trophy"
 VICTORY = "Victory"
+SKIP_DIFFICULTY = "Skip Difficulty Calculation"
 
 def get_item_name_tt_course(course: str) -> str:
     return f"{course} Time Trial"
@@ -89,5 +90,8 @@ for item in game_data.ITEMS:
                 get_item_name_character_item(character.name, item.name), classification,
                 ItemType.ITEM_UNLOCK, count = 0, meta = {"character":character, "item":item}
                 ))
+
+# Used by Universal Tracker glitched logic.
+data_table.append(MkddItemData(SKIP_DIFFICULTY, PROG, count = 0))
 
 name_to_id: dict[str, int] = {item.name:id for (id, item) in enumerate(data_table) if id > 0}
