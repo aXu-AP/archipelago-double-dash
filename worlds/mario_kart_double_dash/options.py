@@ -11,11 +11,16 @@ class Goal(Choice):
 
 class TrophyRequirement(Range):
     """How many gold trophies are needed for goal completion.
-    Recommended: 9-12 if you aim to complete the game on 150cc. 13-16 if you aim to complete the game on Mirror."""
+    Recommended: 9-12 if you aim to complete the game on 150cc. 13-16 if you aim to complete the game on Mirror.
+    Value will be limited to the number of trophies in the pool."""
     display_name = "Trophy Requirement"
     range_start = 0
     range_end = 32
     default = 10
+
+class GrandPrixTrophies(DefaultOnToggle):
+    """Does getting gold in cups earn you trophies."""
+    display_name = "Grand Prix Trophies"
 
 class ShuffleExtraTrophies(Range):
     """How many trophies are added in the pool in addition to predetermined trophy locations.
@@ -126,6 +131,7 @@ class SpeedUpgrades(DefaultOnToggle):
 class MkddOptions(PerGameCommonOptions):
     goal: Goal
     trophy_requirement: TrophyRequirement
+    grand_prix_trophies: GrandPrixTrophies
     shuffle_extra_trophies: ShuffleExtraTrophies
     logic_difficulty: LogicDifficulty
     tracker_unrestricted_logic: TrackerUnrestrictedLogic

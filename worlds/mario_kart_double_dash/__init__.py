@@ -60,7 +60,10 @@ class MkddWorld(World):
 
     def generate_early(self):
         # Adjust trophy requirement to match amount of trophies in the pool.
-        self.options.trophy_requirement.value = min(self.options.trophy_requirement.value, 16 + self.options.shuffle_extra_trophies)
+        max_requirement: int = self.options.shuffle_extra_trophies.value
+        if self.options.grand_prix_trophies:
+            max_requirement += 16
+        self.options.trophy_requirement.value = min(self.options.trophy_requirement.value, max_requirement)
 
         # Universal Tracker passthrough.
         if hasattr(self.multiworld, "re_gen_passthrough"):
@@ -112,15 +115,18 @@ class MkddWorld(World):
             for id, location_data in enumerate(locations.data_table):
                 if self.options.time_trials != options.TimeTrials.option_include_staff_ghosts and locations.TAG_TT_GHOST in location_data.tags:
                     continue
+                if not self.options.grand_prix_trophies and locations.TAG_CUP_TROPHY in location_data.tags:
+                    continue
                 if id > 0 and location_data.region == region_name:
                     region.add_locations({location_data.name: id})
                     self.current_locations.append(location_data)
         
         # Locked items.
-        for cup in game_data.NORMAL_CUPS:
-            for vehicle_class in range(4):
-                self.get_location(locations.get_loc_name_trophy(cup, vehicle_class))\
-                    .place_locked_item(self.create_item(items.TROPHY))
+        if self.options.grand_prix_trophies:
+            for cup in game_data.NORMAL_CUPS:
+                for vehicle_class in range(4):
+                    self.get_location(locations.get_loc_name_trophy(cup, vehicle_class))\
+                        .place_locked_item(self.create_item(items.TROPHY))
         if self.options.goal == options.Goal.option_all_cup_tour:
             self.get_location(locations.TROPHY_GOAL).place_locked_item(self.create_item(game_data.CUPS[game_data.CUP_ALL_CUP_TOUR]))
             self.get_location(locations.WIN_ALL_CUP_TOUR).place_locked_item(self.create_item("Victory"))

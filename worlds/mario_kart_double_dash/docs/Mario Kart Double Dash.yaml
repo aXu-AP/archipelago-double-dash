@@ -44,6 +44,10 @@ Mario Kart Double Dash:
     # Value will be limited to the number of trophies in the pool.
     # Minimum value is 0
     # Maximum value is 32
+  
+  grand_prix_trophies: true
+    # Does getting gold in cups earn you trophies.
+    # Possible values: true, false
 
   shuffle_extra_trophies: 0
     # How many trophies are added in the pool in addition to predetermined trophy locations.
