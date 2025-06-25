@@ -141,6 +141,10 @@ class MkddWorld(World):
         for weight in range(3):
             karts: list[str] = [kart.name for kart in game_data.KARTS if kart.weight == weight]
             precollected.append(self.random.choice(karts))
+        if not self.options.speed_upgrades:
+            precollected.append(items.PROGRESSIVE_ENGINE)
+            # Set minimum difficulty on "hard", otherwise the seed can be unbeatable.
+            self.options.logic_difficulty.value = max(self.options.logic_difficulty, game_data.ENGINE_UPGRADE_USEFULNESS)
         for item in precollected:
             self.multiworld.push_precollected(self.create_item(item))
 
@@ -154,6 +158,10 @@ class MkddWorld(World):
                 count -= precollected.count(item.name)
                 for i in range(count):
                     item_pool.append(self.create_item(item.name))
+        
+        if self.options.speed_upgrades:
+            for i in range(3):
+                item_pool.append(self.create_item(items.PROGRESSIVE_ENGINE))
         
         # Kart upgrades generation.
         if self.options.kart_upgrades > 0:

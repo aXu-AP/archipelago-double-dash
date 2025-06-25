@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from Options import Choice, NamedRange, OptionDict, PerGameCommonOptions, Range, StartInventoryPool, Toggle, Visibility
+from Options import Choice, DefaultOnToggle, NamedRange, OptionDict, PerGameCommonOptions, Range, StartInventoryPool, Toggle, Visibility
 
 class Goal(Choice):
     """Victory condition for the game.
@@ -108,6 +108,12 @@ class KartUpgrades(Range):
     range_end = 40
     default = 10
 
+class SpeedUpgrades(DefaultOnToggle):
+    """Adds 3 Progressive Speed Upgrades to the pool.
+    You start at a slight disadvantage (90 % speed) and collecting all the speed upgrades gets you to 110 % speed.
+    Disabling this sets logic difficulty on hard if it's lower."""
+    display_name = "Speed Upgrades"
+
 @dataclass
 class MkddOptions(PerGameCommonOptions):
     goal: Goal
@@ -128,5 +134,6 @@ class MkddOptions(PerGameCommonOptions):
     start_items_per_character: StartItemsPerCharacter
 
     kart_upgrades: KartUpgrades
+    speed_upgrades: SpeedUpgrades
 
     start_inventory_from_pool: StartInventoryPool

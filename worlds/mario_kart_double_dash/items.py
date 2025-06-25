@@ -62,7 +62,7 @@ data_table: list[MkddItemData] = [
     MkddItemData(PROGRESSIVE_CLASS, PROG, count = 3),
     MkddItemData(PROGRESSIVE_CUP_SKIP, USEF, count = 2),
     MkddItemData(PROGRESSIVE_TIME_TRIAL_ITEM, PROG, count = 3),
-    MkddItemData(PROGRESSIVE_ENGINE, PROG, count = 3),
+    MkddItemData(PROGRESSIVE_ENGINE, PROG, count = 0), # Count depends on options.
     MkddItemData(RANDOM_ITEM, FILL),
     MkddItemData(TROPHY, PROG, count = 0),
     MkddItemData(VICTORY, PROG, count = 0),

@@ -104,6 +104,12 @@ Mario Kart Double Dash:
     # Minimum value is 0
     # Maximum value is 40
 
+  speed_upgrades: true
+    # Adds 3 Progressive Speed Upgrades to the pool.
+    # You start at a slight disadvantage (90 % speed) and collecting all the speed upgrades gets you to 110 % speed.
+    # Disabling this sets logic difficulty on hard if it's lower.
+    # Possible values: true, false
+
   # Item & Location Options
   local_items: []
     # Forces these items to be in their native world.
