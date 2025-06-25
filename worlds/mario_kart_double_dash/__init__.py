@@ -182,7 +182,7 @@ class MkddWorld(World):
         items_left_characters_pool = items_left.copy()
         weights = [1 for _ in items_left]
         items_per_character: dict[game_data.Character, list[game_data.Item]] = {character:[] for character in game_data.CHARACTERS}
-        for i in range(self.options.items_per_character):
+        for i in range(self.options.start_items_per_character + self.options.items_per_character):
             for character in game_data.CHARACTERS:
                 # Try rolling for unique items.
                 for j in range(50):
@@ -195,7 +195,10 @@ class MkddWorld(World):
                         weights = [10 - item.usefulness for item in items_left]
 
                 items_per_character[character].append(item)
-                item_pool.append(self.create_item(items.get_item_name_character_item(character.name, item.name)))
+                if i < self.options.start_items_per_character:
+                    self.multiworld.push_precollected(self.create_item(items.get_item_name_character_item(character.name, item.name)))
+                else:
+                    item_pool.append(self.create_item(items.get_item_name_character_item(character.name, item.name)))
                 id = items_left.index(item)
                 weights[id] -= 1
                 if weights[id] == 0:

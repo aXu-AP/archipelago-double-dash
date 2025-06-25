@@ -93,6 +93,11 @@ Mario Kart Double Dash:
     # Minimum value is 0
     # Maximum value is 4
 
+  start_items_per_character: 1
+    # Unlocks some items for the characters straight away.
+    # Minimum value is 0
+    # Maximum value is 5
+
   kart_upgrades: 10
     # How many random kart stat upgrades there are total.
     # Unlike progressive engine upgrades, these upgrades are tied to certain vehicles.

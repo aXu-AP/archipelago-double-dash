@@ -125,7 +125,7 @@ def add_item(state: CollectionState, player: int, item: Item, count: int = 1) ->
                 state.mkdd_character_levels[player][i] += item_value * count
         else:
             char_id = game_data.CHARACTERS.index(item_data.meta["character"])
-            state.mkdd_character_levels[player][char_id] += item_value
+            state.mkdd_character_levels[player][char_id] += item_value * count
     elif item_data.name == items.PROGRESSIVE_ENGINE:
         state.mkdd_best_combo_level[player] += game_data.ENGINE_UPGRADE_USEFULNESS * count
         # Engine upgrade applies to all combos equally so no need to recalculate.

@@ -93,6 +93,13 @@ class ItemsPerCharacter(Range):
     range_end = 4
     default = 3
 
+class StartItemsPerCharacter(Range):
+    """Unlocks some items for the characters straight away."""
+    display_name = "Start Items per Character"
+    range_start = 0
+    range_end = 5
+    default = 1
+
 class KartUpgrades(Range):
     """How many random kart stat upgrades there are total.
     Unlike progressive engine upgrades, these upgrades are tied to certain vehicles."""
@@ -118,6 +125,7 @@ class MkddOptions(PerGameCommonOptions):
 
     items_for_everybody: ItemsForEverybody
     items_per_character: ItemsPerCharacter
+    start_items_per_character: StartItemsPerCharacter
 
     kart_upgrades: KartUpgrades
 
