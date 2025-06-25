@@ -193,7 +193,7 @@ class MkddContext(CommonContext):
             if "death_link" in slot_data:
                 Utils.async_start(self.update_death_link(bool(args["slot_data"]["death_link"])))
             
-            self.trophy_goal = slot_data.get("trophy_amount")
+            self.trophy_goal = slot_data.get("trophy_requirement")
             self.cups_courses = slot_data["cups_courses"]
             self.all_cup_tour_length = slot_data.get("all_cup_tour_length", 8)
             self.mirror_200cc = bool(slot_data.get("mirror_200cc"))

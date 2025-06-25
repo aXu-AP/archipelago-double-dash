@@ -38,9 +38,16 @@ Mario Kart Double Dash:
     # Trophies: Collect set amount of gold trophies to win.
     # Possible values: all_cup_tour, trophies
 
-  trophy_amount: 10
+  trophy_requirement: 10
     # How many gold trophies are needed for goal completion.
     # Recommended: 9-12 if you aim to complete the game on 150cc. 13-16 if you aim to complete the game on Mirror.
+    # Value will be limited to the number of trophies in the pool.
+    # Minimum value is 0
+    # Maximum value is 32
+
+  shuffle_extra_trophies: 0
+    # How many trophies are added in the pool in addition to predetermined trophy locations.
+    # These trophies can appear in other players' worlds."""
     # Minimum value is 0
     # Maximum value is 16
 

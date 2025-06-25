@@ -59,9 +59,13 @@ class MkddWorld(World):
         super(MkddWorld, self).__init__(world, player)
 
     def generate_early(self):
+        # Adjust trophy requirement to match amount of trophies in the pool.
+        self.options.trophy_requirement.value = min(self.options.trophy_requirement.value, 16 + self.options.shuffle_extra_trophies)
+
+        # Universal Tracker passthrough.
         if hasattr(self.multiworld, "re_gen_passthrough"):
             slot_data: dict = self.multiworld.re_gen_passthrough["Mario Kart Double Dash"]
-            self.options.trophy_amount = slot_data["trophy_amount"]
+            self.options.trophy_requirement = slot_data["trophy_requirement"]
             self.options.logic_difficulty = slot_data["logic_difficulty"]
             # Staff ghosts were on by default before this option was introduced.
             self.options.time_trials = slot_data.get("time_trials", options.TimeTrials.option_include_staff_ghosts)
@@ -159,6 +163,9 @@ class MkddWorld(World):
                 for i in range(count):
                     item_pool.append(self.create_item(item.name))
         
+        for i in range(self.options.shuffle_extra_trophies):
+            item_pool.append(self.create_item(items.TROPHY))
+
         if self.options.speed_upgrades:
             for i in range(3):
                 item_pool.append(self.create_item(items.PROGRESSIVE_ENGINE))
@@ -269,7 +276,7 @@ class MkddWorld(World):
                 lap_counts[course] = laps
         return {
             "version": version.get_str(),
-            "trophy_amount": int(self.options.trophy_amount),
+            "trophy_requirement": int(self.options.trophy_requirement),
             "logic_difficulty": int(self.options.logic_difficulty) if not self.options.tracker_unrestricted_logic else 100,
             "time_trials": int(self.options.time_trials),
             "cups_courses": self.cups_courses,

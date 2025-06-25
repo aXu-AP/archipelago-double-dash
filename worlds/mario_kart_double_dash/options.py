@@ -9,13 +9,21 @@ class Goal(Choice):
     option_all_cup_tour = 0
     option_trophies = 1
 
-class TrophyAmount(Range):
+class TrophyRequirement(Range):
     """How many gold trophies are needed for goal completion.
     Recommended: 9-12 if you aim to complete the game on 150cc. 13-16 if you aim to complete the game on Mirror."""
-    display_name = "Trophy Amount"
+    display_name = "Trophy Requirement"
+    range_start = 0
+    range_end = 32
+    default = 10
+
+class ShuffleExtraTrophies(Range):
+    """How many trophies are added in the pool in addition to predetermined trophy locations.
+    These trophies can appear in other players' worlds."""
+    display_name = "Shuffle Extra Trophies"
     range_start = 0
     range_end = 16
-    default = 10
+    default = 0
 
 class LogicDifficulty(NamedRange):
     """Balances the difficulty modeling, how many upgrades you are presumed to have to win races.
@@ -117,7 +125,8 @@ class SpeedUpgrades(DefaultOnToggle):
 @dataclass
 class MkddOptions(PerGameCommonOptions):
     goal: Goal
-    trophy_amount: TrophyAmount
+    trophy_requirement: TrophyRequirement
+    shuffle_extra_trophies: ShuffleExtraTrophies
     logic_difficulty: LogicDifficulty
     tracker_unrestricted_logic: TrackerUnrestrictedLogic
     time_trials: TimeTrials
