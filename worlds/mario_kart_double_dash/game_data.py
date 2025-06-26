@@ -180,7 +180,6 @@ ITEMS = [
     Item(6, "Star", "St",                   5, [  1,   1,   1,  10,  20,  30,  40,  40]),
     Item(7, "Chain Chomp", "CC",            4, [  0,   0,   1,   3,  20,  60, 130, 180]),
     Item(8, "Bob-omb", "Bo",                1, [ 10,  70, 100, 100, 100,  90,  40,   0]),
-    Item(9, "Fireball", "Fi",               1, [ 90,  50,  25,  10,   1,   1,   1,   1]),
     Item(10, "Lightning", "Li",             3, [  0,   0,   1,   1,   3,  10,  20,  30]),
     Item(11, "Yoshi Egg", "Eg",             4, [ 50,  70,  80,  80,  80,  70,  60,  40]),
     Item(12, "Golden Mushroom", "GMu",      6, [  0,   3,  10,  30,  50,  80, 100, 120]),
@@ -203,18 +202,17 @@ ITEM_MUSHROOM = ITEMS[5]
 ITEM_STAR = ITEMS[6]
 ITEM_CHAIN_CHOMP = ITEMS[7]
 ITEM_BOBOMB = ITEMS[8]
-ITEM_FIREBALL = ITEMS[9]
-ITEM_LIGHTNING = ITEMS[10]
-ITEM_YOSHI_EGG = ITEMS[11]
-ITEM_GOLDEN_MUSHROOM = ITEMS[12]
-ITEM_SPINY_SHELL = ITEMS[13]
-ITEM_HEART = ITEMS[14]
-ITEM_FAKE_ITEM = ITEMS[15]
-ITEM_TRIPLE_GREEN_SHELLS = ITEMS[16]
-ITEM_TRIPLE_MUSHROOMS = ITEMS[17]
-ITEM_TRIPLE_RED_SHELLS = ITEMS[18]
-ITEM_FIREBALLS = ITEMS[19]
-ITEM_NONE = ITEMS[20]
+ITEM_LIGHTNING = ITEMS[9]
+ITEM_YOSHI_EGG = ITEMS[10]
+ITEM_GOLDEN_MUSHROOM = ITEMS[11]
+ITEM_SPINY_SHELL = ITEMS[12]
+ITEM_HEART = ITEMS[13]
+ITEM_FAKE_ITEM = ITEMS[14]
+ITEM_TRIPLE_GREEN_SHELLS = ITEMS[15]
+ITEM_TRIPLE_MUSHROOMS = ITEMS[16]
+ITEM_TRIPLE_RED_SHELLS = ITEMS[17]
+ITEM_FIREBALLS = ITEMS[18]
+ITEM_NONE = ITEMS[19]
 
 TT_ITEM_TABLE = [
     bytes([ITEM_NONE.id, ITEM_MUSHROOM.id]),
