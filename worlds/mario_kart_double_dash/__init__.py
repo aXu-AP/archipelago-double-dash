@@ -198,9 +198,13 @@ class MkddWorld(World):
             items_left.pop(id)
             weights.pop(id)
 
+        # If there's too much global items there's going to be multiples.
+        # Make the pool bigger to avoid every character having the same items.
+        if len(items_left) < self.options.start_items_per_character + self.options.items_per_character:
+            items_left = [item for item in game_data.ITEMS if item != game_data.ITEM_NONE]
         # Character specific items.
-        # Ensure that every item is in pool at least once.
-        items_left_characters_pool = items_left.copy()
+        # Use items that aren't used as global items.
+        items_left_characters_pool: list[game_data.Item] = items_left.copy()
         weights = [1 for _ in items_left]
         items_per_character: dict[game_data.Character, list[game_data.Item]] = {character:[] for character in game_data.CHARACTERS}
         for i in range(self.options.start_items_per_character + self.options.items_per_character):
