@@ -62,7 +62,7 @@ class MkddCommandProcessor(ClientCommandProcessor):
             logger.info(f"Unlocked characters: {", ".join([game_data.CHARACTERS[c].name for c in self.ctx.unlocked_characters])}")
             logger.info(f"Unlocked karts (upgrades): {", ".join([f"{game_data.KARTS[c].name} ({(
                 ", ".join(u.name for u in self.ctx.kart_upgrades[c]))})" for c in self.ctx.unlocked_karts])}")
-            logger.info(f"Engine upgrades: {self.ctx.engine_upgrade_level}")
+            logger.info(f"Speed upgrades: {self.ctx.engine_upgrade_level}")
             logger.info(f"Max vehicle class: {["50cc", "100cc", "150cc", "Mirror"][self.ctx.unlocked_vehicle_class]}")
             logger.info(f"Unlocked cups: {", ".join([game_data.CUPS[c] for c in self.ctx.unlocked_cups])}")
             logger.info(f"Unlocked time trial courses: {", ".join([game_data.COURSES[c].name for c in self.ctx.unlocked_courses])}")
