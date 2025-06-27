@@ -99,6 +99,8 @@ class MkddMemAddresses():
     """Offset from text, x coordinate for the text."""
     text_y_offset_h: int
     """Offset from text, y coordinate for the text."""
+    text_amount: int
+    """Size of the text table."""
 
 class MkddMemAddressesUsa(MkddMemAddresses):
     # Vanilla addresses:
@@ -191,3 +193,4 @@ class MkddMemAddressesUsa(MkddMemAddresses):
     text_size = 0x30
     text_x_offset_h = -4
     text_y_offset_h = -2
+    text_amount = 5

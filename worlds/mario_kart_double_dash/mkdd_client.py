@@ -103,6 +103,9 @@ class MkddContext(CommonContext):
         self.has_send_death: bool = False
         self.victory_sent: bool = False
 
+        self.message_queue: list[str] = []
+        self.message_time_left: int = 0
+
         self.memory_addresses = mem_addresses.MkddMemAddressesUsa
 
         # Options.
@@ -219,6 +222,20 @@ class MkddContext(CommonContext):
             self.items_received_2.sort(key=lambda v: v[1])
         elif cmd == "Retrieved":
             requested_keys_dict = args["keys"]
+        elif cmd == "PrintJSON":
+            if args.get("type") == "ItemSend":
+                to_player: int = args["receiving"]
+                nw_item: NetworkItem = args["item"]
+                from_player: int = nw_item.player
+                item_name: str = self.item_names.lookup_in_slot(nw_item.item, to_player)
+                if to_player == self.slot and from_player == self.slot:
+                    queue_ingame_message(self, f"You found your\n{item_name}")
+                elif to_player == self.slot:
+                    from_player_name: str = self.player_names[from_player]
+                    queue_ingame_message(self, f"{from_player_name} found your\n{item_name}")
+                elif from_player == self.slot:
+                    to_player_name: str = self.player_names[to_player]
+                    queue_ingame_message(self, f"You found {to_player_name}'s\n{item_name}")
         # Relay packages to the tracker also.
         super().on_package(cmd, args)
 
@@ -512,9 +529,10 @@ def update_game(ctx: MkddContext) -> None:
     """
     _apply_ar_code(ar_codes.unlock_everything)
     
-    text_s: list[str] = ["" for _ in range(3)]
-    text_x: list[int] = [0 for _ in range(3)]
-    text_y: list[int] = [0 for _ in range(3)]
+    text_s: list[str] = ["" for _ in range(ctx.memory_addresses.text_amount)]
+    text_x: list[int] = [0 for _ in range(ctx.memory_addresses.text_amount)]
+    text_y: list[int] = [0 for _ in range(ctx.memory_addresses.text_amount)]
+    text_j: list[int] = [1 for _ in range(ctx.memory_addresses.text_amount)]
 
     menu_pointer = dolphin.read_word(ctx.memory_addresses.menu_pointer)
     if menu_pointer != 0:
@@ -804,8 +822,29 @@ def update_game(ctx: MkddContext) -> None:
         dolphin.write_float(kart_address + ctx.memory_addresses.kart_roll_f_offset, stats.roll)
         dolphin.write_float(kart_address + ctx.memory_addresses.kart_steer_f_offset, stats.steer + steer_addition)
     
+
+    # In game message system
+    ctx.message_time_left -= 1
+    if ctx.message_time_left > 0:
+        lines: list[str] = ctx.message_queue[0].split("\n")
+        for i, text in enumerate(lines):
+            # Use text slots from the end to interfere minimally with other texts.
+            text_id = ctx.memory_addresses.text_amount - i - 1
+            text_s[text_id] = text
+            text_x[text_id] = 304
+            text_y[text_id] = 13 + i * 12
+            text_j[text_id] = 0
+            
+    # Try to show the message first, only then check for new message.
+    # This causes one tick long disappearing of the message between messages,
+    # making message changing more noticeable.
+    if ctx.message_time_left == 0:
+        ctx.message_queue.pop(0)
+        if len(ctx.message_queue) > 0:
+            ctx.message_time_left = 40
+
     for i in range(len(text_s)):
-        print_ingame(ctx, text_x[i], text_y[i], text_s[i], i)
+        print_ingame(ctx, text_x[i], text_y[i], text_s[i], i, text_j[i])
 
 
 def wrap(value: int, max_value: int) -> int:
@@ -894,13 +933,16 @@ def print_ingame(ctx: MkddContext, x: int, y: int, text: str, msg_id: int, justi
     :param y: Y coordinate, from 12 (top) to 450 (bottom).
     :param text: The text to show. One line only, max 43 characters.
     :param msg_id: Id for the text. From 0 upwards. Using same id replaces the text.
+    :param justification: 1 for left justification, 0 for center, -1 for right.
     """
-    address = ctx.memory_addresses.text_sx + msg_id * ctx.memory_addresses.text_size
+    text = text[:43]
     font_size = 12
+    text_width = len(text) * font_size
+    x += int(text_width * (justification - 1) / 2)
+    address = ctx.memory_addresses.text_sx + msg_id * ctx.memory_addresses.text_size
+    dolphin_write_str(address, text)
     dolphin_write_half(address + ctx.memory_addresses.text_x_offset_h, x)
     dolphin_write_half(address + ctx.memory_addresses.text_y_offset_h, y)
-    text = text[:43]
-    dolphin_write_str(address, text)
 
 
 def queue_ingame_message(ctx: MkddContext, message: str) -> None:
@@ -910,6 +952,10 @@ def queue_ingame_message(ctx: MkddContext, message: str) -> None:
     :param ctx: Mario Kart Double Dash client context.
     :param message: The message to show. Can be 2 lines long.
     """
+    ctx.message_queue.append(message)
+    if len(ctx.message_queue) == 1:
+        ctx.message_time_left = 40
+
 
 async def dolphin_sync_task(ctx: MkddContext) -> None:
     """
