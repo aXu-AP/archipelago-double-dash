@@ -14,9 +14,15 @@ You'll need the following components to be able to play MKDD AP:
 * A rom of Mario Kart: Double Dash!! (NTSC-U / USA version)
     * Format (`.iso`, `.rvz`) doesn't matter.
 
-Optionally, you can also download:
+Optionally, there's 2 options for tracking your progress:
+* [PopTracker pack](https://github.com/Razerock/double-dash-ap-tracker/releases) by Raze
+    * Requires [PopTracker](https://github.com/black-sliver/PopTracker/releases).
+    * Shows available locations and obtained items with a nice interface.
+    * Logic doesn't follow the difficulty modeling exactly, but is close enough.
 * [Universal Tracker](https://github.com/FarisTheAncient/Archipelago/releases)
+    * Text-based, shows a list of accessible locations.
     * If you have Universal Tracker installed, the client will have a tracker page automatically.
+    * Might be better on single screen / small screen setups.
 
 ## Setting Up a YAML
 
