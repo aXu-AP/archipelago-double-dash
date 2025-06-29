@@ -1,6 +1,6 @@
 major = 0
 minor = 2
-patch = 1
+patch = 2
 suffix = "-dev"
 
 def get_str() -> str:
