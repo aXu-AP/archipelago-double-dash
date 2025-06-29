@@ -145,7 +145,7 @@ WIN_ALL_CUP_TOUR = "All Cup Tour Gold"
 data_table.append(MkddLocationData(GOLD_LIGHT, 0))
 data_table.append(MkddLocationData(GOLD_MEDIUM, 0))
 data_table.append(MkddLocationData(GOLD_HEAVY, 0))
-data_table.append(MkddLocationData(GOLD_PARADE, 40, {"Parade Kart":1}))
+data_table.append(MkddLocationData(GOLD_PARADE, 40, required_items = {"Parade Kart":1}))
 data_table.append(MkddLocationData(TROPHY_GOAL, 0))
 data_table.append(MkddLocationData(WIN_ALL_CUP_TOUR, 0, game_data.CUPS[game_data.CUP_ALL_CUP_TOUR]))
 
