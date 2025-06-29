@@ -42,7 +42,7 @@ Do note, that using the randomizer unlocks everything in your save of MKDD and y
 * Open Mario Kart Double Dash Client from Archipelago Launcher.
 * Open Dolphin and launch the game.
   * At this point, the client should say "Patch Applied".
-  * **Important!** Do not go further than the player count selection screen before you are connected to the host!
+  * **Important!** Do not go further than the title screen before you are connected to the host!
 * Write your host connection info in the box at the top of the client (if you are hosting yourself it's `localhost`) and press enter.
 * Write your slot/player name (if you didn't modify the YAML then it's `Player1`) into the box at the bottom and press enter.
 
@@ -57,7 +57,7 @@ You should now get checks whenever you finish races. To see what is currently un
 * I can't select character X.
   * The characters need to be unlocked by completing checks. The game currently doesn't give any visual indication what is unlocked, but you can use `/unlocked` command in the client to see your current status.
 * The client doesn't register any checks.
-  * Restart both the game and the client.
+  * Restart both the game and the client. Open the client before launching the game to apply the patch as early as possible.
 * Where's my patch?
   * There's no patch, use vanilla rom.
 * Can I use ar/gecko cheat codes?
@@ -68,3 +68,6 @@ You should now get checks whenever you finish races. To see what is currently un
   * Use Archipelago 0.6.1 or newer.
   * Try running the client with admin privileges.
   * As a last resort try resetting your settings (MAKE BACKUP FIRST - deleting `%appdata%/Dolphin Emulator` deletes your saves as well).
+* On-screen notifications doesn't appear.
+  * They don't appear in the title screen due to limitations posed by the patching system used.
+  * If they don't appear in other screens, it might be a cache issue. Try making a savestate (shift + F1) and loading it (F1) to invalidate cache.
