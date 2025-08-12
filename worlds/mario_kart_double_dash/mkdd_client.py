@@ -609,7 +609,7 @@ def update_game(ctx: MkddContext) -> None:
                 # Check for synergy (default character combo).
                 character1 = min(p1_character.id, p2_character.id)
                 character2 = max(p1_character.id, p2_character.id)
-                if character1 % 2 == 0 and character1 + 1 == character2:
+                if character1 % 2 == 0 and character1 + 1 == character2 or character1 >= 16 and character2 >= 16:
                     p1_items = p2_items
                     if len(p2_items) > 0:
                         text_x[2] = 92
