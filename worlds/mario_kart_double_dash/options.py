@@ -50,7 +50,7 @@ class TrackerUnrestrictedLogic(Toggle):
     """If enabled, the Universal Tracker will show all locations that are techically accessible (as if Logic Difficulty was set to unrestricted).
     DEPRECATED - Using latest version of UT on Archipelago 0.6.2 installation shows out of logic locations as glitched logic."""
     display_name = "Tracker Unrestricted Logic"
-    visibility = Visibility.complex_ui | Visibility.template | Visibility.spoiler
+    visibility = Visibility.none
 
 class TimeTrials(Choice):
     """Are time trials in logic? If enabled, item pool has course unlocks for time trials.
