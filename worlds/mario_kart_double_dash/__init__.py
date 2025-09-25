@@ -145,6 +145,9 @@ class MkddWorld(World):
         precollected: list[str] = []
         # Give 1 cup, can't be All Star Cup.
         precollected.append(self.random.choice(game_data.NORMAL_CUPS))
+        # Give 1 time trial track.
+        if self.options.time_trials != options.TimeTrials.option_disable:
+            precollected.append(items.get_item_name_tt_course(self.random.choice(game_data.RACE_COURSES).name))
         # Give 2 random characters to begin.
         precollected_characters = 0
         while precollected_characters < 2:
