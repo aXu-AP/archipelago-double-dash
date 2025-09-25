@@ -41,7 +41,6 @@ Mario Kart Double Dash:
   trophy_requirement: 10
     # How many gold trophies are needed for goal completion.
     # Recommended: 9-12 if you aim to complete the game on 150cc. 13-16 if you aim to complete the game on Mirror.
-    # Value will be limited to the number of trophies in the pool.
     # Minimum value is 0
     # Maximum value is 32
   
