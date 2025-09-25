@@ -1,6 +1,7 @@
 """
 Archipelago init file for Mario Kart Double Dash!!
 """
+import logging
 import math
 from typing import Any
 
@@ -59,11 +60,15 @@ class MkddWorld(World):
         super(MkddWorld, self).__init__(world, player)
 
     def generate_early(self):
-        # Adjust trophy requirement to match amount of trophies in the pool.
+        # Adjust amount of trophies in the pool if the requirement is too high.
         max_requirement: int = self.options.shuffle_extra_trophies.value
         if self.options.grand_prix_trophies:
             max_requirement += 16
-        self.options.trophy_requirement.value = min(self.options.trophy_requirement.value, max_requirement)
+        if self.options.trophy_requirement.value > max_requirement:
+            logging.getLogger("MKDD Logger").warning(f"{self.player_name}: Requirement for trophies is higher than available trophies. Adding extra trophies...")
+            self.options.shuffle_extra_trophies.value = self.options.trophy_requirement.value
+            if self.options.grand_prix_trophies:
+                self.options.shuffle_extra_trophies.value -= 16
 
         # Universal Tracker passthrough.
         if hasattr(self.multiworld, "re_gen_passthrough"):
