@@ -159,7 +159,9 @@ class MkddWorld(World):
         if not self.options.speed_upgrades:
             precollected.append(items.PROGRESSIVE_ENGINE)
             # Set minimum difficulty on "hard", otherwise the seed can be unbeatable.
-            self.options.logic_difficulty.value = max(self.options.logic_difficulty.value, game_data.ENGINE_UPGRADE_USEFULNESS)
+            if self.options.logic_difficulty.value < game_data.ENGINE_UPGRADE_USEFULNESS:
+                self.options.logic_difficulty.value = game_data.ENGINE_UPGRADE_USEFULNESS
+                logging.getLogger("MKDD Logger").warning(f"{self.player_name}: No engine upgrades are available, setting difficulty to hard.")
         for item in precollected:
             self.multiworld.push_precollected(self.create_item(item))
 
