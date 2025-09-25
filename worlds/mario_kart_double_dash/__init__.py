@@ -161,7 +161,7 @@ class MkddWorld(World):
         # Generic items by predetermined counts.
         item_pool: list[MkddItem] = []
         for item in items.data_table:
-            if self.options.time_trials == options.TimeTrials.option_disable and item.item_type == items.ItemType.TT_COURSE or item.name == items.PROGRESSIVE_TIME_TRIAL_ITEM:
+            if self.options.time_trials == options.TimeTrials.option_disable and (item.item_type == items.ItemType.TT_COURSE or item.name == items.PROGRESSIVE_TIME_TRIAL_ITEM):
                 continue
             if item.classification != ItemClassification.filler:
                 count = item.count
