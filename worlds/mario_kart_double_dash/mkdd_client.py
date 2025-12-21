@@ -82,7 +82,8 @@ class MkddContext(CommonContext):
     """
 
     command_processor = MkddCommandProcessor
-    game: str = "Mario Kart Double Dash"
+    game: str = version.get_game_name()
+    compatible_version: str = "v0.2"
     items_handling: int = 0b111
 
     def __init__(self, server_address: Optional[str], password: Optional[str]) -> None:
@@ -193,6 +194,15 @@ class MkddContext(CommonContext):
             self.items_received_2 = []
             self.last_rcvd_index = -1
             slot_data: dict = args.get("slot_data")
+            host_version : str = slot_data.get("version")
+            if not host_version.startswith(self.compatible_version):
+                self.gui_error("Incompatible seed/client",
+                    f"The seed was generated using version {host_version} of MKDDAP.\n" +
+                    f"Client's version: {version.get_version()}"
+                )
+                self.disconnect()
+                return
+            
             if "death_link" in slot_data:
                 Utils.async_start(self.update_death_link(bool(args["slot_data"]["death_link"])))
             
@@ -205,13 +215,6 @@ class MkddContext(CommonContext):
             self.character_item_total_weights = slot_data.get("character_item_total_weights")
             self.global_items_total_weights = slot_data.get("global_items_total_weights")
 
-            host_version = slot_data.get("version")
-            if host_version != version.get_str():
-                logger.warning(
-                    f"The seed was generated using version {host_version} of MKDDAP.\n" +
-                    f"The client is using version {version.get_str()}.\n" +
-                    "If there are any issues, consider changing your client to matching version."
-                )
             sync_state(self)
         elif cmd == "ReceivedItems":
             if args["index"] >= self.last_rcvd_index:
@@ -255,7 +258,7 @@ class MkddContext(CommonContext):
         :return: The client's GUI.
         """
         ui = super().make_gui()
-        ui.base_title = f"Archipelago Mario Kart Double Dash Client {version.get_str()}"
+        ui.base_title = f"MKDD AP Client {version.get_version()}"
         if tracker_loaded:
             ui.base_title += f" | Universal Tracker {UT_VERSION}"
         ui.base_title +=  " | Archipelago v"
