@@ -701,6 +701,7 @@ def update_game(ctx: MkddContext) -> None:
         total_weight = ctx.global_items_total_weights[in_race_placement]
         total_weight += ctx.character_item_total_weights[ctx.active_characters[0].name][in_race_placement]
         item_pool = ctx.global_items + ctx.character_items[ctx.active_characters[0]]
+        # Give different items only if there's no item synergy.
         if item_adr[0] != item_adr[1]:
             item_weights = [item.weight_table[in_race_placement] for item in item_pool]
             # Yet to be unlocked items still count towards item weights.
@@ -708,7 +709,9 @@ def update_game(ctx: MkddContext) -> None:
             if weight_gap > 0:
                 item_pool.append(game_data.ITEM_NONE)
                 item_weights.append(weight_gap)
-            rand_item = random.sample(item_pool, 1, counts = item_weights)[0]
+            rand_item = game_data.ITEM_NONE
+            if len(item_pool) > 0:
+                rand_item = random.sample(item_pool, 1, counts = item_weights)[0]
             dolphin.write_byte(item_adr[0], rand_item.id)
 
             # Reset pool for second player only if they aren't synced.
@@ -722,7 +725,9 @@ def update_game(ctx: MkddContext) -> None:
         if weight_gap > 0:
             item_pool.append(game_data.ITEM_NONE)
             item_weights.append(weight_gap)
-        rand_item = random.sample(item_pool, 1, counts = item_weights)[0]
+        rand_item = game_data.ITEM_NONE
+        if len(item_pool) > 0:
+            rand_item = random.sample(item_pool, 1, counts = item_weights)[0]
         dolphin.write_byte(item_adr[1], rand_item.id)
 
         # Set All Cup Tour lenght by skipping to the second-last race. This ensures that Rainbow Road is still the last.
