@@ -257,12 +257,18 @@ class MkddContext(CommonContext):
 
         :return: The client's GUI.
         """
-        ui = super().make_gui()
-        ui.base_title = f"MKDD AP Client {version.get_version()}"
-        if tracker_loaded:
-            ui.base_title += f" | Universal Tracker {UT_VERSION}"
-        ui.base_title +=  " | Archipelago v"
-        return ui
+        # Use Universal Tracker only if it's recent enough version.
+        if tracker_loaded and UT_VERSION >= "v0.2.12":
+            class TrackerManager(super().make_gui()):
+                logging_pairs = [("Client", "Archipelago")]
+                base_title = f"MKDD AP Client {version.get_version()} | Universal Tracker {UT_VERSION} | Archipelago"
+            return TrackerManager
+        # Otherwise use default ui.
+        from kvui import GameManager
+        class DefaultManager(GameManager):
+            logging_pairs = [("Client", "Archipelago")]
+            base_title = f"MKDD AP Client {version.get_version()} | Archipelago"
+        return DefaultManager
 
 ###### Dolphin connection ######
 def _apply_ar_code(code: list[int]):
