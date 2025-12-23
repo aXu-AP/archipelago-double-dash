@@ -207,6 +207,9 @@ class MkddContext(CommonContext):
                 Utils.async_start(self.update_death_link(bool(args["slot_data"]["death_link"])))
             
             self.trophy_goal = slot_data.get("trophy_requirement")
+            if self.ui:
+                self.ui.update_trophies(self.trophies, self.trophy_goal)
+                self.ui.update_characters([])
             self.cups_courses = slot_data["cups_courses"]
             self.all_cup_tour_length = slot_data.get("all_cup_tour_length", 8)
             self.mirror_200cc = bool(slot_data.get("mirror_200cc"))
@@ -257,18 +260,81 @@ class MkddContext(CommonContext):
 
         :return: The client's GUI.
         """
-        # Use Universal Tracker only if it's recent enough version.
-        if tracker_loaded and UT_VERSION >= "v0.2.12":
-            class TrackerManager(super().make_gui()):
-                logging_pairs = [("Client", "Archipelago")]
-                base_title = f"MKDD AP Client {version.get_version()} | Universal Tracker {UT_VERSION} | Archipelago"
-            return TrackerManager
-        # Otherwise use default ui.
         from kvui import GameManager
-        class DefaultManager(GameManager):
+        base_class: type = GameManager
+        ut_title: str = ""
+        # Use Universal Tracker gui only if it's recent enough version.
+        if tracker_loaded and UT_VERSION >= "v0.2.12":
+            base_class = super().make_gui()
+            ut_title = f" | Universal Tracker {UT_VERSION}"
+        class MKDDManager(base_class):
             logging_pairs = [("Client", "Archipelago")]
-            base_title = f"MKDD AP Client {version.get_version()} | Archipelago"
-        return DefaultManager
+            base_title = f"MKDD AP Client {version.get_version()}{ut_title} | Archipelago"
+            
+
+            def build(self):
+                container = super().build()
+                from kivy.metrics import dp
+                from kvui import MDBoxLayout, MDGridLayout, MDLabel
+                from kivymd.uix.fitimage import FitImage
+                
+                def get_image(source: str, width: int = 0, height: int = 0) -> FitImage:
+                    from importlib import resources
+                    with resources.path(__package__ + ".images", source) as img_path:
+                        image = FitImage(
+                            source = str(img_path),
+                        )
+                        if width > 0:
+                            image.size_hint_x = None
+                            image.width = dp(width)
+                        if height > 0:
+                            image.size_hint_y = None
+                            image.height = dp(height)
+                        return image
+                
+                layout = MDBoxLayout(
+                    orientation = "horizontal",
+                    size_hint_y = None,
+                    height = dp(50),
+                    spacing = dp(5),
+                    padding = dp(5),
+                )
+                
+                layout.add_widget(get_image("trophy.png", 36, 36))
+
+                self.trophies_text = MDLabel(text = "0/10", halign = "left", role = "large")
+                layout.add_widget(self.trophies_text)
+
+                char_box = MDBoxLayout(
+                    orientation = "horizontal",
+                )
+                layout.add_widget(char_box)
+                char_box.add_widget(MDLabel(text = "Characters", halign = "left", role = "large", size_hint_x = None))
+                char_grid = MDGridLayout(rows = 2, padding = 0)
+                char_box.add_widget(char_grid)
+                self.character_icons: list[FitImage] = []
+                for i in range(20):
+                    self.character_icons.append(get_image(f"character_{i + 1}.png", 18, 18))
+                # Grid is filled in row-major order, but characters are in column-major, so we need to pivot.
+                for y in range(2):
+                    for x in range(10):
+                        char_grid.add_widget(self.character_icons[x * 2 + y])
+
+                self.grid.add_widget(layout)
+
+                return container
+
+            def update_trophies(self, current: int, goal: int) -> None:
+                self.trophies_text.text = f"{current}/{goal}"
+
+            def update_characters(self, unlocked_characters: list[int]) -> None:
+                for idx, img in enumerate(self.character_icons):
+                    img.opacity = 1 if idx in unlocked_characters else .2
+
+
+        
+        return MKDDManager
+
 
 ###### Dolphin connection ######
 def _apply_ar_code(code: list[int]):
@@ -342,6 +408,7 @@ def _give_item(ctx: MkddContext, item: MkddItemData) -> bool:
     if item.item_type == ItemType.CHARACTER:
         dolphin.write_byte(ctx.memory_addresses.available_characters_bx + item.address, 1)
         ctx.unlocked_characters.append(item.address)
+        ctx.ui.update_characters(ctx.unlocked_characters)
     
     elif item.item_type == ItemType.KART:
         kart = game_data.KARTS[item.address]
@@ -379,6 +446,8 @@ def _give_item(ctx: MkddContext, item: MkddItemData) -> bool:
 
     elif item.name == items.TROPHY:
         ctx.trophies += 1
+        if ctx.ui:
+            ctx.ui.update_trophies(ctx.trophies, ctx.trophy_goal)
     
     elif item.name == items.VICTORY:
         ctx.victory = True
