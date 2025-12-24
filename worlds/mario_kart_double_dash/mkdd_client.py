@@ -283,17 +283,19 @@ class MkddContext(CommonContext):
                 
                 def get_image(source: str, width: int = 0, height: int = 0) -> FitImage:
                     from importlib import resources
-                    with resources.path(__package__ + ".images", source) as img_path:
-                        image = FitImage(
-                            source = str(img_path),
-                        )
-                        if width > 0:
-                            image.size_hint_x = None
-                            image.width = dp(width)
-                        if height > 0:
-                            image.size_hint_y = None
-                            image.height = dp(height)
-                        return image
+                    from kivy.core.image import Image
+                    from io import BytesIO
+                    img = resources.files(__package__ + ".images").joinpath(source)
+                    data = img.read_bytes()
+                    raw_image = Image(BytesIO(data), ext=img.suffix[1:])
+                    image = FitImage(texture = raw_image.texture)
+                    if width > 0:
+                        image.size_hint_x = None
+                        image.width = dp(width)
+                    if height > 0:
+                        image.size_hint_y = None
+                        image.height = dp(height)
+                    return image
                 
                 layout = MDBoxLayout(
                     orientation = "horizontal",
