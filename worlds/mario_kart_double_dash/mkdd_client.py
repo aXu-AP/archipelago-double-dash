@@ -210,6 +210,9 @@ class MkddContext(CommonContext):
             if self.ui:
                 self.ui.update_trophies(self.trophies, self.trophy_goal)
                 self.ui.update_characters([])
+                self.ui.update_cc(0)
+                self.ui.update_cups([])
+                
             self.cups_courses = slot_data["cups_courses"]
             self.all_cup_tour_length = slot_data.get("all_cup_tour_length", 8)
             self.mirror_200cc = bool(slot_data.get("mirror_200cc"))
@@ -300,18 +303,14 @@ class MkddContext(CommonContext):
                     padding = dp(5),
                 )
                 
-                layout.add_widget(get_image("trophy.png", 36, 36))
+                layout.add_widget(get_image("trophy_1.png", 36, 36))
 
-                self.trophies_text = MDLabel(text = "0/10", halign = "left", role = "large")
+                self.trophies_text: MDLabel = MDLabel(text = "0/10", halign = "left", role = "large")
                 layout.add_widget(self.trophies_text)
 
-                char_box = MDBoxLayout(
-                    orientation = "horizontal",
-                )
-                layout.add_widget(char_box)
-                char_box.add_widget(MDLabel(text = "Characters", halign = "left", role = "large", size_hint_x = None))
-                char_grid = MDGridLayout(rows = 2, padding = 0)
-                char_box.add_widget(char_grid)
+                layout.add_widget(MDLabel(text = "Characters", halign = "right", role = "large"))
+                char_grid = MDGridLayout(rows = 2, padding = 0, size_hint_x = None, width = dp(180))
+                layout.add_widget(char_grid)
                 self.character_icons: list[FitImage] = []
                 for i in range(20):
                     self.character_icons.append(get_image(f"character_{i + 1}.png", 18, 18))
@@ -320,8 +319,14 @@ class MkddContext(CommonContext):
                     for x in range(10):
                         char_grid.add_widget(self.character_icons[x * 2 + y])
 
-                self.grid.add_widget(layout)
+                self.cc_text: MDLabel = MDLabel(text = "50CC", halign = "right", role = "large")
+                layout.add_widget(self.cc_text)
+                self.cup_icons: list[FitImage] = []
+                for i in range(4):
+                    self.cup_icons.append(get_image(f"cup_{i + 1}.png", 36, 36))
+                    layout.add_widget(self.cup_icons[i])
 
+                self.grid.add_widget(layout)
                 return container
 
             def update_trophies(self, current: int, goal: int) -> None:
@@ -330,8 +335,13 @@ class MkddContext(CommonContext):
             def update_characters(self, unlocked_characters: list[int]) -> None:
                 for idx, img in enumerate(self.character_icons):
                     img.opacity = 1 if idx in unlocked_characters else .2
+            
+            def update_cc(self, current_vehile_class: int) -> None:
+                self.cc_text.text = ["50CC", "100CC", "150CC", "Mirror"][min(3, current_vehile_class)]
 
-
+            def update_cups(self, unlocked_cups: list[int]) -> None:
+                for idx, img in enumerate(self.cup_icons):
+                    img.opacity = 1 if idx in unlocked_cups else .2
         
         return MKDDManager
 
@@ -408,8 +418,9 @@ def _give_item(ctx: MkddContext, item: MkddItemData) -> bool:
     if item.item_type == ItemType.CHARACTER:
         dolphin.write_byte(ctx.memory_addresses.available_characters_bx + item.address, 1)
         ctx.unlocked_characters.append(item.address)
-        ctx.ui.update_characters(ctx.unlocked_characters)
-    
+        if ctx.ui:
+            ctx.ui.update_characters(ctx.unlocked_characters)
+
     elif item.item_type == ItemType.KART:
         kart = game_data.KARTS[item.address]
         dolphin.write_byte(ctx.memory_addresses.available_karts_bx + kart.unlock_id, 1)
@@ -423,6 +434,8 @@ def _give_item(ctx: MkddContext, item: MkddItemData) -> bool:
     
     elif item.item_type == ItemType.CUP:
         ctx.unlocked_cups.append(item.address)
+        if ctx.ui:
+            ctx.ui.update_cups(ctx.unlocked_cups)
     
     elif item.item_type == ItemType.TT_COURSE:
         ctx.unlocked_courses.append(item.address)
@@ -430,7 +443,9 @@ def _give_item(ctx: MkddContext, item: MkddItemData) -> bool:
     elif item.name == items.PROGRESSIVE_CLASS:
         ctx.unlocked_vehicle_class = min(ctx.unlocked_vehicle_class + 1, 3)
         dolphin.write_word(ctx.memory_addresses.max_vehicle_class_w, ctx.unlocked_vehicle_class)
-    
+        if ctx.ui:
+            ctx.ui.update_cc(ctx.unlocked_vehicle_class)
+
     elif item.name == items.PROGRESSIVE_CUP_SKIP:
         ctx.unlocked_cup_skips = min(ctx.unlocked_cup_skips + 1, 3)
     
