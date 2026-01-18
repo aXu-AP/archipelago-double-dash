@@ -1,1 +1,7 @@
-worlds/mario_kart_double_dash/images/icons.af~lock~
+*.af~lock~
+*.apworld
+*.zip
+*.pyc
+.ignore/*
+asm/*.out
+asm/*.exe
