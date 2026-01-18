@@ -1,4 +1,5 @@
 import asyncio
+import os
 import random
 import time
 import traceback
@@ -13,6 +14,8 @@ from NetUtils import ClientStatus, NetworkItem
 from . import game_data, items, locations, patches, mem_addresses, ar_codes, version, options
 from .locations import MkddLocationData
 from .items import ItemType, MkddItemData
+from .settings import MkddSettings
+from settings import get_settings
 
 tracker_loaded = False
 try:
@@ -34,6 +37,14 @@ CONNECTION_LOST_STATUS = (
 )
 CONNECTION_CONNECTED_STATUS = "Dolphin connected successfully."
 CONNECTION_INITIAL_STATUS = "Dolphin connection has not been initiated."
+
+DME_DOLPHIN_PROCESS_NAME_ENV_VARIABLE = "DME_DOLPHIN_PROCESS_NAME"
+
+settings : MkddSettings = get_settings().mario_kart_double_dash_options
+if settings.dolphin_process_name:
+    os.environ[DME_DOLPHIN_PROCESS_NAME_ENV_VARIABLE] = settings.dolphin_process_name
+elif DME_DOLPHIN_PROCESS_NAME_ENV_VARIABLE in os.environ:
+    del os.environ[DME_DOLPHIN_PROCESS_NAME_ENV_VARIABLE]
 
 class MkddCommandProcessor(ClientCommandProcessor):
     """
@@ -72,6 +83,12 @@ class MkddCommandProcessor(ClientCommandProcessor):
             for character, items in self.ctx.character_items.items():
                 if len(items) > 0:
                    logger.info(f"{character.name}: {", ".join([item.name for item in items])}")
+
+    def _cmd_dolphin_process_name(self, dolphin_process_name: str) -> None:
+        """Specify the name of the Dolphin process to connect to. "" for system default."""
+        settings.dolphin_process_name = dolphin_process_name
+        get_settings().save()
+        logger.info(f"Dolphin process name set to {dolphin_process_name or "default"}. You must open a new client for this to take effect.")
 
 
 class MkddContext(CommonContext):
@@ -1067,6 +1084,7 @@ async def dolphin_sync_task(ctx: MkddContext) -> None:
     """
     logger.info("Starting Dolphin connector. Use /dolphin for status information.")
     while not ctx.exit_event.is_set():
+        dolphin_name = os.getenv(DME_DOLPHIN_PROCESS_NAME_ENV_VARIABLE) or "Dolphin"
         try:
             if dolphin.is_hooked() and ctx.dolphin_status == CONNECTION_CONNECTED_STATUS:
                 if ctx.slot is not None:
@@ -1084,14 +1102,14 @@ async def dolphin_sync_task(ctx: MkddContext) -> None:
                     if ctx.awaiting_rom:
                         await ctx.server_auth()
                 if dolphin.read_bytes(0x80000000, 6) != b"GM4E01":
-                    logger.info("Connection to Dolphin lost, reconnecting...")
+                    logger.info(f"Connection to {dolphin_name} lost, reconnecting...")
                     ctx.dolphin_status = CONNECTION_LOST_STATUS
                 await asyncio.sleep(0.1)
             else:
                 if ctx.dolphin_status == CONNECTION_CONNECTED_STATUS:
-                    logger.info("Connection to Dolphin lost, reconnecting...")
+                    logger.info(f"Connection to {dolphin_name} lost, reconnecting...")
                     ctx.dolphin_status = CONNECTION_LOST_STATUS
-                logger.info("Attempting to connect to Dolphin...")
+                logger.info(f"Attempting to connect to {dolphin_name}...")
                 dolphin.hook()
                 if dolphin.is_hooked():
                     if dolphin.read_bytes(0x80000000, 6) != b"GM4E01":
@@ -1107,14 +1125,14 @@ async def dolphin_sync_task(ctx: MkddContext) -> None:
                         await give_items(ctx)
                         ctx.locations_checked = set()
                 else:
-                    logger.info("Connection to Dolphin failed, attempting again in 5 seconds...")
+                    logger.info(f"Connection to {dolphin_name} failed, attempting again in 5 seconds...")
                     ctx.dolphin_status = CONNECTION_LOST_STATUS
                     await ctx.disconnect()
                     await asyncio.sleep(5)
                     continue
         except Exception:
             dolphin.un_hook()
-            logger.info("Connection to Dolphin failed, attempting again in 5 seconds...")
+            logger.info(f"Connection to {dolphin_name} failed, attempting again in 5 seconds...")
             logger.error(traceback.format_exc())
             ctx.dolphin_status = CONNECTION_LOST_STATUS
             await ctx.disconnect()

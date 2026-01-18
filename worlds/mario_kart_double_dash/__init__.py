@@ -15,6 +15,7 @@ from .locations import MkddLocation, MkddLocationData
 from .options import MkddOptions
 from .regions import MkddRegionData
 from .rules import MkddRules
+from .settings import MkddSettings
 
 class MkddWebWorld(WebWorld):
     theme = "ocean"
@@ -39,6 +40,7 @@ class MkddWorld(World):
 
     options_dataclass = MkddOptions
     options: MkddOptions
+    settings: MkddSettings
 
     item_name_to_id = items.name_to_id
     location_name_to_id = locations.name_to_id
