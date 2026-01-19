@@ -20,7 +20,7 @@ Grand Prix and Time Trial. 2 players on one kart should work, but is untested (y
 
 ## Setup
 
-See [setup guide](worlds/mario_kart_double_dash/docs/en_Setup.md) for a throughout explanation and troubleshooting.
+See [setup guide](docs/en_Setup.md) for a throughout explanation and troubleshooting.
 
 If you are familiar with the general Archipelago workflow, here's a super quick guide:
 * Install the apworld and set up your multiworld as usual. Having [Universal Tracker](https://github.com/FarisTheAncient/Archipelago/releases) is recommended.
@@ -33,5 +33,5 @@ You're good to go!
 ## Special Thanks
 
 * To **Yoshi2** for patiently showing me the ropes of reverse engineering! This is my first romhacking project so help was really needed!
-* To **Ralph@gc-forever** for making tons of cheat codes for MKDD and allowing me to use them for the randomizator! Some of them are used by the project as is (see [ar_codes.py](worlds/mario_kart_double_dash/ar_codes.py) for complete list) and many of them have given insight to make some custom features myself.
+* To **Ralph@gc-forever** for making tons of cheat codes for MKDD and allowing me to use them for the randomizator! Some of them are used by the project as is (see [ar_codes.py](ar_codes.py) for complete list) and many of them have given insight to make some custom features myself.
 * To **ItzRonsku** and **Hugeli** for testing.
