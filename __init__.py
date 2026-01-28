@@ -306,6 +306,7 @@ class MkddWorld(World):
             "lap_counts": lap_counts,
             "character_item_total_weights": self.character_item_total_weights,
             "global_items_total_weights": self.global_items_total_weights,
+            "allow_nothings_in_item_boxes": int(self.options.allow_nothings_in_item_boxes.value),
         }
     
     # Rerun Universal Tracker with received options.

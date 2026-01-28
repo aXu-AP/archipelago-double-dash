@@ -127,6 +127,10 @@ class SpeedUpgrades(DefaultOnToggle):
     Disabling this sets logic difficulty on hard if it's lower."""
     display_name = "Speed Upgrades"
 
+class AllowNothingsInItemBoxes(DefaultOnToggle):
+    """Are Nothings allowed in item boxes?"""
+    display_name = "Allow Nothings in item boxes"
+
 @dataclass
 class MkddOptions(PerGameCommonOptions):
     goal: Goal
@@ -152,3 +156,4 @@ class MkddOptions(PerGameCommonOptions):
     speed_upgrades: SpeedUpgrades
 
     start_inventory_from_pool: StartInventoryPool
+    allow_nothings_in_item_boxes: AllowNothingsInItemBoxes

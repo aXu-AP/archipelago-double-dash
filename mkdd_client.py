@@ -133,6 +133,7 @@ class MkddContext(CommonContext):
         self.cups_courses: list[list[int]]
         self.mirror_200cc: bool
         self.lap_counts: dict[str, int]
+        self.allow_nothings_in_item_boxes: bool
 
         # Game data.
         self.victory: bool = False
@@ -234,6 +235,7 @@ class MkddContext(CommonContext):
             self.all_cup_tour_length = slot_data.get("all_cup_tour_length", 8)
             self.mirror_200cc = bool(slot_data.get("mirror_200cc"))
             self.lap_counts = slot_data.get("lap_counts")
+            self.allow_nothings_in_item_boxes = slot_data.get("allow_nothings_in_item_boxes", True)
 
             self.character_item_total_weights = slot_data.get("character_item_total_weights")
             self.global_items_total_weights = slot_data.get("global_items_total_weights")
@@ -806,14 +808,21 @@ def update_game(ctx: MkddContext) -> None:
         item_pool = ctx.global_items + ctx.character_items[ctx.active_characters[0]]
         # Give different items only if there's no item synergy.
         if item_adr[0] != item_adr[1]:
+            rand_item = game_data.ITEM_NONE
             item_weights = [item.weight_table[in_race_placement] for item in item_pool]
             # Yet to be unlocked items still count towards item weights.
             weight_gap = total_weight - sum(item_weights)
-            if weight_gap > 0:
-                item_pool.append(game_data.ITEM_NONE)
-                item_weights.append(weight_gap)
-            rand_item = game_data.ITEM_NONE
             if len(item_pool) > 0:
+                weight_gap = total_weight - sum(item_weights)
+                if weight_gap > 0:
+                    item_pool.append(game_data.ITEM_NONE)
+                    item_weights.append(weight_gap)
+                if not ctx.allow_nothings_in_item_boxes:
+                    nothing_entries_indices = [idx for idx, i in enumerate(item_pool) if i == game_data.ITEM_NONE]
+                    nothing_entries_indices.sort(reverse=True)
+                    for idx in nothing_entries_indices:
+                        del item_pool[idx]
+                        del item_weights[idx]
                 rand_item = random.sample(item_pool, 1, counts = item_weights)[0]
             dolphin.write_byte(item_adr[0], rand_item.id)
 
@@ -822,6 +831,7 @@ def update_game(ctx: MkddContext) -> None:
             item_pool = ctx.global_items.copy()
         total_weight += ctx.character_item_total_weights[ctx.active_characters[1].name][in_race_placement]
         item_pool += ctx.character_items[ctx.active_characters[1]]
+        rand_item = game_data.ITEM_NONE
         item_weights = [item.weight_table[in_race_placement] for item in item_pool]
         # Yet to be unlocked items still count towards item weights.
         weight_gap = total_weight - sum(item_weights)
@@ -830,6 +840,12 @@ def update_game(ctx: MkddContext) -> None:
             item_weights.append(weight_gap)
         rand_item = game_data.ITEM_NONE
         if len(item_pool) > 0:
+            if not ctx.allow_nothings_in_item_boxes:
+                nothing_entries_indices = [idx for idx, i in enumerate(item_pool) if i == game_data.ITEM_NONE]
+                nothing_entries_indices.sort(reverse=True)
+                for idx in nothing_entries_indices:
+                    del item_pool[idx]
+                    del item_weights[idx]
             rand_item = random.sample(item_pool, 1, counts = item_weights)[0]
         dolphin.write_byte(item_adr[1], rand_item.id)
 
