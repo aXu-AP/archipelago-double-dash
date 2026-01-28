@@ -127,7 +127,7 @@ class SpeedUpgrades(DefaultOnToggle):
     Disabling this sets logic difficulty on hard if it's lower."""
     display_name = "Speed Upgrades"
 
-class AllowNothingsInItemBoxes(Toggle):
+class AllowNothingsInItemBoxes(DefaultOnToggle):
     """Are Nothings allowed in item boxes?"""
     display_name = "Allow Nothings in item boxes"
 
