@@ -88,7 +88,7 @@ class ShorterCourses(Toggle):
 
 class CustomLapCounts(OptionDict):
     """Set custom amount of laps on each course.
-    Write each course on its own line, followed by : and number of laps."""
+    Write each course on its own line, followed by : and number of laps(max 9)."""
     display_name = "Custom Lap Counts"
     default = {"Wario Colosseum": 2}
     schema = Schema({
