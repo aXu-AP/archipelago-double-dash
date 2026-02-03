@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from Options import Choice, DefaultOnToggle, NamedRange, OptionDict, PerGameCommonOptions, Range, StartInventoryPool, Toggle, Visibility
+from schema import And, Schema
 
 class Goal(Choice):
     """Victory condition for the game.
@@ -87,9 +88,12 @@ class ShorterCourses(Toggle):
 
 class CustomLapCounts(OptionDict):
     """Set custom amount of laps on each course.
-    Write each course on its own line, followed by : and number of laps."""
+    Write each course on its own line, followed by : and number of laps(max 9)."""
     display_name = "Custom Lap Counts"
     default = {"Wario Colosseum": 2}
+    schema = Schema({
+        str: And(int, lambda n: 1 <= n <= 9)
+    })
     
 class ItemsForEverybody(Range):
     """How many global item unlocks there are."""
