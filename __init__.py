@@ -43,6 +43,7 @@ class MkddWorld(World):
     settings: MkddSettings
 
     item_name_to_id = items.name_to_id
+    item_name_groups = items.groups
     location_name_to_id = locations.name_to_id
     location_name_groups = locations.groups
 
