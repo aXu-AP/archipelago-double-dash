@@ -639,28 +639,6 @@ def update_game(ctx: MkddContext) -> None:
 
     :param ctx: Mario Kart Double Dash client context.
     """
-    menu_pointer = dolphin.read_word(ctx.memory_addresses.menu_pointer)
-
-    if menu_pointer != 0:
-        # Determines the icon address pool to change
-        target_icons = None
-
-        if menu_pointer == ctx.memory_addresses.menu_pointers[0]:
-            target_icons = ctx.memory_addresses.character_icons1
-        elif menu_pointer == ctx.memory_addresses.menu_pointers[1]:
-            target_icons = ctx.memory_addresses.character_icons2
-        elif menu_pointer == ctx.memory_addresses.menu_pointers[2]:
-            target_icons = ctx.memory_addresses.character_icons3
-        elif menu_pointer == ctx.memory_addresses.menu_pointers[3]:
-            target_icons = ctx.memory_addresses.character_icons4
-
-        # Applies the changes to the address pool
-        if target_icons:
-            for char_id, address in target_icons.items():
-                if char_id in ctx.unlocked_characters:
-                    dolphin.write_word(address, 0x0100FFFF)
-                else:
-                    dolphin.write_word(address, 0x0000FFFF)
 
     _apply_ar_code(ar_codes.unlock_everything)
     
@@ -671,6 +649,14 @@ def update_game(ctx: MkddContext) -> None:
 
     menu_pointer = dolphin.read_word(ctx.memory_addresses.menu_pointer)
     if menu_pointer != 0:
+        target_icons = ctx.memory_addresses.menu_pointer_to_char_icons.get(menu_pointer)
+
+        for (char_id, address) in enumerate(target_icons):
+            if char_id in ctx.unlocked_characters:
+                dolphin.write_word(address, 0x0100FFFF)
+            else:
+                dolphin.write_word(address, 0x0000FFFF)
+
         driver = dolphin.read_word(menu_pointer + ctx.memory_addresses.menu_driver_w_offset)
         rider = dolphin.read_word(menu_pointer + ctx.memory_addresses.menu_rider_w_offset)
         # Save active selections for printing info.
