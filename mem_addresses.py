@@ -290,3 +290,29 @@ class MkddMemAddressesUsa(MkddMemAddresses):
             0x8141C85C  # King Boo
         ]
     }
+
+    special_item_box_target_pointer = {
+        "Mushroom Bridge": [
+            [0x80D86338],  # Pipe
+            [0x80D863B8],  # Sidewalk
+            [0x80D85F38, 0x80D85F78]  # Bridge boxes
+        ],
+        "Wario Colosseum": [
+            [0x80D9A1E4]  # Great jump
+        ],
+        "Daisy Cruiser": [
+            [0x80D4F064]  # Cargo area
+        ],
+        "Luigi Circuit": [  # Those are for above 50cc in Luigi Circuit
+            [0x80D684E8, 0x80D683E8],  # Chomp shortcut boxes
+            [0x80D686A8, 0x80D68668]  # Last curve shortcut boxes
+        ],
+        "Peach Beach": [
+            [0x80D8B390],  # Hidden pipe
+            [0x80D8A850, 0x80D8A2D0],  # Beach jump boxes
+            [0x80D8A750, 0x80D8A790]  # Fountain hidden boxes
+        ],
+        "Dino Dino Jungle": [
+            [0x80D6E7f8, 0x80D6E878]  # Bridge side dual boxes
+        ]
+    }

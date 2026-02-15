@@ -3,6 +3,7 @@ import os
 import random
 import time
 import traceback
+import struct
 from typing import TYPE_CHECKING, Any, Optional
 
 import dolphin_memory_engine as dolphin
@@ -545,6 +546,45 @@ async def check_locations(ctx: MkddContext) -> None:
     ctx.last_in_game = new_in_game
     course_loaded: bool = game_ticks > ctx.course_changed_time + 60 # Don't give checks in menus etc.
     ctx.last_race_timer = race_timer
+
+    # Gets the current courses and its special box targets to verify the value of each boxes next to its targeted address.
+    # When one of the boxes is hit the value of 32 in hex will be in the address next to the targeted address and the check will be activated.
+    course_name = ctx.current_course.name
+    special_box_groups = ctx.memory_addresses.special_item_box_target_pointer.get(course_name, [])
+
+    if in_game and special_box_groups:
+        unchecked_item_box_locations = []
+
+        for (index, signatures) in enumerate(special_box_groups, start=1):
+            location_name = locations.get_loc_name_item_box(course_name, index)
+
+            if locations.name_to_id.get(location_name) not in ctx.locations_checked:
+                unchecked_item_box_locations.append((signatures, location_name))
+
+        if unchecked_item_box_locations:
+            scan_start = 0x81000000
+            scan_end = 0x810F0000
+
+            for current_scan_address in range(scan_start, scan_end, 4):
+                bytes_at_address = dolphin.read_bytes(current_scan_address, 4)
+
+                if not bytes_at_address or len(bytes_at_address) < 4:
+                    continue
+
+                found_signature = struct.unpack(">I", bytes_at_address)[0]
+
+                for (target_signatures, location_name) in unchecked_item_box_locations[:]:
+                    if found_signature in target_signatures:
+
+                        status_address = current_scan_address + 4
+                        status_bytes = dolphin.read_bytes(status_address, 4)
+
+                        if status_bytes:
+                            box_status_value = struct.unpack(">I", status_bytes)[0]
+
+                            if box_status_value == 0x00000020:
+                                new_location_names.add(location_name)
+                                unchecked_item_box_locations.remove((target_signatures, location_name))
 
     # Course finishing related locations.
     # For Time Trials check against default lap counts.
