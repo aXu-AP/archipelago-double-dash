@@ -99,7 +99,7 @@ for item in game_data.ITEMS:
             TAG_ITEMS_FOR_X = {TAG_ITEMS, f"Items for {character.name}"}
             data_table.append(MkddItemData(
                 name, classification, ItemType.ITEM_UNLOCK, count = 0,
-                meta={"character": character, "item": item}, tags = TAG_ITEMS_FOR_X
+                meta = {"character": character, "item": item}, tags = TAG_ITEMS_FOR_X
             ))
 
 # Used by Universal Tracker glitched logic.
