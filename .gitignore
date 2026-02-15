@@ -5,3 +5,4 @@
 .ignore/*
 asm/*.out
 asm/*.exe
+.idea
