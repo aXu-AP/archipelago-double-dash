@@ -94,7 +94,7 @@ def get_loc_name_win_course_char(course: game_data.Course) -> str:
 
 def get_loc_name_item_box(course: str, box_id: int) -> str:
     names = SPECIAL_BOX_NAMES.get(course, [])
-    return f"{course} - {names[box_id]}"
+    return f"{course} - {names[box_id]} Special Box"
 
 data_table: list[MkddLocationData] = [MkddLocationData("", 0)] # Id 0 is reserved.
 
