@@ -555,9 +555,8 @@ async def check_locations(ctx: MkddContext) -> None:
     if in_game and special_box_groups:
         unchecked_item_box_locations = []
 
-        for (index, signatures) in enumerate(special_box_groups, start=1):
+        for (index, signatures) in enumerate(special_box_groups):
             location_name = locations.get_loc_name_item_box(course_name, index)
-
             if locations.name_to_id.get(location_name) not in ctx.locations_checked:
                 unchecked_item_box_locations.append((signatures, location_name))
 
@@ -565,24 +564,17 @@ async def check_locations(ctx: MkddContext) -> None:
             scan_start = 0x81000000
             scan_end = 0x810F0000
 
-            for current_scan_address in range(scan_start, scan_end, 4):
-                bytes_at_address = dolphin.read_bytes(current_scan_address, 4)
+            data = dolphin.read_bytes(scan_start, scan_end - scan_start)
 
-                if not bytes_at_address or len(bytes_at_address) < 4:
-                    continue
+            if data and len(data) > 8:
+                for offset in range(0, len(data) - 8, 4):
+                    found_signature = struct.unpack(">I", data[offset: offset + 4])[0]
 
-                found_signature = struct.unpack(">I", bytes_at_address)[0]
+                    for (target_signatures, location_name) in unchecked_item_box_locations[:]:
+                        if found_signature in target_signatures:
+                            box_status_value = struct.unpack(">I", data[offset + 4: offset + 8])[0]
 
-                for (target_signatures, location_name) in unchecked_item_box_locations[:]:
-                    if found_signature in target_signatures:
-
-                        status_address = current_scan_address + 4
-                        status_bytes = dolphin.read_bytes(status_address, 4)
-
-                        if status_bytes:
-                            box_status_value = struct.unpack(">I", status_bytes)[0]
-
-                            if box_status_value == 0x00000020:
+                            if box_status_value == 0x20:
                                 new_location_names.add(location_name)
                                 unchecked_item_box_locations.remove((target_signatures, location_name))
 
