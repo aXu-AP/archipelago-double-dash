@@ -524,6 +524,7 @@ async def check_locations(ctx: MkddContext) -> None:
     mode: int = dolphin.read_word(ctx.memory_addresses.mode_w)
     cup: str = game_data.CUPS[dolphin.read_word(ctx.memory_addresses.cup_w)]
     menu_course: int = dolphin.read_word(ctx.memory_addresses.menu_course_w)
+    human_players: int = dolphin.read_byte(ctx.memory_addresses.human_players_b)
     vehicle_class: int = dolphin.read_word(ctx.memory_addresses.vehicle_class_w)
     current_lap: int = dolphin.read_word(ctx.memory_addresses.current_lap_wx)
     # Get placement and modify it to be 0-based for less confusion (rankings are also 0-based).
@@ -539,7 +540,7 @@ async def check_locations(ctx: MkddContext) -> None:
 
     # Some ways to check what state is the game in. In game in particular has to have one frame
     # leeway in case we read finishing state after the last frame advance has happened.
-    new_in_game: bool = race_timer - ctx.last_race_timer > 0 # From countdown to finish.
+    new_in_game: bool = race_timer - ctx.last_race_timer > 0 and human_players > 0 # From countdown to finish.
     in_game: bool = new_in_game or ctx.last_in_game
     ctx.last_in_game = new_in_game
     course_loaded: bool = game_ticks > ctx.course_changed_time + 60 # Don't give checks in menus etc.

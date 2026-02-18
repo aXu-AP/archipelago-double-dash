@@ -13,6 +13,8 @@ class MkddMemAddresses():
     """Cup selection. 0 Mushroom Cup - 4 All Cup Tour."""
     menu_course_w: int
     """Currently selected course inside a cup. Doesn't update in midst of a gp. 0-3."""
+    human_players_b: int
+    """Amount of human players. Used to check if actually playing or in attraction mode."""
     vehicle_class_w: int
     """Currently selected class. Updated after select character screen. 0 = 50cc, 3 = Mirror."""
     current_course_w: int
@@ -107,6 +109,7 @@ class MkddMemAddressesUsa(MkddMemAddresses):
     mode_w = 0x803b1464
     cup_w = 0x803cb7a8
     menu_course_w = 0x803cb7ac
+    human_players_b = 0x803b147b
     vehicle_class_w = 0x803b146c
     current_course_w = 0x803cbd44
     current_lap_wx = 0x8037ff60
