@@ -101,6 +101,8 @@ class MkddMemAddresses():
     """Offset from text, y coordinate for the text."""
     text_amount: int
     """Size of the text table."""
+    menu_pointer_to_char_icons: dict[int, list[int]]
+    """Pointers of the menu character icons"""
 
 class MkddMemAddressesUsa(MkddMemAddresses):
     # Vanilla addresses:
