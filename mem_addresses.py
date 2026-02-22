@@ -105,6 +105,8 @@ class MkddMemAddresses():
     """Size of the text table."""
     menu_pointer_to_char_icons: dict[int, list[int]]
     """Pointers of the menu character icons"""
+    item_box_target_pointer: dict[str, list[list[int]]]
+    """The pointers of reference of some boxes"""
 
 class MkddMemAddressesUsa(MkddMemAddresses):
     # Vanilla addresses:
@@ -291,7 +293,7 @@ class MkddMemAddressesUsa(MkddMemAddresses):
         ]
     }
 
-    special_item_box_target_pointer = {
+    item_box_target_pointer = {
         "Mushroom Bridge": [
             [0x80D86338],  # Pipe
             [0x80D863B8],  # Sidewalk

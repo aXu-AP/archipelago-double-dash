@@ -131,6 +131,14 @@ class SpeedUpgrades(DefaultOnToggle):
     Disabling this sets logic difficulty on hard if it's lower."""
     display_name = "Speed Upgrades"
 
+class ItemBoxesAsLocations(Choice):
+    """Makes some item boxes count as checks."""
+    display_name = "Item Boxes as Locations"
+    option_disabled = 0
+    option_interesting_locations = 1
+    #option_boxsanity = 2
+    default = 1
+
 @dataclass
 class MkddOptions(PerGameCommonOptions):
     goal: Goal
@@ -156,3 +164,5 @@ class MkddOptions(PerGameCommonOptions):
     speed_upgrades: SpeedUpgrades
 
     start_inventory_from_pool: StartInventoryPool
+
+    item_boxes_as_locations: ItemBoxesAsLocations

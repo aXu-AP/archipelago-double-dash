@@ -550,7 +550,7 @@ async def check_locations(ctx: MkddContext) -> None:
     # Gets the current courses and its special box targets to verify the value of each boxes next to its targeted address.
     # When one of the boxes is hit the value of 32 in hex will be in the address next to the targeted address and the check will be activated.
     course_name = ctx.current_course.name
-    special_box_groups = ctx.memory_addresses.special_item_box_target_pointer.get(course_name, [])
+    special_box_groups = ctx.memory_addresses.item_box_target_pointer.get(course_name, [])
 
     if in_game and special_box_groups:
         unchecked_item_box_locations = []

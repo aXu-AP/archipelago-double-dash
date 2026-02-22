@@ -124,6 +124,8 @@ class MkddWorld(World):
                     continue
                 if not self.options.grand_prix_trophies and locations.TAG_CUP_TROPHY in location_data.tags:
                     continue
+                if self.options.item_boxes_as_locations == 0 and locations.TAG_ITEM_BOX in location_data.tags:
+                    continue
                 if id > 0 and location_data.region == region_name:
                     region.add_locations({location_data.name: id})
                     self.current_locations.append(location_data)
@@ -307,6 +309,7 @@ class MkddWorld(World):
             "lap_counts": lap_counts,
             "character_item_total_weights": self.character_item_total_weights,
             "global_items_total_weights": self.global_items_total_weights,
+            "item_boxes_as_locations": int(self.options.item_boxes_as_locations),
         }
     
     # Rerun Universal Tracker with received options.
