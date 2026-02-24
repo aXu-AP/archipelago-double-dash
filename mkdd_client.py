@@ -639,7 +639,6 @@ def update_game(ctx: MkddContext) -> None:
 
     :param ctx: Mario Kart Double Dash client context.
     """
-
     _apply_ar_code(ar_codes.unlock_everything)
     
     text_s: list[str] = ["" for _ in range(ctx.memory_addresses.text_amount)]
