@@ -166,7 +166,11 @@ data_table.append(MkddLocationData(WIN_ALL_CUP_TOUR, 0, game_data.CUPS[game_data
 for course in game_data.RACE_COURSES:
     boxes = BOX_NAMES.get(course.name, [])
     for i, box_nickname in enumerate(boxes):
-        data_table.append(MkddLocationData(get_loc_name_item_box(course.name, i), 20, f"{course.name} GP", tags={course.name, TAG_ITEM_BOX}))
+        if course.name == "Luigi Circuit":
+            if items.PROGRESSIVE_CLASS == 1:
+                data_table.append(MkddLocationData(get_loc_name_item_box(course.name, i), 0, f"{course.name} GP", tags={course.name, TAG_ITEM_BOX}))
+        else:
+            data_table.append(MkddLocationData(get_loc_name_item_box(course.name, i), 0, f"{course.name} GP",tags={course.name, TAG_ITEM_BOX}))
 
 name_to_id: dict[str, int] = {data.name:id for (id, data) in enumerate(data_table) if id > 0}
 
