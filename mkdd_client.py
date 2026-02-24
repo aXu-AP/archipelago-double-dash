@@ -649,6 +649,14 @@ def update_game(ctx: MkddContext) -> None:
 
     menu_pointer = dolphin.read_word(ctx.memory_addresses.menu_pointer)
     if menu_pointer != 0:
+        target_icons = ctx.memory_addresses.menu_pointer_to_char_icons.get(menu_pointer)
+
+        for (char_id, address) in enumerate(target_icons):
+            if char_id in ctx.unlocked_characters:
+                dolphin.write_word(address, 0x0100FFFF)
+            else:
+                dolphin.write_word(address, 0x0000FFFF)
+
         driver = dolphin.read_word(menu_pointer + ctx.memory_addresses.menu_driver_w_offset)
         rider = dolphin.read_word(menu_pointer + ctx.memory_addresses.menu_rider_w_offset)
         # Save active selections for printing info.

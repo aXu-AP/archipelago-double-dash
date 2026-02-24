@@ -103,6 +103,8 @@ class MkddMemAddresses():
     """Offset from text, y coordinate for the text."""
     text_amount: int
     """Size of the text table."""
+    menu_pointer_to_char_icons: dict[int, list[int]]
+    """Pointers of the menu character icons"""
 
 class MkddMemAddressesUsa(MkddMemAddresses):
     # Vanilla addresses:
@@ -197,3 +199,94 @@ class MkddMemAddressesUsa(MkddMemAddresses):
     text_x_offset_h = -4
     text_y_offset_h = -2
     text_amount = 5
+
+    menu_pointer_to_char_icons = {
+        0x812BFACC: [
+            0x813FE760,  # Mario
+            0x813FDDE0,  # Luigi
+            0x81401DDC,  # Peach
+            0x8140145C,  # Daisy
+            0x81405458,  # Yoshi
+            0x81404AD8,  # Birdo
+            0x81408AD4,  # Baby Mario
+            0x81408154,  # Baby Luigi
+            0x8140C150,  # Toad
+            0x8140B7D0,  # Toadette
+            0x8140F7CC,  # Koopa
+            0x8140EE4C,  # Red Koopa
+            0x81412E48,  # Donkey Kong
+            0x814124C8,  # Diddy Kong
+            0x814164C4,  # Bowser
+            0x81415B44,  # Bowser Jr.
+            0x81419B40,  # Wario
+            0x814191C0,  # Waluigi
+            0x8141D1BC,  # Petey Piranha
+            0x8141C83C  # King Boo
+        ],
+        0x811D9BCC: [
+            0x81318880,  # Mario
+            0x81317F00,  # Luigi
+            0x8131BEFC,  # Peach
+            0x8131B57C,  # Daisy
+            0x8131F578,  # Yoshi
+            0x8131EBF8,  # Birdo
+            0x81322BF4,  # Baby Mario
+            0x81322274,  # Baby Luigi
+            0x81326270,  # Toad
+            0x813258F0,  # Toadette
+            0x813298EC,  # Koopa
+            0x81328F6C,  # Red Koopa
+            0x8132CF68,  # Donkey Kong
+            0x8132C5E8,  # Diddy Kong
+            0x813305E4,  # Bowser
+            0x8132FC64,  # Bowser Jr.
+            0x81333C60,  # Wario
+            0x813332E0,  # Waluigi
+            0x813372DC,  # Petey Piranha
+            0x8133695C  # King Boo
+        ],
+        0x8132380C: [
+            0x8145D6D8,  # Mario
+            0x8145CD58,  # Luigi
+            0x81460D54,  # Peach
+            0x814603D4,  # Daisy
+            0x814643D0,  # Yoshi
+            0x81463A50,  # Birdo
+            0x81467A4C,  # Baby Mario
+            0x814670CC,  # Baby Luigi
+            0x8146B0C8,  # Toad
+            0x8146A748,  # Toadette
+            0x8146E744,  # Koopa
+            0x8146DDC4,  # Red Koopa
+            0x81471DC0,  # Donkey Kong
+            0x81471440,  # Diddy Kong
+            0x8147543C,  # Bowser
+            0x81474ABC,  # Bowser Jr.
+            0x81478AB8,  # Wario
+            0x81478138,  # Waluigi
+            0x8147C134,  # Petey Piranha
+            0x8147B7B4  # King Boo
+        ],
+        0x812BFAEC: [
+            0x813FE780,  # Mario
+            0x813FDE00,  # Luigi
+            0x81401DFC,  # Peach
+            0x8140147C,  # Daisy
+            0x81405478,  # Yoshi
+            0x81404AF8,  # Birdo
+            0x81408AF4,  # Baby Mario
+            0x81408174,  # Baby Luigi
+            0x8140C170,  # Toad
+            0x8140B7F0,  # Toadette
+            0x8140F7EC,  # Koopa
+            0x8140EE6C,  # Red Koopa
+            0x81412E68,  # Donkey Kong
+            0x814124E8,  # Diddy Kong
+            0x814164E4,  # Bowser
+            0x81415B64,  # Bowser Jr.
+            0x81419B60,  # Wario
+            0x814191E0,  # Waluigi
+            0x8141D1DC,  # Petey Piranha
+            0x8141C85C  # King Boo
+        ]
+    }
