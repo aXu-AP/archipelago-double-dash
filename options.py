@@ -163,6 +163,6 @@ class MkddOptions(PerGameCommonOptions):
     kart_upgrades: KartUpgrades
     speed_upgrades: SpeedUpgrades
 
-    start_inventory_from_pool: StartInventoryPool
-
     item_boxes_as_locations: ItemBoxesAsLocations
+
+    start_inventory_from_pool: StartInventoryPool

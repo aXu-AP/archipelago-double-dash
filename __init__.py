@@ -79,6 +79,8 @@ class MkddWorld(World):
             self.options.logic_difficulty = slot_data["logic_difficulty"]
             # Staff ghosts were on by default before this option was introduced.
             self.options.time_trials = slot_data.get("time_trials", options.TimeTrials.option_include_staff_ghosts)
+            self.options.item_boxes_as_locations = slot_data["item_boxes_as_locations"]
+
 
     def create_regions(self) -> None:
         # Course shuffle (entrance rando). If using Universal Tracker, get shuffled tracks from slot data.
