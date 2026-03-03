@@ -149,3 +149,7 @@ Mario Kart Double Dash:
 
   item_links: []
     # Share part of your item pool with other players.
+
+  item_boxes_as_locations: interesting_locations
+  # Makes some item boxes count as checks.
+  # Possible values: disabled, interesting_locations.

@@ -3,6 +3,7 @@ import os
 import random
 import time
 import traceback
+import struct
 from typing import TYPE_CHECKING, Any, Optional
 
 import dolphin_memory_engine as dolphin
@@ -545,6 +546,37 @@ async def check_locations(ctx: MkddContext) -> None:
     ctx.last_in_game = new_in_game
     course_loaded: bool = game_ticks > ctx.course_changed_time + 60 # Don't give checks in menus etc.
     ctx.last_race_timer = race_timer
+
+    # Gets the current courses and its special box targets to verify the value of each boxes next to its targeted address.
+    # When one of the boxes is hit the value of 32 in hex will be in the address next to the targeted address and the check will be activated.
+    course_name = ctx.current_course.name
+    special_box_groups = ctx.memory_addresses.item_box_target_pointer.get(course_name, [])
+
+    if in_game and special_box_groups:
+        unchecked_item_box_locations = []
+
+        for (index, signatures) in enumerate(special_box_groups):
+            location_name = locations.get_loc_name_item_box(course_name, index)
+            if locations.name_to_id.get(location_name) not in ctx.locations_checked:
+                unchecked_item_box_locations.append((signatures, location_name))
+
+        if unchecked_item_box_locations:
+            scan_start = 0x81000000
+            scan_end = 0x810F0000
+
+            data = dolphin.read_bytes(scan_start, scan_end - scan_start)
+
+            if data and len(data) > 8:
+                for offset in range(0, len(data) - 8, 4):
+                    found_signature = struct.unpack(">I", data[offset: offset + 4])[0]
+
+                    for (target_signatures, location_name) in unchecked_item_box_locations[:]:
+                        if found_signature in target_signatures:
+                            box_status_value = struct.unpack(">I", data[offset + 4: offset + 8])[0]
+
+                            if box_status_value == 0x20:
+                                new_location_names.add(location_name)
+                                unchecked_item_box_locations.remove((target_signatures, location_name))
 
     # Course finishing related locations.
     # For Time Trials check against default lap counts.
