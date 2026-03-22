@@ -387,6 +387,7 @@ def apply_patch(ctx: MkddContext):
     _apply_dict_patch(patches.patch)
     _apply_ar_code(ar_codes.lap_modifier)
     _apply_ar_code(ar_codes.gp_course_selection)
+    _apply_ar_code(ar_codes.fireball_limit)
     logger.info("Patch Applied.")
 
 
