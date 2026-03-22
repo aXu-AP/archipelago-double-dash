@@ -535,9 +535,10 @@ async def check_locations(ctx: MkddContext) -> None:
     total_points: int = dolphin.read_word(ctx.memory_addresses.total_points_wx)
     game_ticks: int = dolphin.read_word(ctx.memory_addresses.game_ticks_w)
     race_timer: int = dolphin.read_word(ctx.memory_addresses.race_timer_w)
-    # Remove 181 frame headstart and convert to seconds.
+    # Remove 182 frame headstart and convert to seconds.
     # Close enough (to 1/10th of a second), altough probably exact formula should be investigated.
-    race_timer_s: float = (race_timer - 181) / 60
+    # Rounded in favor of the player.
+    race_timer_s: float = (race_timer - 182) / 60
 
     # Some ways to check what state is the game in. In game in particular has to have one frame
     # leeway in case we read finishing state after the last frame advance has happened.
