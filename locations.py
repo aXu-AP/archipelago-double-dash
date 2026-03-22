@@ -128,7 +128,7 @@ for course in game_data.RACE_COURSES:
     data_table.append(MkddLocationData(get_loc_name_finish(course.name), 0, course.name, tags = {course.name, TAG_COURSE_FINISH}))
     data_table.append(MkddLocationData(get_loc_name_lead(course.name), 30, course.name + " GP", tags = {course.name, TAG_COURSE_LEAD}))
     data_table.append(MkddLocationData(get_loc_name_first(course.name), 40, course.name + " GP", tags = {course.name, TAG_COURSE_FIRST}))
-    data_table.append(MkddLocationData(get_loc_name_good_time(course), 60, course.name + " TT", tags = {course.name, TAG_TT, TAG_TT_GOOD}))
+    data_table.append(MkddLocationData(get_loc_name_good_time(course), 70, course.name + " TT", tags = {course.name, TAG_TT, TAG_TT_GOOD}))
     data_table.append(MkddLocationData(get_loc_name_ghost(course.name), 100, course.name + " TT", tags = {course.name, TAG_TT, TAG_TT_GHOST}))
 
 # Win with default character pairs.
