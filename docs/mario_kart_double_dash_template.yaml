@@ -120,6 +120,10 @@ Mario Kart Double Dash:
     # Disabling this sets logic difficulty on hard if it's lower.
     # Possible values: true, false
 
+  item_boxes_as_locations: interesting_locations
+    # Makes some item boxes count as checks.
+    # Possible values: disabled, interesting_locations
+
   # Item & Location Options
   local_items: []
     # Forces these items to be in their native world.
@@ -149,7 +153,3 @@ Mario Kart Double Dash:
 
   item_links: []
     # Share part of your item pool with other players.
-
-  item_boxes_as_locations: interesting_locations
-  # Makes some item boxes count as checks.
-  # Possible values: disabled, interesting_locations.
