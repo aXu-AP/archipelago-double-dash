@@ -101,7 +101,7 @@ class MkddContext(CommonContext):
 
     command_processor = MkddCommandProcessor
     game: str = version.get_game_name()
-    compatible_version: str = "v0.2"
+    compatible_version: str = "v0.3"
     items_handling: int = 0b111
 
     def __init__(self, server_address: Optional[str], password: Optional[str]) -> None:
