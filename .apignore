@@ -1,0 +1,8 @@
+.ignore/
+asm/
+test/
+*.af
+*.af~lock~
+CONTRIBUTING.md
+README.md
+docs/mario_kart_double_dash_template.yaml
