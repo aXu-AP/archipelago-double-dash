@@ -90,7 +90,14 @@ class MkddCommandProcessor(ClientCommandProcessor):
         settings.dolphin_process_name = dolphin_process_name
         get_settings().save()
         logger.info(f"Dolphin process name set to {dolphin_process_name or "default"}. You must open a new client for this to take effect.")
-
+    
+    def _cmd_launch(self) -> None:
+        """Launch Dolphin running Mario Kart Double Dash."""
+        import os
+        if not os.path.isfile(settings.rom_path):
+            settings.rom_path = settings.rom_path.browse([("Rom file", ["*.ISO", "*.RVZ", "*.GCZ"])])
+            get_settings().save()
+        os.startfile(settings.dolphin_path, arguments=f'"{settings.rom_path}"')
 
 class MkddContext(CommonContext):
     """
@@ -298,6 +305,7 @@ class MkddContext(CommonContext):
                 container = super().build()
                 from kivy.metrics import dp
                 from kvui import MDBoxLayout, MDGridLayout, MDLabel
+                from kivymd.uix.button import MDButton, MDButtonText
                 from kivymd.uix.fitimage import FitImage
                 
                 def get_image(source: str, width: int = 0, height: int = 0) -> FitImage:
@@ -316,7 +324,7 @@ class MkddContext(CommonContext):
                         image.height = dp(height)
                     return image
                 
-                layout = MDBoxLayout(
+                self.layout = MDBoxLayout(
                     orientation = "horizontal",
                     size_hint_y = None,
                     height = dp(50),
@@ -324,14 +332,16 @@ class MkddContext(CommonContext):
                     padding = dp(5),
                 )
                 
-                layout.add_widget(get_image("trophy_1.png", 36, 36))
+                self.launch_button: MDButton = MDButton(MDButtonText(text="Launch Game"), style="filled", radius=5)
+
+                self.layout.add_widget(get_image("trophy_1.png", 36, 36))
 
                 self.trophies_text: MDLabel = MDLabel(text = "0/10", halign = "left", role = "large")
-                layout.add_widget(self.trophies_text)
+                self.layout.add_widget(self.trophies_text)
 
-                layout.add_widget(MDLabel(text = "Characters", halign = "right", role = "large"))
+                self.layout.add_widget(MDLabel(text = "Characters", halign = "right", role = "large"))
                 char_grid = MDGridLayout(rows = 2, padding = 0, size_hint_x = None, width = dp(180))
-                layout.add_widget(char_grid)
+                self.layout.add_widget(char_grid)
                 self.character_icons: list[FitImage] = []
                 for i in range(20):
                     self.character_icons.append(get_image(f"character_{i + 1}.png", 18, 18))
@@ -341,14 +351,25 @@ class MkddContext(CommonContext):
                         char_grid.add_widget(self.character_icons[x * 2 + y])
 
                 self.cc_text: MDLabel = MDLabel(text = "50CC", halign = "right", role = "large")
-                layout.add_widget(self.cc_text)
+                self.layout.add_widget(self.cc_text)
                 self.cup_icons: list[FitImage] = []
                 for i in range(4):
                     self.cup_icons.append(get_image(f"cup_{i + 1}.png", 36, 36))
-                    layout.add_widget(self.cup_icons[i])
+                    self.layout.add_widget(self.cup_icons[i])
 
-                self.grid.add_widget(layout)
+                self.grid.add_widget(self.layout)
                 return container
+            
+            def set_launch_func(self, f) -> None:
+                self.launch_button.bind(on_press=f)
+            
+            def show_launch_button(self, show: bool) -> None:
+                if show:
+                    if self.launch_button not in self.layout.children:
+                        self.layout.add_widget(self.launch_button, index=len(self.layout.children))
+                else:
+                    if self.launch_button in self.layout.children:
+                        self.layout.remove_widget(self.launch_button)
 
             def update_trophies(self, current: int, goal: int) -> None:
                 self.trophies_text.text = f"{current}/{goal}"
@@ -1131,6 +1152,8 @@ async def dolphin_sync_task(ctx: MkddContext) -> None:
         dolphin_name = os.getenv(DME_DOLPHIN_PROCESS_NAME_ENV_VARIABLE) or "Dolphin"
         try:
             if dolphin.is_hooked() and ctx.dolphin_status == CONNECTION_CONNECTED_STATUS:
+                if ctx.ui:
+                    ctx.ui.show_launch_button(False)
                 if ctx.slot is not None:
                     if "DeathLink" in ctx.tags:
                         await check_death(ctx)
@@ -1150,6 +1173,9 @@ async def dolphin_sync_task(ctx: MkddContext) -> None:
                     ctx.dolphin_status = CONNECTION_LOST_STATUS
                 await asyncio.sleep(0.1)
             else:
+                if ctx.ui:
+                    ctx.ui.set_launch_func(ctx.command_processor._cmd_launch)
+                    ctx.ui.show_launch_button(True)
                 if ctx.dolphin_status == CONNECTION_CONNECTED_STATUS:
                     logger.info(f"Connection to {dolphin_name} lost, reconnecting...")
                     ctx.dolphin_status = CONNECTION_LOST_STATUS
