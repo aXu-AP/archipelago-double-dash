@@ -239,7 +239,8 @@ class MkddContext(CommonContext):
             self.character_item_total_weights = slot_data.get("character_item_total_weights")
             self.global_items_total_weights = slot_data.get("global_items_total_weights")
 
-            sync_state(self)
+            if self.dolphin_status == CONNECTION_CONNECTED_STATUS:
+                sync_state(self)
         elif cmd == "ReceivedItems":
             if args["index"] >= self.last_rcvd_index:
                 self.last_rcvd_index = args["index"]
@@ -1170,20 +1171,18 @@ async def dolphin_sync_task(ctx: MkddContext) -> None:
                 else:
                     logger.info(f"Connection to {dolphin_name} failed, attempting again in 5 seconds...")
                     ctx.dolphin_status = CONNECTION_LOST_STATUS
-                    await ctx.disconnect()
                     await asyncio.sleep(5)
                     continue
         except Exception:
             dolphin.un_hook()
             logger.info(f"Connection to {dolphin_name} failed, attempting again in 5 seconds...")
-            logger.error(traceback.format_exc())
+            logger.warning(traceback.format_exc())
             ctx.dolphin_status = CONNECTION_LOST_STATUS
-            await ctx.disconnect()
             await asyncio.sleep(5)
             continue
 
 
-def main(connect: Optional[str] = None, password: Optional[str] = None) -> None:
+def main(*args) -> None:
     """
     Run the main async loop for Mario Kart Double Dash client.
 
@@ -1217,14 +1216,22 @@ def main(connect: Optional[str] = None, password: Optional[str] = None) -> None:
             await asyncio.sleep(3)
             await ctx.dolphin_sync_task
 
+    parser = get_base_parser(description="Mario Kart Double Dash Client.")
+    parser.add_argument('--name', default=None, help="Slot Name to connect as.")
+    parser.add_argument("url", nargs="?", help="Archipelago connection url")
+    args = parser.parse_args(args)
+
+    from CommonClient import handle_url_arg
+    args = handle_url_arg(args, parser=parser)
+
     import colorama
 
     colorama.init()
-    asyncio.run(_main(connect, password))
+    asyncio.run(_main(args.connect, args.password))
     colorama.deinit()
 
 
 if __name__ == "__main__":
     parser = get_base_parser()
     args = parser.parse_args()
-    main(args.connect, args.password)
+    main(args)

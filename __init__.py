@@ -320,13 +320,13 @@ class MkddWorld(World):
         return slot_data
 
 
-def launch_client():
+def launch_client(*args):
     from .mkdd_client import main
-    launch_subprocess(main, name="MKDD Client")
+    launch_subprocess(main, name="MKDD Client", args=args)
 
 
 def add_client_to_launcher() -> None:
-    components.append(Component("Mario Kart Double Dash Client", func=launch_client))
+    components.append(Component("Mario Kart Double Dash Client", func=launch_client, game_name=version.get_game_name(), supports_uri=True))
 
 
 add_client_to_launcher()
