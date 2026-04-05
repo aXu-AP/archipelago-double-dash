@@ -7,7 +7,7 @@ from typing import Any
 
 from BaseClasses import Region, ItemClassification, Tutorial
 from worlds.AutoWorld import WebWorld, World
-from worlds.LauncherComponents import Component, components, launch_subprocess
+from worlds.LauncherComponents import Component, components, icon_paths, launch_subprocess
 
 from . import game_data, locations, items, regions, version
 from .items import MkddItem
@@ -324,9 +324,14 @@ def launch_client(*args):
     from .mkdd_client import main
     launch_subprocess(main, name="MKDD Client", args=args)
 
+icon_paths["MKDD"] = "ap:worlds.mario_kart_double_dash/images/icon.png"
 
-def add_client_to_launcher() -> None:
-    components.append(Component("Mario Kart Double Dash Client", func=launch_client, game_name=version.get_game_name(), supports_uri=True))
-
-
-add_client_to_launcher()
+components.append(
+    Component(
+        "Mario Kart Double Dash Client",
+        func=launch_client,
+        game_name=version.get_game_name(),
+        icon="MKDD",
+        supports_uri=True
+    )
+)
