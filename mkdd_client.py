@@ -357,7 +357,7 @@ class MkddContext(CommonContext):
                 cup_box = MDBoxLayout(orientation="horizontal", spacing=dp(5))
                 self.status_bar.add_widget(cup_box)
                 cup_box.add_widget(MDLabel()) # For alignment...
-                self.cc_text: MDLabel = MDLabel(text="50CC", halign="right", role="large", size_hint_x=None, width=dp(45))
+                self.cc_text: MDLabel = MDLabel(text="50CC", halign="right", role="large", size_hint_x=None, width=dp(50))
                 cup_box.add_widget(self.cc_text)
                 self.cup_icons: list[FitImage] = []
                 for i in range(4):
