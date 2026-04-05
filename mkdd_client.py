@@ -237,6 +237,8 @@ class MkddContext(CommonContext):
                 self.ui.update_characters([])
                 self.ui.update_cc(0)
                 self.ui.update_cups([])
+                self.ui.update_speed_upgrades(0, 3)
+                self.ui.update_karts([])
                 
             self.cups_courses = slot_data["cups_courses"]
             self.all_cup_tour_length = slot_data.get("all_cup_tour_length", 8)
@@ -304,18 +306,19 @@ class MkddContext(CommonContext):
             def build(self):
                 container = super().build()
                 from kivy.metrics import dp
-                from kvui import MDBoxLayout, MDGridLayout, MDLabel
+                from kvui import MDBoxLayout, MDGridLayout, MDLabel, MDDivider
                 from kivymd.uix.button import MDButton, MDButtonText
                 from kivymd.uix.fitimage import FitImage
-                
+
                 def get_image(source: str, width: int = 0, height: int = 0) -> FitImage:
+                    """Loads and image from images/ folder and returns it as a widget."""
                     from importlib import resources
                     from kivy.core.image import Image
                     from io import BytesIO
                     img = resources.files(__package__ + ".images").joinpath(source)
                     data = img.read_bytes()
                     raw_image = Image(BytesIO(data), ext=img.suffix[1:])
-                    image = FitImage(texture = raw_image.texture)
+                    image = FitImage(texture=raw_image.texture)
                     if width > 0:
                         image.size_hint_x = None
                         image.width = dp(width)
@@ -324,24 +327,24 @@ class MkddContext(CommonContext):
                         image.height = dp(height)
                     return image
                 
-                self.layout = MDBoxLayout(
-                    orientation = "horizontal",
+                self.status_bar = MDGridLayout(
+                    rows=2,
                     size_hint_y = None,
-                    height = dp(50),
+                    height = dp(100),
                     spacing = dp(5),
                     padding = dp(5),
                 )
+                self.grid.add_widget(self.status_bar)
                 
-                self.launch_button: MDButton = MDButton(MDButtonText(text="Launch Game"), style="filled", radius=5)
+                # Trophies
+                self.status_bar.add_widget(get_image("trophy_1.png", 36, 36))
+                self.trophies_text: MDLabel = MDLabel(text="0/10", halign="left", role="large")
+                self.status_bar.add_widget(self.trophies_text)
 
-                self.layout.add_widget(get_image("trophy_1.png", 36, 36))
-
-                self.trophies_text: MDLabel = MDLabel(text = "0/10", halign = "left", role = "large")
-                self.layout.add_widget(self.trophies_text)
-
-                self.layout.add_widget(MDLabel(text = "Characters", halign = "right", role = "large"))
+                # Characters
+                self.status_bar.add_widget(MDLabel(text="Characters", halign="right", role="large"))
                 char_grid = MDGridLayout(rows = 2, padding = 0, size_hint_x = None, width = dp(180))
-                self.layout.add_widget(char_grid)
+                self.status_bar.add_widget(char_grid)
                 self.character_icons: list[FitImage] = []
                 for i in range(20):
                     self.character_icons.append(get_image(f"character_{i + 1}.png", 18, 18))
@@ -350,26 +353,56 @@ class MkddContext(CommonContext):
                     for x in range(10):
                         char_grid.add_widget(self.character_icons[x * 2 + y])
 
-                self.cc_text: MDLabel = MDLabel(text = "50CC", halign = "right", role = "large")
-                self.layout.add_widget(self.cc_text)
+                # Cups
+                cup_box = MDBoxLayout(orientation="horizontal", spacing=dp(5))
+                self.status_bar.add_widget(cup_box)
+                cup_box.add_widget(MDLabel()) # For alignment...
+                self.cc_text: MDLabel = MDLabel(text="50CC", halign="right", role="large", size_hint_x=None, width=dp(45))
+                cup_box.add_widget(self.cc_text)
                 self.cup_icons: list[FitImage] = []
                 for i in range(4):
                     self.cup_icons.append(get_image(f"cup_{i + 1}.png", 36, 36))
-                    self.layout.add_widget(self.cup_icons[i])
+                    cup_box.add_widget(self.cup_icons[i])
 
-                self.grid.add_widget(self.layout)
+                # Speed
+                self.status_bar.add_widget(get_image("speed.png", 36, 36))
+                self.speed_text: MDLabel = MDLabel(text="0/3", halign="left", role="large")
+                self.status_bar.add_widget(self.speed_text)
+
+                # Karts
+                self.status_bar.add_widget(MDLabel(text="Karts", halign="right", role="large"))
+                kart_grid = MDGridLayout(rows=2, padding=0, size_hint_x=None, width=dp(18 * 11))
+                self.status_bar.add_widget(kart_grid)
+                self.kart_icons: list[FitImage] = []
+                for i in range(20):
+                    self.kart_icons.append(get_image(f"character_{i + 1}.png", 18, 18))
+                self.kart_icons.append(get_image("trophy_1.png", 18, 18))
+                # Grid is filled in row-major order, but karts are in column-major, so we need to pivot.
+                for y in range(2):
+                    for x in range(10):
+                        kart_grid.add_widget(self.kart_icons[x * 2 + y])
+                        if x == 9 and y == 0:
+                            kart_grid.add_widget(self.kart_icons[20])
+
+                self.launch_button: MDButton = MDButton(MDButtonText(text="Launch Game"), style="filled", radius=5)
+                self.status_bar.add_widget(self.launch_button)
+                # Don't ask why, but the layout screws up if there isn't a button here, so a placeholder.
+                # One would think disabling the button would do something, but for whatever reason it disables only visually.
+                self.launch_button2: MDButton = MDButton(MDButtonText(text="Launch Game"), radius=5)
                 return container
             
             def set_launch_func(self, f) -> None:
-                self.launch_button.bind(on_press=f)
+                self.launch_button.bind(on_release=f)
             
             def show_launch_button(self, show: bool) -> None:
                 if show:
-                    if self.launch_button not in self.layout.children:
-                        self.layout.add_widget(self.launch_button, index=len(self.layout.children))
+                    if self.launch_button not in self.status_bar.children:
+                        self.status_bar.add_widget(self.launch_button)
+                        self.status_bar.remove_widget(self.launch_button2)
                 else:
-                    if self.launch_button in self.layout.children:
-                        self.layout.remove_widget(self.launch_button)
+                    if self.launch_button in self.status_bar.children:
+                        self.status_bar.remove_widget(self.launch_button)
+                        self.status_bar.add_widget(self.launch_button2)
 
             def update_trophies(self, current: int, goal: int) -> None:
                 self.trophies_text.text = f"{current}/{goal}"
@@ -377,7 +410,7 @@ class MkddContext(CommonContext):
             def update_characters(self, unlocked_characters: list[int]) -> None:
                 for idx, img in enumerate(self.character_icons):
                     img.opacity = 1 if idx in unlocked_characters else .2
-            
+
             def update_cc(self, current_vehile_class: int) -> None:
                 self.cc_text.text = ["50CC", "100CC", "150CC", "Mirror"][min(3, current_vehile_class)]
 
@@ -385,6 +418,17 @@ class MkddContext(CommonContext):
                 for idx, img in enumerate(self.cup_icons):
                     img.opacity = 1 if idx in unlocked_cups else .2
         
+            def update_speed_upgrades(self, current: int, in_pool: int) -> None:
+                self.speed_text.text = f"{current}/{in_pool}"
+
+            def update_karts(self, unlocked_karts: list[int]) -> None:
+                # Kart ids are different from character ids, but they are shown in order of the characters.
+                for idx, img in enumerate(self.kart_icons):
+                    kart_no: int = 20 # Parade Kart isn't anybody's default.
+                    if idx < 20:
+                        kart_no = game_data.CHARACTERS[idx].default_kart
+                    img.opacity = 1 if kart_no in unlocked_karts else .2
+            
         return MKDDManager
 
 
@@ -468,12 +512,16 @@ def _give_item(ctx: MkddContext, item: MkddItemData) -> bool:
         kart = game_data.KARTS[item.address]
         dolphin.write_byte(ctx.memory_addresses.available_karts_bx + kart.unlock_id, 1)
         ctx.unlocked_karts.append(item.address)
+        if ctx.ui:
+            ctx.ui.update_karts(ctx.unlocked_karts)
     
     elif item.item_type == ItemType.KART_UPGRADE:
         ctx.kart_upgrades[item.address].append(item.meta)
     
     elif item.name == items.PROGRESSIVE_ENGINE:
         ctx.engine_upgrade_level += 1
+        if ctx.ui:
+            ctx.ui.update_speed_upgrades(ctx.engine_upgrade_level, 3)
     
     elif item.item_type == ItemType.CUP:
         ctx.unlocked_cups.append(item.address)
