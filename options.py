@@ -35,7 +35,7 @@ class LogicDifficulty(NamedRange):
     """Balances the difficulty modeling, how many upgrades you are presumed to have to win races.
     Use normal (0) if you can comfortably win 100cc races.
     Unrestricted places locations in logic as soon as they are technically possible."""
-    display_name = "Logic Difficulty."  
+    display_name = "Logic Difficulty"  
     range_start = -50
     range_end = 100
     default = 0
