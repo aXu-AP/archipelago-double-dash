@@ -9,7 +9,7 @@ class MkddSettings(settings.Group):
         description = "Dolphin executable"
         is_exe = True
 
-    class RomPath(settings.UserFilePath):
+    class RomPath(settings.OptionalUserFilePath):
         """Path to the Mario Kart: Double Dash!! (USA) rom."""
         description = "Mario Kart: Double Dash!! (USA) rom"
     
