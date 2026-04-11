@@ -10,9 +10,9 @@ Characters, karts, items, cups and access to time trial courses are shuffled int
 
 Collect enough gold trophies and finish All Cup Tour.
 
-## When the player receives an item, what happens?
+## How can I see what items I have unlocked?
 
-Currently there is no in-game notification system and the game generally doesn't have any visual indication of what's unlocked. You can refer to the client to see what's unlocked (there's a nifty `/unlocked` command which tells you what do you have).
+There's a status bar at the bottom of the client which tells you what characters, karts and cups you have open. You can also use `/unlocked` command which tells you what do you have down to exact upgrades.
 
 ## What game modes are available?
 
