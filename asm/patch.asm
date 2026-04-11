@@ -13,6 +13,7 @@
 .set tt_driver_item, 0x80001000 + 0x41
 .set tt_rider_item, 0x80001000 + 0x42
 .set gp_next_item, 0x80001000 + 0x43
+.set item_box_id, 0x80001000 + 0x60
 
 # 4 bytes for position, 44 for string per text. text_table points to the start of the string, x and y are offset -4 and -2.
 .set text_table, 0x80000da0 + 4
@@ -256,6 +257,22 @@ addi    r3, r3, gp_next_item@l
 lbzx    r3, r3, r5 # Offset by assumed special item.
 b       item_shuffle_return_player
 b       item_shuffle_return_cpu
+
+
+# SECTION item_box_id
+.set item_box_id_jump, 0x80001198 - 0x801fbe08
+.set item_box_id_return, 0x801fbe08 + 4 - 0x80001198 - 6*4
+WriteTo 0x801fbe08
+b       item_box_id_jump
+WriteTo 0x80001198
+cmplwi  r4, 0               # Skip for other karts than no. 0 (player).
+bne+    4*4
+lis     r30, item_box_id@ha
+lwz     r29, 0xe8 (r3)      # Load box's id.
+stw     r29, item_box_id@l (r30)
+mr      r29, r3             # default code
+b       item_box_id_return
+
 
 # SECTION draw_string
 .set jutreport_jump, 0x80019c4c - 0x80001128 - 10*4
