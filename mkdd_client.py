@@ -95,9 +95,21 @@ class MkddCommandProcessor(ClientCommandProcessor):
         """Launch Dolphin running Mario Kart Double Dash."""
         import os
         if not os.path.isfile(settings.rom_path):
-            settings.rom_path = settings.rom_path.browse([("Rom file", ["*.ISO", "*.RVZ", "*.GCZ"])])
-            get_settings().save()
-        os.startfile(settings.dolphin_path, arguments=f'"{settings.rom_path}"')
+            new_path = settings.rom_path.browse([("Rom file", ["*.ISO", "*.RVZ", "*.GCZ"])])
+            if new_path != None:
+                settings.rom_path = new_path
+                get_settings().save()
+        if os.path.isfile(settings.rom_path) and os.path.isfile(settings.dolphin_path):
+            os.startfile(settings.dolphin_path, arguments=f'"{settings.rom_path}"')
+        else:
+            logger.error("Dolphin or ROM path not valid.")
+    
+    def _cmd_reset_paths(self) -> None:
+        """Reset file paths to Dolphin and ROM."""
+        settings.rom_path = settings.RomPath()
+        settings.dolphin_path = settings.DolphinPath()
+        get_settings().save()
+
 
 class MkddContext(CommonContext):
     """
