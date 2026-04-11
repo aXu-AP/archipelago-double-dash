@@ -93,6 +93,8 @@ class MkddMemAddresses():
     """Items for driver and rider in time trials (size 2)."""
     gp_next_items_bx: int
     """Item for player in grand prix. Offset by character's special item id (size 22)."""
+    item_box_p: int
+    """Pointer for last gotten item box data."""
     text_sx: int
     """Text to print."""
     text_size: int
@@ -195,6 +197,7 @@ class MkddMemAddressesUsa(MkddMemAddresses):
     available_cups_bx = 0x8000103c
     tt_items_bx = 0x80001041
     gp_next_items_bx = 0x80001043
+    item_box_p = 0x80001060
 
     text_sx = 0x80000da4
     text_size = 0x30
