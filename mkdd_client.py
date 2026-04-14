@@ -465,11 +465,12 @@ def _apply_dict_patch(code: dict[int, list[int]]):
             address += 4
 
 
-def apply_patch(ctx: MkddContext):
+def apply_patch():
     _apply_dict_patch(patches.patch)
     _apply_ar_code(ar_codes.lap_modifier)
     _apply_ar_code(ar_codes.gp_course_selection)
     _apply_ar_code(ar_codes.fireball_limit)
+    _apply_ar_code(ar_codes.disable_reverse_lakitu)
     logger.info("Patch Applied.")
 
 
@@ -1242,7 +1243,7 @@ async def dolphin_sync_task(ctx: MkddContext) -> None:
                     else:
                         logger.info(CONNECTION_CONNECTED_STATUS)
                         ctx.dolphin_status = CONNECTION_CONNECTED_STATUS
-                        apply_patch(ctx)
+                        apply_patch()
                         sync_state(ctx)
                         await give_items(ctx)
                         ctx.locations_checked = set()
