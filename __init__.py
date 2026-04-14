@@ -126,8 +126,19 @@ class MkddWorld(World):
                     continue
                 if not self.options.grand_prix_trophies and locations.TAG_CUP_TROPHY in location_data.tags:
                     continue
-                if self.options.item_boxes_as_locations == 0 and locations.TAG_ITEM_BOX in location_data.tags:
-                    continue
+                if locations.TAG_ITEM_BOX in location_data.tags:
+                    match self.options.item_boxes_as_locations:
+                        case options.ItemBoxesAsLocations.option_disabled:
+                            continue
+                        case options.ItemBoxesAsLocations.option_interesting_locations:
+                            if locations.TAG_ITEM_BOX_INTERESTING not in location_data.tags:
+                                continue
+                        case options.ItemBoxesAsLocations.option_box_groups:
+                            if locations.TAG_ITEM_BOX_GROUP not in location_data.tags:
+                                continue
+                        case options.ItemBoxesAsLocations.option_boxsanity:
+                            if locations.TAG_ITEM_BOX_SANITY not in location_data.tags:
+                                continue
                 if id > 0 and location_data.region == region_name:
                     region.add_locations({location_data.name: id})
                     self.current_locations.append(location_data)

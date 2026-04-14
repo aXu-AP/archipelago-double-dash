@@ -107,7 +107,7 @@ class MkddMemAddresses():
     """Size of the text table."""
     menu_pointer_to_char_icons: dict[int, list[int]]
     """Pointers of the menu character icons"""
-    item_box_target_pointer: dict[str, list[list[int]]]
+    item_box_data_x: dict[str, list[list[int]]]
     """The pointers of reference of some boxes"""
 
 class MkddMemAddressesUsa(MkddMemAddresses):
@@ -296,7 +296,7 @@ class MkddMemAddressesUsa(MkddMemAddresses):
         ]
     }
 
-    item_box_target_pointer = {
+    item_box_data_x = {
         "Mushroom Bridge": [
             [0x80D86338],  # Pipe
             [0x80D863B8],  # Sidewalk
@@ -319,5 +319,13 @@ class MkddMemAddressesUsa(MkddMemAddresses):
         ],
         "Dino Dino Jungle": [
             [0x80D6E7f8, 0x80D6E878]  # Bridge side dual boxes
-        ]
+        ],
+        "Yoshi Circuit": [
+            [0x80d7d034, 0x80d7d0b4, 0x80d7d0f4, 0x80d7d074],               # First Turn
+            [0x80d7d474, 0x80d7d3b4, 0x80d7d3f4, 0x80d7d434],               # Before Tunnel
+            [0x80d7cfb4, 0x80d7cf74, 0x80d7cf34, 0x80d7cff4],               # After Tunnel
+            [0x80d7d1f4, 0x80d7d134, 0x80d7d174, 0x80d7d1b4],               # Before U-turn
+            [0x80d7d934, 0x80d7d8f4],                                       # Tunnel Shortcut
+            [0x80d7d374, 0x80d7d2b4, 0x80d7d4b4, 0x80d7d2f4, 0x80d7d334],   # Last Straight
+        ],
     }

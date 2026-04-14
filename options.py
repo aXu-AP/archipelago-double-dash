@@ -132,11 +132,15 @@ class SpeedUpgrades(DefaultOnToggle):
     display_name = "Speed Upgrades"
 
 class ItemBoxesAsLocations(Choice):
-    """Makes some item boxes count as checks."""
+    """Makes some item boxes count as checks.
+    Interesting locations adds 1-3 checks per course.
+    Box Groups grants you checks by touching any box in a row/group.
+    Boxsanity adds checks to every box individually."""
     display_name = "Item Boxes as Locations"
     option_disabled = 0
     option_interesting_locations = 1
-    #option_boxsanity = 2
+    option_box_groups = 2
+    option_boxsanity = 3
     default = 1
 
 @dataclass

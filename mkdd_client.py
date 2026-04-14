@@ -153,6 +153,7 @@ class MkddContext(CommonContext):
         self.cups_courses: list[list[int]]
         self.mirror_200cc: bool
         self.lap_counts: dict[str, int]
+        self.item_boxes_as_locations: int
 
         # Game data.
         self.victory: bool = False
@@ -181,6 +182,8 @@ class MkddContext(CommonContext):
         self.last_selected_course: int = 0
         
         self.time_trial_items: int = 0
+
+        self.last_item_box: int = 0
 
         # These are per player.
         self.last_selected_character: list[int] = [0 for _ in range(4)]
@@ -256,6 +259,7 @@ class MkddContext(CommonContext):
             self.all_cup_tour_length = slot_data.get("all_cup_tour_length", 8)
             self.mirror_200cc = bool(slot_data.get("mirror_200cc"))
             self.lap_counts = slot_data.get("lap_counts")
+            self.item_boxes_as_locations = slot_data.get("item_boxes_as_locations", 0)
 
             self.character_item_total_weights = slot_data.get("character_item_total_weights")
             self.global_items_total_weights = slot_data.get("global_items_total_weights")
@@ -631,14 +635,24 @@ async def check_locations(ctx: MkddContext) -> None:
     course_loaded: bool = game_ticks > ctx.course_changed_time + 60 # Don't give checks in menus etc.
     ctx.last_race_timer = race_timer
 
-    # Gets the current courses and its special box targets to verify the value of each boxes next to its targeted address.
-    course_name = ctx.current_course.name
-    special_box_groups = ctx.memory_addresses.item_box_target_pointer.get(course_name, [])
-    if in_game and special_box_groups:
+    if in_game and ctx.item_boxes_as_locations > 0:
+        # Gets the current courses and its special box targets to verify the value of each boxes next to its targeted address.
+        course_name = ctx.current_course.name
         item_box: int = dolphin.read_word(ctx.memory_addresses.item_box_p)
-        for (index, box_ids) in enumerate(special_box_groups):
-            if item_box in box_ids:
-                new_location_names.add(locations.get_loc_name_item_box(course_name, index))
+        if item_box != ctx.last_item_box:
+            ctx.last_item_box = item_box
+            found = False
+            box_groups = ctx.memory_addresses.item_box_data_x.get(course_name, [])
+            for (group_idx, box_ids) in enumerate(box_groups):
+                if item_box in box_ids:
+                    found = True
+                    if ctx.item_boxes_as_locations == options.ItemBoxesAsLocations.option_boxsanity:
+                        new_location_names.add(locations.get_loc_name_item_box(course_name, group_idx, box_ids.index(item_box)))
+                    else: # Groups or interesting locations (latter also uses groups just not all of them).
+                        new_location_names.add(locations.get_loc_name_item_box(course_name, group_idx))
+            if not found:
+                logger.info(f"Unknown box data: 0x{hex(item_box)}")
+
 
     # Course finishing related locations.
     # For Time Trials check against default lap counts.

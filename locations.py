@@ -2,6 +2,7 @@ from typing import NamedTuple, TYPE_CHECKING
 
 from BaseClasses import Location
 from . import game_data, items, version
+from .mem_addresses import MkddMemAddressesUsa
 
 if TYPE_CHECKING:
     from . import MkddWorld
@@ -21,6 +22,9 @@ TAG_TT = "Time Trial"
 TAG_TT_GOOD = "Time Trial Good Time"
 TAG_TT_GHOST = "Time Trial Staff Ghost"
 TAG_ITEM_BOX = "Item Box"
+TAG_ITEM_BOX_INTERESTING = "*Interesting Item Box" # Tags starting with * are for gen purposes only, not user facing.
+TAG_ITEM_BOX_GROUP = "*Item Box Group"
+TAG_ITEM_BOX_SANITY = "*Boxsanity Item Box"
 
 
 class MkddLocation(Location):
@@ -32,16 +36,8 @@ class MkddLocationData(NamedTuple):
     difficulty: int = 0
     region: str = "Menu"
     required_items: dict[str, int] = {}
-    tags: set[str] = {}
+    tags: set[str] = set()
 
-BOX_NAMES = {
-    "Mushroom Bridge": ["Pipe", "Sidewalk", "Bridge"],
-    "Peach Beach": ["Hidden Pipe", "Beach Jump", "Fountain"],
-    "Luigi Circuit": ["Chomp Shortcut", "Last Curve Shortcut"],
-    "Wario Colosseum": ["Great Jump"],
-    "Daisy Cruiser": ["Cargo Area"],
-    "Dino Dino Jungle": ["Bridge Side"]
-}
 
 def get_loc_name_cup(cup: str, ranking: int, vehicle_class: int) -> str:
     try:
@@ -92,9 +88,54 @@ def get_loc_name_win_course_char(course: game_data.Course) -> str:
     else:
         return f"Win in {course.name} With {characters[0]} and {characters[1]}"
 
-def get_loc_name_item_box(course: str, box_id: int) -> str:
-    names = BOX_NAMES.get(course, [])
-    return f"{course} - {names[box_id]} Box"
+
+class ItemBoxGroup(NamedTuple):
+    name: str
+    tags: set[str] = set()
+    required_items: dict[str, int] = {}
+
+BOX_NAMES: dict[str, list[ItemBoxGroup]] = {
+    "Luigi Circuit": [
+        ItemBoxGroup("Chomp Shortcut", {TAG_ITEM_BOX_INTERESTING}, {items.PROGRESSIVE_CLASS:1}),
+        ItemBoxGroup("Last Curve Shortcut", {TAG_ITEM_BOX_INTERESTING}, {items.PROGRESSIVE_CLASS:1}),
+    ],
+    "Peach Beach": [
+        ItemBoxGroup("Hidden Pipe", {TAG_ITEM_BOX_INTERESTING}),
+        ItemBoxGroup("Beach Jump", {TAG_ITEM_BOX_INTERESTING}),
+        ItemBoxGroup("Fountain", {TAG_ITEM_BOX_INTERESTING}),
+    ],
+    "Mushroom Bridge": [
+        ItemBoxGroup("Pipe", {TAG_ITEM_BOX_INTERESTING}),
+        ItemBoxGroup("Sidewalk", {TAG_ITEM_BOX_INTERESTING}),
+        ItemBoxGroup("Bridge", {TAG_ITEM_BOX_INTERESTING}),
+    ],
+    "Daisy Cruiser": [
+        ItemBoxGroup("Cargo Area", {TAG_ITEM_BOX_INTERESTING}),
+    ],
+    "Wario Colosseum": [
+        ItemBoxGroup("Great Jump", {TAG_ITEM_BOX_INTERESTING}),
+    ],
+    "Yoshi Circuit": [
+        ItemBoxGroup("First Turn"),
+        ItemBoxGroup("Before Tunnel"),
+        ItemBoxGroup("After Tunnel"),
+        ItemBoxGroup("Before U-turn"),
+        ItemBoxGroup("Tunnel Shortcut", {TAG_ITEM_BOX_INTERESTING}),
+        ItemBoxGroup("Last Straight"),
+    ],
+    "Dino Dino Jungle": [
+        ItemBoxGroup("Bridge Side", {TAG_ITEM_BOX_INTERESTING}),
+    ],
+}
+
+def get_loc_name_item_box(course: str, group: int, number: int = -1) -> str:
+    """Returns box name if number is defined. If no number, then returns group name."""
+    if len(MkddMemAddressesUsa.item_box_data_x[course][group]) == 1:
+        return f"{course} - {BOX_NAMES[course][group].name} Box"
+    elif number == -1:
+        return f"{course} - {BOX_NAMES[course][group].name} Boxes"
+    else:
+        return f"{course} - {BOX_NAMES[course][group].name} Box {number + 1}"
 
 data_table: list[MkddLocationData] = [MkddLocationData("", 0)] # Id 0 is reserved.
 
@@ -162,20 +203,24 @@ data_table.append(MkddLocationData(GOLD_PARADE, 40, required_items = {"Parade Ka
 data_table.append(MkddLocationData(TROPHY_GOAL, 0))
 data_table.append(MkddLocationData(WIN_ALL_CUP_TOUR, 0, game_data.CUPS[game_data.CUP_ALL_CUP_TOUR]))
 
-# Box in course related locations.
-for course in game_data.RACE_COURSES:
-    boxes = BOX_NAMES.get(course.name, [])
-    for i, box_nickname in enumerate(boxes):
-        if course.name == "Luigi Circuit":
-            data_table.append(MkddLocationData(get_loc_name_item_box(course.name, i), 0, f"{course.name} GP", {items.PROGRESSIVE_CLASS:1}, tags={course.name, TAG_ITEM_BOX}))
+# Item Box locations.
+for course, box_groups in BOX_NAMES.items():
+    for i, group in enumerate(box_groups):
+        tags: set[str] = {course, TAG_ITEM_BOX}
+        box_amount = len(MkddMemAddressesUsa.item_box_data_x[course][i])
+        if box_amount > 1: # Don't add group and box separately if it's just one.
+            for j in range(box_amount):
+                data_table.append(MkddLocationData(get_loc_name_item_box(course, i, j), 0, f"{course} GP", group.required_items, tags=tags | {TAG_ITEM_BOX_SANITY}))
         else:
-            data_table.append(MkddLocationData(get_loc_name_item_box(course.name, i), 0, f"{course.name} GP", tags={course.name, TAG_ITEM_BOX}))
+            tags.add(TAG_ITEM_BOX_SANITY) # Just add one location with both tags.
+        data_table.append(MkddLocationData(get_loc_name_item_box(course, i), 0, f"{course} GP", group.required_items, tags=tags | group.tags | {TAG_ITEM_BOX_GROUP}))
+
 
 name_to_id: dict[str, int] = {data.name:id for (id, data) in enumerate(data_table) if id > 0}
 
 group_names: set[str] = set()
 for data in data_table:
-    group_names.update(data.tags)
+    group_names.update({tag for tag in data.tags if not tag.startswith("*")})
 groups: dict[str: set[str]] = {
     group:{data.name for data in data_table if group in data.tags} 
     for group in group_names
