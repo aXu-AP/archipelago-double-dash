@@ -143,6 +143,10 @@ class ItemBoxesAsLocations(Choice):
     option_boxsanity = 3
     default = 1
 
+class AddCustomItemBoxes(DefaultOnToggle):
+    """Moves some item boxes to interesting places, like shortcuts."""
+    display_name = "Add Custom Item Boxes"
+
 @dataclass
 class MkddOptions(PerGameCommonOptions):
     goal: Goal
@@ -168,5 +172,6 @@ class MkddOptions(PerGameCommonOptions):
     speed_upgrades: SpeedUpgrades
 
     item_boxes_as_locations: ItemBoxesAsLocations
+    add_custom_item_boxes: AddCustomItemBoxes
 
     start_inventory_from_pool: StartInventoryPool

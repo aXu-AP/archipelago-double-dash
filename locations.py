@@ -2,7 +2,6 @@ from typing import NamedTuple, TYPE_CHECKING
 
 from BaseClasses import Location
 from . import game_data, items, version
-from .mem_addresses import MkddMemAddressesUsa
 
 if TYPE_CHECKING:
     from . import MkddWorld
@@ -25,6 +24,9 @@ TAG_ITEM_BOX = "Item Box"
 TAG_ITEM_BOX_INTERESTING = "*Interesting Item Box" # Tags starting with * are for gen purposes only, not user facing.
 TAG_ITEM_BOX_GROUP = "*Item Box Group"
 TAG_ITEM_BOX_SANITY = "*Boxsanity Item Box"
+TAG_ITEM_BOX_CUSTOM = "*Custom Item Box"
+TAG_ITEM_BOX_REPLACEABLE = "*Replaceable Item Box"
+TAG_REQUIRES_BOOST = "*Requires Boost"
 
 
 class MkddLocation(Location):
@@ -91,51 +93,73 @@ def get_loc_name_win_course_char(course: game_data.Course) -> str:
 
 class ItemBoxGroup(NamedTuple):
     name: str
+    count: int
     tags: set[str] = set()
     required_items: dict[str, int] = {}
 
 BOX_NAMES: dict[str, list[ItemBoxGroup]] = {
     "Luigi Circuit": [
-        ItemBoxGroup("Chomp Shortcut", {TAG_ITEM_BOX_INTERESTING}, {items.PROGRESSIVE_CLASS:1}),
-        ItemBoxGroup("Last Curve Shortcut", {TAG_ITEM_BOX_INTERESTING}, {items.PROGRESSIVE_CLASS:1}),
+        ItemBoxGroup("Chomp Shortcut", 2, {TAG_ITEM_BOX_INTERESTING}, {items.PROGRESSIVE_CLASS:1}),
+        ItemBoxGroup("Last Curve Shortcut", 2, {TAG_ITEM_BOX_INTERESTING}, {items.PROGRESSIVE_CLASS:1}),
     ],
     "Peach Beach": [
-        ItemBoxGroup("Hidden Pipe", {TAG_ITEM_BOX_INTERESTING}),
-        ItemBoxGroup("Beach Jump", {TAG_ITEM_BOX_INTERESTING}),
-        ItemBoxGroup("Fountain", {TAG_ITEM_BOX_INTERESTING}),
+        ItemBoxGroup("Hidden Pipe", 1, {TAG_ITEM_BOX_INTERESTING}),
+        ItemBoxGroup("Beach Jump", 2, {TAG_ITEM_BOX_INTERESTING}),
+        ItemBoxGroup("Fountain", 2, {TAG_ITEM_BOX_INTERESTING}),
     ],
     "Mushroom Bridge": [
-        ItemBoxGroup("Pipe", {TAG_ITEM_BOX_INTERESTING}),
-        ItemBoxGroup("Sidewalk", {TAG_ITEM_BOX_INTERESTING}),
-        ItemBoxGroup("Bridge", {TAG_ITEM_BOX_INTERESTING}),
+        ItemBoxGroup("Pipe", 1, {TAG_ITEM_BOX_INTERESTING}),
+        ItemBoxGroup("Sidewalk", 1, {TAG_ITEM_BOX_INTERESTING}),
+        ItemBoxGroup("Bridge", 2, {TAG_ITEM_BOX_INTERESTING}),
     ],
     "Daisy Cruiser": [
-        ItemBoxGroup("Cargo Area", {TAG_ITEM_BOX_INTERESTING}),
+        ItemBoxGroup("Cargo Area", 1, {TAG_ITEM_BOX_INTERESTING}),
     ],
     "Wario Colosseum": [
-        ItemBoxGroup("Great Jump", {TAG_ITEM_BOX_INTERESTING}),
+        ItemBoxGroup("Great Jump", 1, {TAG_ITEM_BOX_INTERESTING}),
     ],
     "Yoshi Circuit": [
-        ItemBoxGroup("First Turn"),
-        ItemBoxGroup("Before Tunnel"),
-        ItemBoxGroup("After Tunnel"),
-        ItemBoxGroup("Before U-turn"),
-        ItemBoxGroup("Tunnel Shortcut", {TAG_ITEM_BOX_INTERESTING}),
-        ItemBoxGroup("Last Straight"),
+        ItemBoxGroup("First Turn", 4),
+        ItemBoxGroup("Before Tunnel", 4),
+        ItemBoxGroup("After Tunnel", 4),
+        ItemBoxGroup("Before U-turn", 4),
+        ItemBoxGroup("Tunnel Shortcut", 2, {TAG_ITEM_BOX_INTERESTING}),
+        ItemBoxGroup("Last Straight", 5),
     ],
     "Dino Dino Jungle": [
-        ItemBoxGroup("Bridge Side", {TAG_ITEM_BOX_INTERESTING}),
+        ItemBoxGroup("Bridge Side", 1, {TAG_ITEM_BOX_INTERESTING}),
     ],
 }
 
 def get_loc_name_item_box(course: str, group: int, number: int = -1) -> str:
     """Returns box name if number is defined. If no number, then returns group name."""
-    if len(MkddMemAddressesUsa.item_box_data_x[course][group]) == 1:
-        return f"{course} - {BOX_NAMES[course][group].name} Box"
+    group: ItemBoxGroup = BOX_NAMES[course][group]
+    if group.count == 1:
+        return f"{course} - {group.name} Box"
     elif number == -1:
-        return f"{course} - {BOX_NAMES[course][group].name} Boxes"
+        return f"{course} - {group.name} Boxes"
     else:
-        return f"{course} - {BOX_NAMES[course][group].name} Box {number + 1}"
+        return f"{course} - {group.name} Box {number + 1}"
+
+
+class CustomItemBox(NamedTuple):
+    name: str
+    replaces_group: str
+    replaces_number: int
+    position: tuple[float, float, float]
+    tags: set[str] = {}
+
+CUSTOM_BOXES: dict[str, list[CustomItemBox]] = {
+    "Yoshi Circuit": [
+        CustomItemBox("Jump Shortcut", "Last Straight", 2, (-8000, 13400, 12100), {TAG_REQUIRES_BOOST})
+    ]
+}
+
+def get_loc_name_custom_box(course: str, number: int) -> str:
+    """Returns custom box name."""
+    box: ItemBoxGroup = CUSTOM_BOXES[course][number]
+    return f"{course} - {box.name} Box"
+
 
 data_table: list[MkddLocationData] = [MkddLocationData("", 0)] # Id 0 is reserved.
 
@@ -205,15 +229,22 @@ data_table.append(MkddLocationData(WIN_ALL_CUP_TOUR, 0, game_data.CUPS[game_data
 
 # Item Box locations.
 for course, box_groups in BOX_NAMES.items():
+    custom_boxes = CUSTOM_BOXES.get(course, [])
     for i, group in enumerate(box_groups):
         tags: set[str] = {course, TAG_ITEM_BOX}
-        box_amount = len(MkddMemAddressesUsa.item_box_data_x[course][i])
-        if box_amount > 1: # Don't add group and box separately if it's just one.
-            for j in range(box_amount):
-                data_table.append(MkddLocationData(get_loc_name_item_box(course, i, j), 0, f"{course} GP", group.required_items, tags=tags | {TAG_ITEM_BOX_SANITY}))
+        if group.count > 1: # Don't add group and box separately if it's just one.
+            for j in range(group.count):
+                box_tags = tags.copy() | {TAG_ITEM_BOX_SANITY}
+                if any(cb.replaces_group == group.name and cb.replaces_number == j for cb in custom_boxes):
+                    box_tags.add(TAG_ITEM_BOX_REPLACEABLE)
+                data_table.append(MkddLocationData(get_loc_name_item_box(course, i, j), 0, f"{course} GP", group.required_items, tags=box_tags))
         else:
             tags.add(TAG_ITEM_BOX_SANITY) # Just add one location with both tags.
         data_table.append(MkddLocationData(get_loc_name_item_box(course, i), 0, f"{course} GP", group.required_items, tags=tags | group.tags | {TAG_ITEM_BOX_GROUP}))
+    for idx, box in enumerate(custom_boxes):
+        data_table.append(MkddLocationData(
+                get_loc_name_custom_box(course, idx), 0, f"{course} GP",
+                tags={course, TAG_ITEM_BOX, TAG_ITEM_BOX_GROUP, TAG_ITEM_BOX_INTERESTING, TAG_ITEM_BOX_SANITY, TAG_ITEM_BOX_CUSTOM} | box.tags))
 
 
 name_to_id: dict[str, int] = {data.name:id for (id, data) in enumerate(data_table) if id > 0}

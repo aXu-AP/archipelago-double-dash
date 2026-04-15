@@ -155,6 +155,8 @@ class MkddContext(CommonContext):
         self.mirror_200cc: bool
         self.lap_counts: dict[str, int]
         self.item_boxes_as_locations: int
+        self.add_custom_item_boxes: bool
+        self.custom_box_table: dict[str, dict[int, tuple[tuple[float, float, float], int]]] | None = None
 
         # Game data.
         self.victory: bool = False
@@ -260,7 +262,8 @@ class MkddContext(CommonContext):
             self.all_cup_tour_length = slot_data.get("all_cup_tour_length", 8)
             self.mirror_200cc = bool(slot_data.get("mirror_200cc"))
             self.lap_counts = slot_data.get("lap_counts")
-            self.item_boxes_as_locations = slot_data.get("item_boxes_as_locations", 0)
+            self.item_boxes_as_locations = slot_data["item_boxes_as_locations"]
+            self.add_custom_item_boxes = slot_data["add_custom_item_boxes"]
 
             self.character_item_total_weights = slot_data.get("character_item_total_weights")
             self.global_items_total_weights = slot_data.get("global_items_total_weights")
@@ -640,44 +643,74 @@ async def check_locations(ctx: MkddContext) -> None:
     course_loaded: bool = game_ticks > ctx.course_changed_time + 60 # Don't give checks in menus etc.
     ctx.last_race_timer = race_timer
 
+    # Populate custom box table (run once).
+    if ctx.add_custom_item_boxes and ctx.custom_box_table == None:
+        ctx.custom_box_table = {}
+        for course, c_boxes in locations.CUSTOM_BOXES.items():
+            cb_table: dict[int, tuple[tuple[float, float, float], int, str]] = {}
+            box_groups = locations.BOX_NAMES.get(course, [])
+            for c_idx, c_box in enumerate(c_boxes):
+                for g_idx, group in enumerate(box_groups):
+                    if group.name == c_box.replaces_group:
+                        loc_name: str = locations.get_loc_name_custom_box(course, c_idx)
+                        loc_id: int = locations.name_to_id.get(loc_name)
+                        cb_table[ctx.memory_addresses.item_box_data_x[course][g_idx][c_box.replaces_number]] = (c_box.position, loc_id, loc_name)
+            ctx.custom_box_table[course] = cb_table
     # Item Box locations.
     if in_game and ctx.item_boxes_as_locations > 0:
         item_box: int = dolphin.read_word(ctx.memory_addresses.item_box_p)
         if item_box != ctx.last_item_box:
             ctx.last_item_box = item_box
             found = False
-            box_groups = ctx.memory_addresses.item_box_data_x.get(course_name, [])
-            for (group_idx, box_ids) in enumerate(box_groups):
-                if item_box in box_ids:
-                    found = True
-                    if ctx.item_boxes_as_locations == options.ItemBoxesAsLocations.option_boxsanity:
-                        new_location_names.add(locations.get_loc_name_item_box(course_name, group_idx, box_ids.index(item_box)))
-                    else: # Groups or interesting locations (latter also uses groups just not all of them).
-                        new_location_names.add(locations.get_loc_name_item_box(course_name, group_idx))
+            custom_item_box = ctx.custom_box_table.get(course_name, {}).get(item_box)
+            if custom_item_box:
+                new_location_names.add(custom_item_box[2])
+                found = True
+            else:
+                box_groups = ctx.memory_addresses.item_box_data_x.get(course_name, [])
+                for (group_idx, box_ids) in enumerate(box_groups):
+                    if item_box in box_ids:
+                        found = True
+                        if ctx.item_boxes_as_locations == options.ItemBoxesAsLocations.option_boxsanity:
+                            new_location_names.add(locations.get_loc_name_item_box(course_name, group_idx, box_ids.index(item_box)))
+                        else: # Groups or interesting locations (latter also uses groups just not all of them).
+                            new_location_names.add(locations.get_loc_name_item_box(course_name, group_idx))
             if not found:
                 logger.info(f"Unknown box data: 0x{hex(item_box)}")
     # Update item box visuals (takes effect when the box spawns).
+    # Boxes that are unchecked, are inverted by changing their x size to -1 resulting in look reminiscent of MK64 boxes.
     if course_loaded and ctx.item_boxes_as_locations > 0:
         box_groups = ctx.memory_addresses.item_box_data_x.get(course_name, [])
         for (group_idx, box_ids) in enumerate(box_groups):
+            custom_boxes = {}
+            if ctx.add_custom_item_boxes:
+                custom_boxes = ctx.custom_box_table.get(course_name, {})
             if ctx.item_boxes_as_locations == options.ItemBoxesAsLocations.option_boxsanity:
                 for box_idx, box_address in enumerate(box_ids):
+                    if box_address in custom_boxes:
+                        continue
                     loc_name: str = locations.get_loc_name_item_box(course_name, group_idx, box_idx)
-                    if locations.name_to_id.get(loc_name) not in ctx.locations_checked:
-                        dolphin.write_float(box_address + 12, -1) # Size X of the box.
-                    else:
-                        dolphin.write_float(box_address + 12, 1)
+                    size_x = 1 if locations.name_to_id.get(loc_name) in ctx.locations_checked else -1
+                    dolphin.write_float(box_address + 12, size_x)
             else: # Groups or interesting locations.
                 if (ctx.item_boxes_as_locations == options.ItemBoxesAsLocations.option_interesting_locations and
                         locations.TAG_ITEM_BOX_INTERESTING not in locations.BOX_NAMES[course_name][group_idx].tags):
                     continue
                 loc_name: str = locations.get_loc_name_item_box(course_name, group_idx)
-                if locations.name_to_id.get(loc_name) not in ctx.locations_checked:
-                    for box_idx, box_address in enumerate(box_ids):
-                        dolphin.write_float(box_address + 12, -1) # Size X of the box.
-                else:
-                    for box_idx, box_address in enumerate(box_ids):
-                        dolphin.write_float(box_address + 12, 1)
+                size_x = 1 if locations.name_to_id.get(loc_name) in ctx.locations_checked else -1
+                for box_idx, box_address in enumerate(box_ids):
+                    if box_address in custom_boxes:
+                        continue
+                    dolphin.write_float(box_address + 12, size_x)
+    if course_loaded and ctx.custom_box_table:
+        for box_address, box_data in ctx.custom_box_table.get(course_name, {}).items():
+            box_position = box_data[0]
+            box_location_id = box_data[1]
+            for i in range(3):
+                dolphin.write_float(box_address + i * 4, box_position[i])
+            if ctx.item_boxes_as_locations > 0: # These boxes are always a group of 1 and interesting locations, so all options are handled the same.
+                size_x = 1 if box_location_id in ctx.locations_checked else -1
+                dolphin.write_float(box_address + 12, size_x)
 
 
     # Course finishing related locations.
