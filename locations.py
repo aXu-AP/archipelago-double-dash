@@ -99,24 +99,75 @@ class ItemBoxGroup(NamedTuple):
 
 BOX_NAMES: dict[str, list[ItemBoxGroup]] = {
     "Luigi Circuit": [
-        ItemBoxGroup("Chomp Shortcut", 2, {TAG_ITEM_BOX_INTERESTING}, {items.PROGRESSIVE_CLASS:1}),
-        ItemBoxGroup("Last Curve Shortcut", 2, {TAG_ITEM_BOX_INTERESTING}, {items.PROGRESSIVE_CLASS:1}),
+        ItemBoxGroup("First U-turn", 7),
+        ItemBoxGroup("Last Turn", 5),
+        ItemBoxGroup("50cc First Straight", 4),
+        ItemBoxGroup("50cc Second Straight", 4),
+        ItemBoxGroup("100cc Center", 4, required_items={items.PROGRESSIVE_CLASS:1}),
+        ItemBoxGroup("100cc Chomp Shortcut", 2, {TAG_ITEM_BOX_INTERESTING}, {items.PROGRESSIVE_CLASS:1}),
+        ItemBoxGroup("100cc Last Turn Shortcut", 2, {TAG_ITEM_BOX_INTERESTING}, {items.PROGRESSIVE_CLASS:1}),
     ],
     "Peach Beach": [
         ItemBoxGroup("Hidden Pipe", 1, {TAG_ITEM_BOX_INTERESTING}),
+        ItemBoxGroup("First Turn", 5),
         ItemBoxGroup("Beach Jump", 2, {TAG_ITEM_BOX_INTERESTING}),
+        ItemBoxGroup("Under Arc", 6),
+        ItemBoxGroup("Ramp", 6),
         ItemBoxGroup("Fountain", 2, {TAG_ITEM_BOX_INTERESTING}),
+    ],
+    "Baby Park": [
+        ItemBoxGroup("First Turn", 7),
+        ItemBoxGroup("Second Turn", 7),
+    ],
+    "Dry Dry Desert": [
+        ItemBoxGroup("Start", 4),
+        ItemBoxGroup("First Turn", 5),
+        ItemBoxGroup("Before Sand Pit", 4),
+        ItemBoxGroup("After Sand Pit", 4),
+        ItemBoxGroup("Between Pokeys", 1, {TAG_ITEM_BOX_INTERESTING}),
+        ItemBoxGroup("Sand Hills", 5),
+        ItemBoxGroup("Last Pokeys", 4),
     ],
     "Mushroom Bridge": [
         ItemBoxGroup("Pipe", 1, {TAG_ITEM_BOX_INTERESTING}),
+        ItemBoxGroup("First Tunnel", 3),
         ItemBoxGroup("Sidewalk", 1, {TAG_ITEM_BOX_INTERESTING}),
-        ItemBoxGroup("Bridge", 2, {TAG_ITEM_BOX_INTERESTING}),
+        ItemBoxGroup("Second Tunnel", 3),
+        ItemBoxGroup("Bridge", 3),
+        ItemBoxGroup("Bridge Top", 2, {TAG_ITEM_BOX_INTERESTING}),
+    ],
+    "Mario Circuit": [
+        ItemBoxGroup("Start", 5),
+        ItemBoxGroup("Before Tunnel", 4),
+        ItemBoxGroup("Near Goombas", 6),
     ],
     "Daisy Cruiser": [
         ItemBoxGroup("Cargo Area", 1, {TAG_ITEM_BOX_INTERESTING}),
     ],
-    "Wario Colosseum": [
-        ItemBoxGroup("Great Jump", 1, {TAG_ITEM_BOX_INTERESTING}),
+    "Waluigi Stadium": [
+        ItemBoxGroup("Start", 4),
+        ItemBoxGroup("First Jump", 1),
+        ItemBoxGroup("Second Jump", 1),
+        ItemBoxGroup("Near Big Puddle", 4),
+        ItemBoxGroup("First Piranha", 4),
+        ItemBoxGroup("Second Piranha", 4),
+        ItemBoxGroup("After Piranhas", 4),
+        ItemBoxGroup("Last Jump", 1, {TAG_ITEM_BOX_INTERESTING}),
+    ],
+    "Sherbet Land": [
+        ItemBoxGroup("Start", 4),
+        ItemBoxGroup("Tunnel Beginning", 3),
+        ItemBoxGroup("Tunnel End", 3),
+        ItemBoxGroup("After Tunnel", 3),
+        ItemBoxGroup("Before Ice", 5),
+        ItemBoxGroup("On Ice", 4),
+    ],
+    "Mushroom City": [
+        ItemBoxGroup("Start", 4),
+        ItemBoxGroup("Alley", 1, {TAG_ITEM_BOX_INTERESTING}),
+        ItemBoxGroup("Crossroad", 1),
+        ItemBoxGroup("After City", 4),
+        ItemBoxGroup("Ramp", 3),
     ],
     "Yoshi Circuit": [
         ItemBoxGroup("First Turn", 4),
@@ -126,8 +177,51 @@ BOX_NAMES: dict[str, list[ItemBoxGroup]] = {
         ItemBoxGroup("Tunnel Shortcut", 2, {TAG_ITEM_BOX_INTERESTING}),
         ItemBoxGroup("Last Straight", 5),
     ],
+    "DK Mountain": [
+        ItemBoxGroup("Start", 4),
+        ItemBoxGroup("Mountain Top", 4),
+        ItemBoxGroup("Cliff U-turn", 4),
+        ItemBoxGroup("Last Turn", 5),
+    ],
+    "Wario Colosseum": [
+        ItemBoxGroup("First Jump", 1),
+        ItemBoxGroup("Second Jump", 1),
+        ItemBoxGroup("Before Big Jump", 5),
+        ItemBoxGroup("After Spiral", 4),
+        ItemBoxGroup("Wide Curve", 5),
+        ItemBoxGroup("Before Pit", 4),
+        ItemBoxGroup("Pit Left", 2),
+        ItemBoxGroup("Pit Jump", 1, {TAG_ITEM_BOX_INTERESTING}),
+        ItemBoxGroup("Pit Right", 2),
+        ItemBoxGroup("After Pit", 6),
+        ItemBoxGroup("Last Jump", 4),
+    ],
     "Dino Dino Jungle": [
-        ItemBoxGroup("Bridge Side", 1, {TAG_ITEM_BOX_INTERESTING}),
+        ItemBoxGroup("First Turn", 4),
+        ItemBoxGroup("Over Logs", 2, {TAG_ITEM_BOX_INTERESTING}),
+        ItemBoxGroup("Under Dino", 4),
+        ItemBoxGroup("Bridge", 2, {TAG_ITEM_BOX_INTERESTING}),
+        ItemBoxGroup("Cave", 3),
+        ItemBoxGroup("Cave Shortcut", 1, {TAG_ITEM_BOX_INTERESTING}),
+        ItemBoxGroup("After Cave", 4),
+        ItemBoxGroup("Last Straight", 4),
+    ],
+    "Bowser's Castle": [
+        ItemBoxGroup("Entrance", 4),
+        ItemBoxGroup("Lava Room Left", 2),
+        ItemBoxGroup("Lava Room Right", 2),
+        ItemBoxGroup("Spinning Fire", 4),
+        ItemBoxGroup("Balcon", 4),
+        ItemBoxGroup("Cannon Room First", 3),
+        ItemBoxGroup("Cannon Room Second", 3),
+    ],
+    "Rainbow Road": [
+        ItemBoxGroup("Downhill", 4),
+        ItemBoxGroup("U-turn", 5),
+        ItemBoxGroup("Spiral", 4),
+        ItemBoxGroup("After Spiral", 4),
+        ItemBoxGroup("Big Pipe", 5),
+        ItemBoxGroup("Last Jump", 4),
     ],
 }
 
@@ -147,12 +241,15 @@ class CustomItemBox(NamedTuple):
     replaces_group: str
     replaces_number: int
     position: tuple[float, float, float]
-    tags: set[str] = {}
+    tags: set[str] = set()
 
 CUSTOM_BOXES: dict[str, list[CustomItemBox]] = {
+    "Peach Beach": [
+        CustomItemBox("Behind Cargo", "Under Arc", 5, (-10870, 1360, 26570))
+    ],
     "Yoshi Circuit": [
         CustomItemBox("Jump Shortcut", "Last Straight", 2, (-8000, 13400, 12100), {TAG_REQUIRES_BOOST})
-    ]
+    ],
 }
 
 def get_loc_name_custom_box(course: str, number: int) -> str:

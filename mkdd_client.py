@@ -616,7 +616,6 @@ async def check_locations(ctx: MkddContext) -> None:
         new_location_names.add(locations.TROPHY_GOAL)
     
     mode: int = dolphin.read_word(ctx.memory_addresses.mode_w)
-    course_name = ctx.current_course.name
     cup: str = game_data.CUPS[dolphin.read_word(ctx.memory_addresses.cup_w)]
     menu_course: int = dolphin.read_word(ctx.memory_addresses.menu_course_w)
     human_players: int = dolphin.read_byte(ctx.memory_addresses.human_players_b)
@@ -657,26 +656,25 @@ async def check_locations(ctx: MkddContext) -> None:
                         cb_table[ctx.memory_addresses.item_box_data_x[course][g_idx][c_box.replaces_number]] = (c_box.position, loc_id, loc_name)
             ctx.custom_box_table[course] = cb_table
     # Item Box locations.
+    course_name = ctx.current_course.name
+    if course_name == "Luigi Circuit": # LC has different layout and boxes on 50cc.
+        course_name += " 50cc" if vehicle_class == 0 else " 100cc"
     if in_game and ctx.item_boxes_as_locations > 0:
         item_box: int = dolphin.read_word(ctx.memory_addresses.item_box_p)
-        if item_box != ctx.last_item_box:
+        if item_box != ctx.last_item_box and item_box != 0:
             ctx.last_item_box = item_box
-            found = False
             custom_item_box = ctx.custom_box_table.get(course_name, {}).get(item_box)
+            logger.debug(f"Box: {hex(item_box)}")
             if custom_item_box:
                 new_location_names.add(custom_item_box[2])
-                found = True
             else:
                 box_groups = ctx.memory_addresses.item_box_data_x.get(course_name, [])
                 for (group_idx, box_ids) in enumerate(box_groups):
                     if item_box in box_ids:
-                        found = True
                         if ctx.item_boxes_as_locations == options.ItemBoxesAsLocations.option_boxsanity:
-                            new_location_names.add(locations.get_loc_name_item_box(course_name, group_idx, box_ids.index(item_box)))
+                            new_location_names.add(locations.get_loc_name_item_box(ctx.current_course.name, group_idx, box_ids.index(item_box)))
                         else: # Groups or interesting locations (latter also uses groups just not all of them).
-                            new_location_names.add(locations.get_loc_name_item_box(course_name, group_idx))
-            if not found:
-                logger.info(f"Unknown box data: 0x{hex(item_box)}")
+                            new_location_names.add(locations.get_loc_name_item_box(ctx.current_course.name, group_idx))
     # Update item box visuals (takes effect when the box spawns).
     # Boxes that are unchecked, are inverted by changing their x size to -1 resulting in look reminiscent of MK64 boxes.
     if course_loaded and ctx.item_boxes_as_locations > 0:
@@ -689,12 +687,12 @@ async def check_locations(ctx: MkddContext) -> None:
                 for box_idx, box_address in enumerate(box_ids):
                     if box_address in custom_boxes:
                         continue
-                    loc_name: str = locations.get_loc_name_item_box(course_name, group_idx, box_idx)
+                    loc_name: str = locations.get_loc_name_item_box(ctx.current_course.name, group_idx, box_idx)
                     size_x = 1 if locations.name_to_id.get(loc_name) in ctx.locations_checked else -1
                     dolphin.write_float(box_address + 12, size_x)
             else: # Groups or interesting locations.
                 if (ctx.item_boxes_as_locations == options.ItemBoxesAsLocations.option_interesting_locations and
-                        locations.TAG_ITEM_BOX_INTERESTING not in locations.BOX_NAMES[course_name][group_idx].tags):
+                        locations.TAG_ITEM_BOX_INTERESTING not in locations.BOX_NAMES[ctx.current_course.name][group_idx].tags):
                     continue
                 loc_name: str = locations.get_loc_name_item_box(course_name, group_idx)
                 size_x = 1 if locations.name_to_id.get(loc_name) in ctx.locations_checked else -1
@@ -1163,6 +1161,7 @@ async def check_current_course_changed(ctx: MkddContext) -> None:
         if new_course != ctx.current_course:
             ctx.course_changed_time = dolphin.read_word(ctx.memory_addresses.game_ticks_w)
             ctx.current_course = new_course
+            dolphin.write_word(ctx.memory_addresses.item_box_p, 0) # Clean up item box data.
             # Send a Bounced message containing the new stage name to all trackers connected to the current slot.
             data_to_send = {"mkdd_course_name": new_course.name}
             message = {
