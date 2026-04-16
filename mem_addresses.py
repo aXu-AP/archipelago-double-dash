@@ -350,7 +350,11 @@ class MkddMemAddressesUsa(MkddMemAddresses):
             [0x80d85d6c, 0x80d85e6c, 0x80d85e2c, 0x80d85dec, 0x80d8626c, 0x80d85dac],               # Near Goombas
         ],
         "Daisy Cruiser": [
+            [0x80d4e6a4, 0x80d4e6e4, 0x80d4e724, 0x80d4e424, 0x80d4e3e4],                           # First
+            [0x80d4e3a4, 0x80d4e764, 0x80d4e2a4, 0x80d4e624, 0x80d4e7e4, 0x80d4e7a4, 0x80d4e664, 0x80d4e324], # Dining Hall
+            [0x80d4f124, 0x80d4f164],                                                               # Cargo Hatch
             [0x80D4F064],                                                                           # Cargo Area
+            [0x80d4e564, 0x80d4e524, 0x80d4e4e4, 0x80d4e4a4, 0x80d4e824],                           # Deck
         ],
         "Waluigi Stadium": [
             [0x80d76130, 0x80d760f0, 0x80d760b0, 0x80d76170],                                       # Start

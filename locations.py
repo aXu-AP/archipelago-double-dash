@@ -142,7 +142,11 @@ BOX_NAMES: dict[str, list[ItemBoxGroup]] = {
         ItemBoxGroup("Near Goombas", 6),
     ],
     "Daisy Cruiser": [
+        ItemBoxGroup("First", 5),
+        ItemBoxGroup("Dining Hall", 8),
+        ItemBoxGroup("Cargo Hatch", 2),
         ItemBoxGroup("Cargo Area", 1, {TAG_ITEM_BOX_INTERESTING}),
+        ItemBoxGroup("Deck", 5),
     ],
     "Waluigi Stadium": [
         ItemBoxGroup("Start", 4),
