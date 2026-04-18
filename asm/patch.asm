@@ -276,11 +276,11 @@ b       item_box_id_return
 
 
 # SECTION rolling_item_box_id
-.set rolling_item_box_id_jump, 0x800011bc - 0x8027d1e4
-.set rolling_item_box_id_return, 0x8027d1e4 + 4 - 0x800011bc - 7*4
+.set rolling_item_box_id_jump, 0x800011b8 - 0x8027d1e4
+.set rolling_item_box_id_return, 0x8027d1e4 + 4 - 0x800011b8 - 7*4
 WriteTo 0x8027d1e4
 b       rolling_item_box_id_jump
-WriteTo 0x800011bc
+WriteTo 0x800011b8
 cmplwi  r4, 0               # Skip for other karts than no. 0 (player).
 bne+    5*4
 lwz     r4, 0xe8 (r3)       # Load box's id.
@@ -289,6 +289,21 @@ stw     r4, item_box_id@l (r31)
 li      r4, 0               # Return value to 0.
 mr      r31, r3             # default code
 b       rolling_item_box_id_return
+
+
+# SECTION car_item_box_id
+.set car_item_box_id_jump, 0x800011d8 - 0x8019a69c
+.set car_item_box_id_return, 0x8019a69c + 4 - 0x800011d8 - 6*4
+WriteTo 0x8019a69c
+b       car_item_box_id_jump
+WriteTo 0x800011d8
+cmplwi  r4, 0               # Skip for other karts than no. 0 (player).
+bne+    4*4
+lwz     r30, 0xe8 (r3)       # Load box's id.
+lis     r31, item_box_id@ha
+stw     r30, item_box_id@l (r31)
+mr      r30, r3             # default code
+b       car_item_box_id_return
 
 
 # SECTION draw_string

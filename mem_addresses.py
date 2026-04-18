@@ -337,6 +337,8 @@ class MkddMemAddressesUsa(MkddMemAddresses):
             [0x80da5b04, 0x80da55c4, 0x80da5b44, 0x80da5b84],                                       # Last Pokeys
         ],
         "Mushroom Bridge": [
+            [0x80d85ef8, 0x80d860f8],                                                               # Left Lane
+            [0x80d85eb8, 0x80d85db8],                                                               # Right Lane
             [0x80D86338],                                                                           # Pipe
             [0x80d85e38, 0x80d85df8, 0x80d85e78],                                                   # First Tunnel
             [0x80D863B8],                                                                           # Sidewalk
@@ -375,6 +377,10 @@ class MkddMemAddressesUsa(MkddMemAddresses):
             [0x80d50d80, 0x80d50dc0, 0x80d50e40, 0x80d50e00],                                       # On Ice
         ],
         "Mushroom City": [
+            [0x80d667a8, 0x80d66a28],                                                               # Outer Route
+            [0x80d66ba8],                                                                           # First Block
+            [0x80d664a8, 0x80d66928],                                                               # Last Straight Left Lane
+            [0x80d663a8, 0x80d66428, 0x80d66a68],                                                   # Last Straight Right Lane
             [0x80d66c68, 0x80d66c28, 0x80d66be8, 0x80d66ca8],                                       # Start
             [0x80d66b68],                                                                           # Alley
             [0x80d66ce8],                                                                           # Crossroad

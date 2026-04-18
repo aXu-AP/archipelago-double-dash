@@ -129,6 +129,8 @@ BOX_NAMES: dict[str, list[ItemBoxGroup]] = {
         ItemBoxGroup("Last Pokeys", 4),
     ],
     "Mushroom Bridge": [
+        ItemBoxGroup("Left Lane", 2),
+        ItemBoxGroup("Right Lane", 2),
         ItemBoxGroup("Pipe", 1, {TAG_ITEM_BOX_INTERESTING}),
         ItemBoxGroup("First Tunnel", 3),
         ItemBoxGroup("Sidewalk", 1, {TAG_ITEM_BOX_INTERESTING}),
@@ -167,6 +169,10 @@ BOX_NAMES: dict[str, list[ItemBoxGroup]] = {
         ItemBoxGroup("On Ice", 4),
     ],
     "Mushroom City": [
+        ItemBoxGroup("Outer Route", 2),
+        ItemBoxGroup("First Block", 1),
+        ItemBoxGroup("Last Straight Left Lane", 2),
+        ItemBoxGroup("Last Straight Right Lane", 3),
         ItemBoxGroup("Start", 4),
         ItemBoxGroup("Alley", 1, {TAG_ITEM_BOX_INTERESTING}),
         ItemBoxGroup("Crossroad", 1),
