@@ -270,6 +270,9 @@ class MkddWorld(World):
                     break
             if len(item_pool) == total_locations:
                 break
+        # In case the user has specified no items, force at least one boost item for all locations be reachable.
+        if self.options.items_for_everybody + self.options.items_per_character + self.options.start_items_per_character == 0:
+            item_pool.append(self.create_item(items.get_item_name_character_item(game_data.CHARACTERS[0].name, game_data.ITEM_MUSHROOM.name)))
 
         self.character_item_total_weights = {character.name:[] for character in game_data.CHARACTERS}
         for i in range(8):
