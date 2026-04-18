@@ -34,3 +34,8 @@ fireball_limit = [
     0x00355651, 0x00000014,
     0x00355641, 0x00000014,
 ]
+
+# Disable "Wrong Direction" Lakitu [Ralf]
+disable_reverse_lakitu = [
+    0x04251CB0, 0x60000000,
+]

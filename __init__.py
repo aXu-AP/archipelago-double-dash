@@ -80,6 +80,7 @@ class MkddWorld(World):
             # Staff ghosts were on by default before this option was introduced.
             self.options.time_trials = slot_data.get("time_trials", options.TimeTrials.option_include_staff_ghosts)
             self.options.item_boxes_as_locations = slot_data["item_boxes_as_locations"]
+            self.options.add_custom_item_boxes = slot_data["add_custom_item_boxes"]
 
 
     def create_regions(self) -> None:
@@ -126,8 +127,23 @@ class MkddWorld(World):
                     continue
                 if not self.options.grand_prix_trophies and locations.TAG_CUP_TROPHY in location_data.tags:
                     continue
-                if self.options.item_boxes_as_locations == 0 and locations.TAG_ITEM_BOX in location_data.tags:
-                    continue
+                if locations.TAG_ITEM_BOX in location_data.tags:
+                    if not self.options.add_custom_item_boxes and locations.TAG_ITEM_BOX_CUSTOM in location_data.tags:
+                        continue
+                    match self.options.item_boxes_as_locations:
+                        case options.ItemBoxesAsLocations.option_disabled:
+                            continue
+                        case options.ItemBoxesAsLocations.option_interesting_locations:
+                            if locations.TAG_ITEM_BOX_INTERESTING not in location_data.tags:
+                                continue
+                        case options.ItemBoxesAsLocations.option_box_groups:
+                            if locations.TAG_ITEM_BOX_GROUP not in location_data.tags:
+                                continue
+                        case options.ItemBoxesAsLocations.option_boxsanity:
+                            if locations.TAG_ITEM_BOX_SANITY not in location_data.tags:
+                                continue
+                            if self.options.add_custom_item_boxes and locations.TAG_ITEM_BOX_REPLACEABLE in location_data.tags:
+                                continue
                 if id > 0 and location_data.region == region_name:
                     region.add_locations({location_data.name: id})
                     self.current_locations.append(location_data)
@@ -254,6 +270,9 @@ class MkddWorld(World):
                     break
             if len(item_pool) == total_locations:
                 break
+        # In case the user has specified no items, force at least one boost item for all locations be reachable.
+        if self.options.items_for_everybody + self.options.items_per_character + self.options.start_items_per_character == 0:
+            item_pool.append(self.create_item(items.get_item_name_character_item(game_data.CHARACTERS[0].name, game_data.ITEM_MUSHROOM.name)))
 
         self.character_item_total_weights = {character.name:[] for character in game_data.CHARACTERS}
         for i in range(8):
@@ -312,6 +331,7 @@ class MkddWorld(World):
             "character_item_total_weights": self.character_item_total_weights,
             "global_items_total_weights": self.global_items_total_weights,
             "item_boxes_as_locations": int(self.options.item_boxes_as_locations),
+            "add_custom_item_boxes": int(self.options.add_custom_item_boxes),
         }
     
     # Rerun Universal Tracker with received options.

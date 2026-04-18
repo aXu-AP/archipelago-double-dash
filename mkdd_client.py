@@ -138,6 +138,7 @@ class MkddContext(CommonContext):
         self.dolphin_status: str = CONNECTION_INITIAL_STATUS
         self.awaiting_rom: bool = False
         self.last_rcvd_index: int = -1
+        self.locations_checked: set[int] = set()
         self.has_send_death: bool = False
         self.victory_sent: bool = False
 
@@ -153,6 +154,9 @@ class MkddContext(CommonContext):
         self.cups_courses: list[list[int]]
         self.mirror_200cc: bool
         self.lap_counts: dict[str, int]
+        self.item_boxes_as_locations: int
+        self.add_custom_item_boxes: bool
+        self.custom_box_table: dict[str, dict[int, tuple[tuple[float, float, float], int]]] | None = None
 
         # Game data.
         self.victory: bool = False
@@ -181,6 +185,8 @@ class MkddContext(CommonContext):
         self.last_selected_course: int = 0
         
         self.time_trial_items: int = 0
+
+        self.last_item_box: int = 0
 
         # These are per player.
         self.last_selected_character: list[int] = [0 for _ in range(4)]
@@ -256,10 +262,13 @@ class MkddContext(CommonContext):
             self.all_cup_tour_length = slot_data.get("all_cup_tour_length", 8)
             self.mirror_200cc = bool(slot_data.get("mirror_200cc"))
             self.lap_counts = slot_data.get("lap_counts")
+            self.item_boxes_as_locations = slot_data["item_boxes_as_locations"]
+            self.add_custom_item_boxes = slot_data["add_custom_item_boxes"]
 
             self.character_item_total_weights = slot_data.get("character_item_total_weights")
             self.global_items_total_weights = slot_data.get("global_items_total_weights")
 
+            self.locations_checked = set(args.get("checked_locations"))
             if self.dolphin_status == CONNECTION_CONNECTED_STATUS:
                 sync_state(self)
         elif cmd == "ReceivedItems":
@@ -269,8 +278,8 @@ class MkddContext(CommonContext):
                     self.items_received_2.append((item, self.last_rcvd_index))
                     self.last_rcvd_index += 1
             self.items_received_2.sort(key=lambda v: v[1])
-        elif cmd == "Retrieved":
-            requested_keys_dict = args["keys"]
+        elif cmd == "RoomUpdate":
+            self.locations_checked.update(args.get("checked_locations"))
         elif cmd == "PrintJSON":
             if args.get("type") == "ItemSend":
                 to_player: int = args["receiving"]
@@ -461,11 +470,12 @@ def _apply_dict_patch(code: dict[int, list[int]]):
             address += 4
 
 
-def apply_patch(ctx: MkddContext):
+def apply_patch():
     _apply_dict_patch(patches.patch)
     _apply_ar_code(ar_codes.lap_modifier)
     _apply_ar_code(ar_codes.gp_course_selection)
     _apply_ar_code(ar_codes.fireball_limit)
+    _apply_ar_code(ar_codes.disable_reverse_lakitu)
     logger.info("Patch Applied.")
 
 
@@ -617,6 +627,7 @@ async def check_locations(ctx: MkddContext) -> None:
     total_ranking: int = dolphin.read_word(ctx.memory_addresses.total_ranking_w)
     total_points: int = dolphin.read_word(ctx.memory_addresses.total_points_wx)
     game_ticks: int = dolphin.read_word(ctx.memory_addresses.game_ticks_w)
+
     race_timer: int = dolphin.read_word(ctx.memory_addresses.race_timer_w)
     # Remove 182 frame headstart and convert to seconds.
     # Close enough (to 1/10th of a second), altough probably exact formula should be investigated.
@@ -631,14 +642,74 @@ async def check_locations(ctx: MkddContext) -> None:
     course_loaded: bool = game_ticks > ctx.course_changed_time + 60 # Don't give checks in menus etc.
     ctx.last_race_timer = race_timer
 
-    # Gets the current courses and its special box targets to verify the value of each boxes next to its targeted address.
+    # Populate custom box table (run once).
+    if ctx.add_custom_item_boxes and ctx.custom_box_table == None:
+        ctx.custom_box_table = {}
+        for course, c_boxes in locations.CUSTOM_BOXES.items():
+            cb_table: dict[int, tuple[tuple[float, float, float], int, str]] = {}
+            box_groups = locations.BOX_NAMES.get(course, [])
+            for c_idx, c_box in enumerate(c_boxes):
+                for g_idx, group in enumerate(box_groups):
+                    if group.name == c_box.replaces_group:
+                        loc_name: str = locations.get_loc_name_custom_box(course, c_idx)
+                        loc_id: int = locations.name_to_id.get(loc_name)
+                        cb_table[ctx.memory_addresses.item_box_data_x[course][g_idx][c_box.replaces_number]] = (c_box.position, loc_id, loc_name)
+            ctx.custom_box_table[course] = cb_table
+    # Item Box locations.
     course_name = ctx.current_course.name
-    special_box_groups = ctx.memory_addresses.item_box_target_pointer.get(course_name, [])
-    if in_game and special_box_groups:
+    if course_name == "Luigi Circuit": # LC has different layout and boxes on 50cc.
+        course_name += " 50cc" if vehicle_class == 0 else " 100cc"
+    if in_game and ctx.item_boxes_as_locations > 0:
         item_box: int = dolphin.read_word(ctx.memory_addresses.item_box_p)
-        for (index, box_ids) in enumerate(special_box_groups):
-            if item_box in box_ids:
-                new_location_names.add(locations.get_loc_name_item_box(course_name, index))
+        if item_box != ctx.last_item_box and item_box != 0:
+            ctx.last_item_box = item_box
+            custom_item_box = ctx.custom_box_table.get(course_name, {}).get(item_box)
+            logger.debug(f"Box: {hex(item_box)}")
+            if custom_item_box:
+                new_location_names.add(custom_item_box[2])
+            else:
+                box_groups = ctx.memory_addresses.item_box_data_x.get(course_name, [])
+                for (group_idx, box_ids) in enumerate(box_groups):
+                    if item_box in box_ids:
+                        if ctx.item_boxes_as_locations == options.ItemBoxesAsLocations.option_boxsanity:
+                            new_location_names.add(locations.get_loc_name_item_box(ctx.current_course.name, group_idx, box_ids.index(item_box)))
+                        else: # Groups or interesting locations (latter also uses groups just not all of them).
+                            new_location_names.add(locations.get_loc_name_item_box(ctx.current_course.name, group_idx))
+    # Update item box visuals (takes effect when the box spawns).
+    # Boxes that are unchecked, are inverted by changing their x size to -1 resulting in look reminiscent of MK64 boxes.
+    if course_loaded and ctx.item_boxes_as_locations > 0:
+        box_groups = ctx.memory_addresses.item_box_data_x.get(course_name, [])
+        for (group_idx, box_ids) in enumerate(box_groups):
+            custom_boxes = {}
+            if ctx.add_custom_item_boxes:
+                custom_boxes = ctx.custom_box_table.get(course_name, {})
+            if ctx.item_boxes_as_locations == options.ItemBoxesAsLocations.option_boxsanity:
+                for box_idx, box_address in enumerate(box_ids):
+                    if box_address in custom_boxes:
+                        continue
+                    loc_name: str = locations.get_loc_name_item_box(ctx.current_course.name, group_idx, box_idx)
+                    size_x = 1 if locations.name_to_id.get(loc_name) in ctx.locations_checked else -1
+                    dolphin.write_float(box_address + 12, size_x)
+            else: # Groups or interesting locations.
+                if (ctx.item_boxes_as_locations == options.ItemBoxesAsLocations.option_interesting_locations and
+                        locations.TAG_ITEM_BOX_INTERESTING not in locations.BOX_NAMES[ctx.current_course.name][group_idx].tags):
+                    continue
+                loc_name: str = locations.get_loc_name_item_box(course_name, group_idx)
+                size_x = 1 if locations.name_to_id.get(loc_name) in ctx.locations_checked else -1
+                for box_idx, box_address in enumerate(box_ids):
+                    if box_address in custom_boxes:
+                        continue
+                    dolphin.write_float(box_address + 12, size_x)
+    if course_loaded and ctx.custom_box_table:
+        for box_address, box_data in ctx.custom_box_table.get(course_name, {}).items():
+            box_position = box_data[0]
+            box_location_id = box_data[1]
+            for i in range(3):
+                dolphin.write_float(box_address + i * 4, box_position[i])
+            if ctx.item_boxes_as_locations > 0: # These boxes are always a group of 1 and interesting locations, so all options are handled the same.
+                size_x = 1 if box_location_id in ctx.locations_checked else -1
+                dolphin.write_float(box_address + 12, size_x)
+
 
     # Course finishing related locations.
     # For Time Trials check against default lap counts.
@@ -1090,6 +1161,7 @@ async def check_current_course_changed(ctx: MkddContext) -> None:
         if new_course != ctx.current_course:
             ctx.course_changed_time = dolphin.read_word(ctx.memory_addresses.game_ticks_w)
             ctx.current_course = new_course
+            dolphin.write_word(ctx.memory_addresses.item_box_p, 0) # Clean up item box data.
             # Send a Bounced message containing the new stage name to all trackers connected to the current slot.
             data_to_send = {"mkdd_course_name": new_course.name}
             message = {
@@ -1228,10 +1300,9 @@ async def dolphin_sync_task(ctx: MkddContext) -> None:
                     else:
                         logger.info(CONNECTION_CONNECTED_STATUS)
                         ctx.dolphin_status = CONNECTION_CONNECTED_STATUS
-                        apply_patch(ctx)
+                        apply_patch()
                         sync_state(ctx)
                         await give_items(ctx)
-                        ctx.locations_checked = set()
                 else:
                     logger.info(f"Connection to {dolphin_name} failed, attempting again in 5 seconds...")
                     ctx.dolphin_status = CONNECTION_LOST_STATUS

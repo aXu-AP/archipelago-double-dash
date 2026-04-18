@@ -33,6 +33,8 @@ class MkddRules:
             if len(location.required_items) > 0:
                 self.add_loc_rule(location.name,
                         lambda state, items = location.required_items: state.has_all_counts(items, self.player))
+            if locations.TAG_REQUIRES_BOOST in location.tags:
+                self.add_loc_rule(location.name, lambda state: has_boost_item(state, self.player))
             if locations.TAG_TT in location.tags:
                 self.add_loc_rule(location.name,
                         lambda state, difficulty = location.difficulty:
@@ -75,6 +77,7 @@ class MkddState(LogicMixin):
     mkdd_kart_levels: dict[int, list[int]]
     mkdd_unlocked_karts: dict[int, list[int]]
     mkdd_character_levels: dict[int, list[int]]
+    mkdd_character_has_boost: dict[int, list[int]]
     mkdd_unlocked_characters: dict[int, list[int]]
     mkdd_best_combo_level: dict[int, int]
     mkdd_state_is_stale: dict[int, bool]
@@ -83,6 +86,7 @@ class MkddState(LogicMixin):
         self.mkdd_kart_levels = {}
         self.mkdd_unlocked_karts = {}
         self.mkdd_character_levels = {}
+        self.mkdd_character_has_boost = {}
         self.mkdd_unlocked_characters = {}
         self.mkdd_best_combo_level = {}
         self.mkdd_state_is_stale = {}
@@ -90,6 +94,7 @@ class MkddState(LogicMixin):
             self.mkdd_kart_levels[player] = [0] * len(game_data.KARTS)
             self.mkdd_unlocked_karts[player] = [0] * len(game_data.KARTS)
             self.mkdd_character_levels[player] = [0] * len(game_data.CHARACTERS)
+            self.mkdd_character_has_boost[player] = [0] * len(game_data.CHARACTERS)
             self.mkdd_unlocked_characters[player] = [0] * len(game_data.CHARACTERS)
             self.mkdd_best_combo_level[player] = 0
             self.mkdd_state_is_stale[player] = False
@@ -98,12 +103,14 @@ class MkddState(LogicMixin):
         new_state.mkdd_kart_levels = {}
         new_state.mkdd_unlocked_karts = {}
         new_state.mkdd_character_levels = {}
+        new_state.mkdd_character_has_boost = {}
         new_state.mkdd_unlocked_characters = {}
         new_state.mkdd_best_combo_level = {}
         for player in self.mkdd_kart_levels.keys():
             new_state.mkdd_kart_levels[player] = self.mkdd_kart_levels[player].copy()
             new_state.mkdd_unlocked_karts[player] = self.mkdd_unlocked_karts[player].copy()
             new_state.mkdd_character_levels[player] = self.mkdd_character_levels[player].copy()
+            new_state.mkdd_character_has_boost[player] = self.mkdd_character_has_boost[player].copy()
             new_state.mkdd_unlocked_characters[player] = self.mkdd_unlocked_characters[player].copy()
             new_state.mkdd_best_combo_level[player] = self.mkdd_best_combo_level[player]
             new_state.mkdd_state_is_stale[player] = self.mkdd_state_is_stale[player]
@@ -120,12 +127,15 @@ def add_item(state: CollectionState, player: int, item: Item, count: int = 1) ->
         state.mkdd_kart_levels[player][item_data.address] += item_data.meta.usefulness * count
     elif item_data.item_type == items.ItemType.ITEM_UNLOCK:
         item_value = item_data.meta["item"].usefulness
+        boost_value = 1 if item_data.meta["item"].is_boost_item else 0
         if item_data.meta["character"] == None:
             for i in range(len(game_data.CHARACTERS)):
                 state.mkdd_character_levels[player][i] += item_value * count
+                state.mkdd_character_has_boost[player][i] += boost_value * count
         else:
             char_id = game_data.CHARACTERS.index(item_data.meta["character"])
             state.mkdd_character_levels[player][char_id] += item_value * count
+            state.mkdd_character_has_boost[player][char_id] += boost_value * count
     elif item_data.name == items.PROGRESSIVE_ENGINE:
         state.mkdd_best_combo_level[player] += game_data.ENGINE_UPGRADE_USEFULNESS * count
         # Engine upgrade applies to all combos equally so no need to recalculate.
@@ -245,3 +255,10 @@ def calculate_player_level(state: CollectionState, player: int,
         state.count(items.PROGRESSIVE_ENGINE, player) * game_data.ENGINE_UPGRADE_USEFULNESS +
         state.count(items.SKIP_DIFFICULTY, player) * game_data.SKIP_DIFFICULTY_USEFULNESS
     )
+
+
+def has_boost_item(state: CollectionState, player: int) -> bool:
+    for character_id, boost_level in enumerate(state.mkdd_character_has_boost[player]):
+        if boost_level > 0 and state.mkdd_unlocked_characters[player][character_id] > 0:
+            return True
+    return False

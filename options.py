@@ -132,12 +132,20 @@ class SpeedUpgrades(DefaultOnToggle):
     display_name = "Speed Upgrades"
 
 class ItemBoxesAsLocations(Choice):
-    """Makes some item boxes count as checks."""
+    """Makes some item boxes count as checks.
+    Interesting locations adds 1-3 checks per course.
+    Box Groups grants you checks by touching any box in a row/group.
+    Boxsanity adds checks to every box individually."""
     display_name = "Item Boxes as Locations"
     option_disabled = 0
     option_interesting_locations = 1
-    #option_boxsanity = 2
+    option_box_groups = 2
+    option_boxsanity = 3
     default = 1
+
+class AddCustomItemBoxes(DefaultOnToggle):
+    """Moves some item boxes to interesting places, like shortcuts."""
+    display_name = "Add Custom Item Boxes"
 
 @dataclass
 class MkddOptions(PerGameCommonOptions):
@@ -164,5 +172,6 @@ class MkddOptions(PerGameCommonOptions):
     speed_upgrades: SpeedUpgrades
 
     item_boxes_as_locations: ItemBoxesAsLocations
+    add_custom_item_boxes: AddCustomItemBoxes
 
     start_inventory_from_pool: StartInventoryPool
