@@ -68,7 +68,7 @@ class CourseShuffle(Choice):
     display_name = "Course Shuffle"
     option_vanilla = 0
     option_shuffle_once = 1
-    #option_shuffle_per_class = 2
+    # TODO: option_shuffle_per_class = 2
     default = 1
 
 class AllCupTourLength(Range):

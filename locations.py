@@ -42,19 +42,13 @@ class MkddLocationData(NamedTuple):
 
 
 def get_loc_name_cup(cup: str, ranking: int, vehicle_class: int) -> str:
-    try:
-        rank_name = ["Gold", "Silver", "Bronze"][ranking]
-        class_name = ["50cc", "100cc", "150cc", "Mirror"][vehicle_class]
-        return f"{cup} {rank_name} {class_name}"
-    except:
-        return ""
+    rank_name = ["Gold", "Silver", "Bronze"][ranking]
+    class_name = ["50cc", "100cc", "150cc", "Mirror"][vehicle_class]
+    return f"{cup} {rank_name} {class_name}"
 
 def get_loc_name_trophy(cup: str, vehicle_class: int) -> str:
-    try:
-        class_name = ["50cc", "100cc", "150cc", "Mirror"][vehicle_class]
-        return f"{cup} Gold {class_name} (Trophy)"
-    except:
-        return ""
+    class_name = ["50cc", "100cc", "150cc", "Mirror"][vehicle_class]
+    return f"{cup} Gold {class_name} (Trophy)"
 
 def get_loc_name_perfect(cup: str) -> str:
     return f"{cup} Perfect"

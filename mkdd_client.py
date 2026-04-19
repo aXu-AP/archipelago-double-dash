@@ -3,7 +3,6 @@ import os
 import random
 import time
 import traceback
-import struct
 from typing import TYPE_CHECKING, Any, Optional
 
 import dolphin_memory_engine as dolphin
@@ -13,7 +12,6 @@ from CommonClient import get_base_parser, gui_enabled, logger, server_loop
 from NetUtils import ClientStatus, NetworkItem
 
 from . import game_data, items, locations, patches, mem_addresses, ar_codes, version, options
-from .locations import MkddLocationData
 from .items import ItemType, MkddItemData
 from .settings import MkddSettings
 from settings import get_settings
@@ -233,67 +231,68 @@ class MkddContext(CommonContext):
         :param cmd: The command received from the server.
         :param args: The command arguments.
         """
-        if cmd == "Connected":
-            self.items_received_2 = []
-            self.last_rcvd_index = -1
-            slot_data: dict = args.get("slot_data")
-            host_version : str = slot_data.get("version")
-            if not host_version.startswith(self.compatible_version):
-                self.gui_error("Incompatible seed/client",
-                    f"The seed was generated using version {host_version} of MKDDAP.\n" +
-                    f"Client's version: {version.get_version()}"
-                )
-                self.disconnect()
-                return
-            
-            if "death_link" in slot_data:
-                Utils.async_start(self.update_death_link(bool(args["slot_data"]["death_link"])))
-            
-            self.trophy_goal = slot_data.get("trophy_requirement")
-            if self.ui:
-                self.ui.update_trophies(self.trophies, self.trophy_goal)
-                self.ui.update_characters([])
-                self.ui.update_cc(0)
-                self.ui.update_cups([])
-                self.ui.update_speed_upgrades(0, 3)
-                self.ui.update_karts([])
+        match cmd:
+            case "Connected":
+                self.items_received_2 = []
+                self.last_rcvd_index = -1
+                slot_data: dict = args.get("slot_data")
+                host_version : str = slot_data.get("version")
+                if not host_version.startswith(self.compatible_version):
+                    self.gui_error("Incompatible seed/client",
+                        f"The seed was generated using version {host_version} of MKDDAP.\n" +
+                        f"Client's version: {version.get_version()}"
+                    )
+                    self.disconnect()
+                    return
                 
-            self.cups_courses = slot_data["cups_courses"]
-            self.all_cup_tour_length = slot_data.get("all_cup_tour_length", 8)
-            self.mirror_200cc = bool(slot_data.get("mirror_200cc"))
-            self.lap_counts = slot_data.get("lap_counts")
-            self.item_boxes_as_locations = slot_data["item_boxes_as_locations"]
-            self.add_custom_item_boxes = slot_data["add_custom_item_boxes"]
+                if "death_link" in slot_data:
+                    Utils.async_start(self.update_death_link(bool(args["slot_data"]["death_link"])))
+                
+                self.trophy_goal = slot_data.get("trophy_requirement")
+                if self.ui:
+                    self.ui.update_trophies(self.trophies, self.trophy_goal)
+                    self.ui.update_characters([])
+                    self.ui.update_cc(0)
+                    self.ui.update_cups([])
+                    self.ui.update_speed_upgrades(0, 3)
+                    self.ui.update_karts([])
+                    
+                self.cups_courses = slot_data["cups_courses"]
+                self.all_cup_tour_length = slot_data.get("all_cup_tour_length", 8)
+                self.mirror_200cc = bool(slot_data.get("mirror_200cc"))
+                self.lap_counts = slot_data.get("lap_counts")
+                self.item_boxes_as_locations = slot_data["item_boxes_as_locations"]
+                self.add_custom_item_boxes = slot_data["add_custom_item_boxes"]
 
-            self.character_item_total_weights = slot_data.get("character_item_total_weights")
-            self.global_items_total_weights = slot_data.get("global_items_total_weights")
+                self.character_item_total_weights = slot_data.get("character_item_total_weights")
+                self.global_items_total_weights = slot_data.get("global_items_total_weights")
 
-            self.locations_checked = set(args.get("checked_locations"))
-            if self.dolphin_status == CONNECTION_CONNECTED_STATUS:
-                sync_state(self)
-        elif cmd == "ReceivedItems":
-            if args["index"] >= self.last_rcvd_index:
-                self.last_rcvd_index = args["index"]
-                for item in args["items"]:
-                    self.items_received_2.append((item, self.last_rcvd_index))
-                    self.last_rcvd_index += 1
-            self.items_received_2.sort(key=lambda v: v[1])
-        elif cmd == "RoomUpdate":
-            self.locations_checked.update(args.get("checked_locations"))
-        elif cmd == "PrintJSON":
-            if args.get("type") == "ItemSend":
-                to_player: int = args["receiving"]
-                nw_item: NetworkItem = args["item"]
-                from_player: int = nw_item.player
-                item_name: str = self.item_names.lookup_in_slot(nw_item.item, to_player)
-                if to_player == self.slot and from_player == self.slot:
-                    queue_ingame_message(self, f"You found your\n{item_name}")
-                elif to_player == self.slot:
-                    from_player_name: str = self.player_names[from_player]
-                    queue_ingame_message(self, f"{from_player_name} found your\n{item_name}")
-                elif from_player == self.slot:
-                    to_player_name: str = self.player_names[to_player]
-                    queue_ingame_message(self, f"You found {to_player_name}'s\n{item_name}")
+                self.locations_checked = set(args.get("checked_locations"))
+                if self.dolphin_status == CONNECTION_CONNECTED_STATUS:
+                    sync_state(self)
+            case "ReceivedItems":
+                if args["index"] >= self.last_rcvd_index:
+                    self.last_rcvd_index = args["index"]
+                    for item in args["items"]:
+                        self.items_received_2.append((item, self.last_rcvd_index))
+                        self.last_rcvd_index += 1
+                self.items_received_2.sort(key=lambda v: v[1])
+            case "RoomUpdate":
+                self.locations_checked.update(args.get("checked_locations"))
+            case "PrintJSON":
+                if args.get("type") == "ItemSend":
+                    to_player: int = args["receiving"]
+                    nw_item: NetworkItem = args["item"]
+                    from_player: int = nw_item.player
+                    item_name: str = self.item_names.lookup_in_slot(nw_item.item, to_player)
+                    if to_player == self.slot and from_player == self.slot:
+                        queue_ingame_message(self, f"You found your\n{item_name}")
+                    elif to_player == self.slot:
+                        from_player_name: str = self.player_names[from_player]
+                        queue_ingame_message(self, f"{from_player_name} found your\n{item_name}")
+                    elif from_player == self.slot:
+                        to_player_name: str = self.player_names[to_player]
+                        queue_ingame_message(self, f"You found {to_player_name}'s\n{item_name}")
         # Relay packages to the tracker also.
         super().on_package(cmd, args)
 
@@ -617,13 +616,11 @@ async def check_locations(ctx: MkddContext) -> None:
     
     mode: int = dolphin.read_word(ctx.memory_addresses.mode_w)
     cup: str = game_data.CUPS[dolphin.read_word(ctx.memory_addresses.cup_w)]
-    menu_course: int = dolphin.read_word(ctx.memory_addresses.menu_course_w)
     human_players: int = dolphin.read_byte(ctx.memory_addresses.human_players_b)
     vehicle_class: int = dolphin.read_word(ctx.memory_addresses.vehicle_class_w)
     current_lap: int = dolphin.read_word(ctx.memory_addresses.current_lap_wx)
     # Get placement and modify it to be 0-based for less confusion (rankings are also 0-based).
     in_race_placement: int = dolphin.read_word(ctx.memory_addresses.in_race_placement_wx) - 1
-    current_course_ranking: int = dolphin.read_word(ctx.memory_addresses.current_course_ranking_w)
     total_ranking: int = dolphin.read_word(ctx.memory_addresses.total_ranking_w)
     total_points: int = dolphin.read_word(ctx.memory_addresses.total_points_wx)
     game_ticks: int = dolphin.read_word(ctx.memory_addresses.game_ticks_w)
@@ -854,7 +851,7 @@ def update_game(ctx: MkddContext) -> None:
                     p2_character = game_data.CHARACTERS[character]
 
                 # Force character selection.
-                if not character in ctx.unlocked_characters:
+                if character not in ctx.unlocked_characters:
                     direction: int = character - ctx.last_selected_character[player]
                     direction = 1 if direction == 0 or direction == 1 else -1
                     for i in range(20):
@@ -936,12 +933,12 @@ def update_game(ctx: MkddContext) -> None:
 
 
     mode: int = int(dolphin.read_word(ctx.memory_addresses.mode_w))
-    available_cups_courses: dict[int, set[int]] = {}
+    available_cups_courses: dict[int, set[int]] = {} # Key: Cup (0-4), value: selectable courses in cup (0-3).
     if mode == game_data.Modes.TIMETRIAL:
         for i_cup in range(4):
             for i_course in ctx.unlocked_courses:
                 if i_course in ctx.cups_courses[i_cup]:
-                    if not i_cup in available_cups_courses:
+                    if i_cup not in available_cups_courses:
                         available_cups_courses[i_cup] = set()
                     available_cups_courses[i_cup].add(ctx.cups_courses[i_cup].index(i_course))
         if len(available_cups_courses) == 0:
@@ -952,21 +949,21 @@ def update_game(ctx: MkddContext) -> None:
             dolphin.write_word(ctx.memory_addresses.vehicle_class_w, ctx.unlocked_vehicle_class)
 
         # Use vanilla lap counts in time trials.
-        for i_course in [c for c in game_data.RACE_COURSES]:
+        for i_course in game_data.RACE_COURSES:
             dolphin.write_byte(ctx.memory_addresses.lap_count_bx + i_course.id, i_course.laps)
 
     
     if mode == game_data.Modes.GRANDPRIX:
         # Give option to skip x first courses.
-        courses = [c for c in range(ctx.unlocked_cup_skips + 1)]
+        gp_selectable_courses = range(ctx.unlocked_cup_skips + 1)
         for i_cup in ctx.unlocked_cups:
             if i_cup == game_data.CUP_ALL_CUP_TOUR:
                 available_cups_courses[i_cup] = [0]
             else:
-                available_cups_courses[i_cup] = courses
+                available_cups_courses[i_cup] = gp_selectable_courses
 
         # Use custom lap counts in grand prix.
-        for i_course in [c for c in game_data.RACE_COURSES]:
+        for i_course in game_data.RACE_COURSES:
             dolphin.write_byte(ctx.memory_addresses.lap_count_bx + i_course.id, ctx.lap_counts[i_course.name])
 
         # Item selection.
@@ -1016,7 +1013,7 @@ def update_game(ctx: MkddContext) -> None:
     selected_cup: int = int(dolphin.read_word(ctx.memory_addresses.cup_w))
     selected_course: int = int(dolphin.read_word(ctx.memory_addresses.menu_course_w))
     if len(available_cups_courses) > 0:
-        if not selected_cup in available_cups_courses:
+        if selected_cup not in available_cups_courses:
             direction: int = selected_cup - ctx.last_selected_cup
             direction = 1 if direction == 0 or direction == 1 else -1
             for i in range(5):
@@ -1028,7 +1025,7 @@ def update_game(ctx: MkddContext) -> None:
         for i_cup in range(len(game_data.CUPS)):
             dolphin.write_byte(ctx.memory_addresses.available_cups_bx + i_cup, int(i_cup in available_cups_courses))
 
-        if not selected_course in available_cups_courses[selected_cup]:
+        if selected_course not in available_cups_courses[selected_cup]:
             direction: int = selected_course - ctx.last_selected_course
             direction = 1 if direction == 0 or direction == 1 else -1
             for i in range(4):

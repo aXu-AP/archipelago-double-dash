@@ -174,7 +174,7 @@ class MkddWorld(World):
         precollected_characters = 0
         while precollected_characters < 2:
             character_name: str = self.random.choice(game_data.CHARACTERS).name
-            if not character_name in precollected:
+            if character_name not in precollected:
                 precollected.append(character_name)
                 precollected_characters += 1
         # Give 1 kart in each weight class.
@@ -226,9 +226,9 @@ class MkddWorld(World):
             item = self.random.sample(items_left, 1, counts = weights)[0]
             item_pool.append(self.create_item(items.get_item_name_character_item(None, item.name)))
             global_items.append(item)
-            id = items_left.index(item)
-            items_left.pop(id)
-            weights.pop(id)
+            idx = items_left.index(item)
+            items_left.pop(idx)
+            weights.pop(idx)
 
         # If there's too much global items there's going to be multiples.
         # Make the pool bigger to avoid every character having the same items.
@@ -244,7 +244,7 @@ class MkddWorld(World):
                 # Try rolling for unique items.
                 for j in range(50):
                     item = self.random.sample(items_left, 1, counts = weights)[0]
-                    if not item in items_per_character[character]:
+                    if item not in items_per_character[character]:
                         break
                     # If item hasn't been found after 10 tries, try refilling the pool.
                     elif j == 10:
@@ -256,11 +256,11 @@ class MkddWorld(World):
                     self.multiworld.push_precollected(self.create_item(items.get_item_name_character_item(character.name, item.name)))
                 else:
                     item_pool.append(self.create_item(items.get_item_name_character_item(character.name, item.name)))
-                id = items_left.index(item)
-                weights[id] -= 1
-                if weights[id] == 0:
-                    items_left.pop(id)
-                    weights.pop(id)
+                idx = items_left.index(item)
+                weights[idx] -= 1
+                if weights[idx] == 0:
+                    items_left.pop(idx)
+                    weights.pop(idx)
                 if len(items_left) == 0:
                     # Refill the pool with some balancing.
                     items_left = items_left_characters_pool.copy()
@@ -287,9 +287,9 @@ class MkddWorld(World):
         self.multiworld.itempool += item_pool
 
     def create_item(self, name: str) -> MkddItem:
-        id = items.name_to_id[name]
-        item_data = items.data_table[id]
-        return MkddItem(name, item_data.classification, id, self.player)
+        idx = items.name_to_id[name]
+        item_data = items.data_table[idx]
+        return MkddItem(name, item_data.classification, idx, self.player)
 
     def get_filler_item_name(self) -> str:
         return items.RANDOM_ITEM

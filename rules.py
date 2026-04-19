@@ -23,7 +23,7 @@ class MkddRules:
         add_rule(location, rule, combine)
 
     def set_ent_rule(self, entrance_name: str, rule: CollectionRule) -> None:
-        if not entrance_name in self.world.current_entrances:
+        if entrance_name not in self.world.current_entrances:
             return
         entrance = self.world.multiworld.get_entrance(entrance_name, self.player)
         set_rule(entrance, rule)
@@ -189,7 +189,6 @@ def calculate_player_level(state: CollectionState, player: int,
         ])
     
     # Kart's weight class is determined, check each kart individually (don't forget to include Parade Kart, weight -1).
-    # TODO: Calculate first the best kart in its class and then only the characters!
     if kart == 0 or kart == 1 or kart == 2 or kart == -1:
         karts = [kart2 for kart2 in game_data.KARTS if kart2.weight == kart]
         if iterative_characters:

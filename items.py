@@ -40,7 +40,7 @@ class MkddItemData(NamedTuple):
     address: int = 0
     count: int = 1
     meta: Any = None
-    tags: set[str] = {}
+    tags: set[str] = set()
 
 
 PROGRESSIVE_CLASS = "Progressive CC"
@@ -55,7 +55,7 @@ SKIP_DIFFICULTY = "Skip Difficulty Calculation"
 def get_item_name_tt_course(course: str) -> str:
     return f"{course} Time Trial"
 
-def get_item_name_character_item(character: str, item: str) -> str:
+def get_item_name_character_item(character: str|None, item: str) -> str:
     if character != None:
         return f"{item} for {character}"
     else:
