@@ -75,12 +75,7 @@ class MkddWorld(World):
         # Universal Tracker passthrough.
         if hasattr(self.multiworld, "re_gen_passthrough"):
             slot_data: dict = self.multiworld.re_gen_passthrough["Mario Kart Double Dash"]
-            self.options.trophy_requirement = slot_data["trophy_requirement"]
-            self.options.logic_difficulty = slot_data["logic_difficulty"]
-            # Staff ghosts were on by default before this option was introduced.
-            self.options.time_trials = slot_data.get("time_trials", options.TimeTrials.option_include_staff_ghosts)
-            self.options.item_boxes_as_locations = slot_data["item_boxes_as_locations"]
-            self.options.add_custom_item_boxes = slot_data["add_custom_item_boxes"]
+            self.options.update_from_slot_data(slot_data)
 
 
     def create_regions(self) -> None:
@@ -321,17 +316,11 @@ class MkddWorld(World):
                 lap_counts[course] = laps
         return {
             "version": version.get_version(),
-            "trophy_requirement": int(self.options.trophy_requirement),
-            "logic_difficulty": int(self.options.logic_difficulty) if not self.options.tracker_unrestricted_logic else 100,
-            "time_trials": int(self.options.time_trials),
             "cups_courses": self.cups_courses,
-            "all_cup_tour_length": int(self.options.all_cup_tour_length),
-            "mirror_200cc": int(self.options.mirror_200cc),
             "lap_counts": lap_counts,
             "character_item_total_weights": self.character_item_total_weights,
             "global_items_total_weights": self.global_items_total_weights,
-            "item_boxes_as_locations": int(self.options.item_boxes_as_locations),
-            "add_custom_item_boxes": int(self.options.add_custom_item_boxes),
+            **self.options.to_slot_data(),
         }
     
     # Rerun Universal Tracker with received options.
