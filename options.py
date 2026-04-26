@@ -176,6 +176,7 @@ class MkddOptions(PerGameCommonOptions):
             "logic_difficulty",
             "time_trials",
             "all_cup_tour_length",
+            "custom_lap_counts",
             "mirror_200cc",
             "item_boxes_as_locations",
             "add_custom_item_boxes",
@@ -186,3 +187,7 @@ class MkddOptions(PerGameCommonOptions):
         for key, val in slot_data.items():
             if key in MkddOptions.type_hints: # Filter non-option data.
                 setattr(self, key, val)
+
+def init_options() -> MkddOptions:
+    """Initializes options object with default values."""
+    return MkddOptions(**{key: val.default for key, val in MkddOptions.type_hints.items()})
