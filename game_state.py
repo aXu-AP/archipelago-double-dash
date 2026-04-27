@@ -25,7 +25,7 @@ class MkddGameState():
         self.options: options.MkddOptions
         self.memory_addresses: mem_addresses.MkddMemAddresses = memory_addresses
         self.mode: int = 0
-        self.cup: str = ""
+        self.selected_cup: int = 0
         self.human_players: int = 0
         self.vehicle_class: int = 0
         self.current_lap: int = 0
@@ -41,12 +41,17 @@ class MkddGameState():
         self.course_loaded: bool = False
 
         self._course_changed_time: int = 0
-        self._last_race_timer: int = 0
-        self._last_in_game: bool = False
-        self._last_item_box: int = 0
+        self.last_race_timer: int = 0
+        self.last_in_game: bool = False
+        self.last_item_box: int = 0
 
         self.message_queue: list[str] = []
         self.message_time_left: int = 0
+        self.text_str: list[str] = ["" for _ in range(self.memory_addresses.text_amount)]
+        self.text_x: list[int] = [0 for _ in range(self.memory_addresses.text_amount)]
+        self.text_y: list[int] = [0 for _ in range(self.memory_addresses.text_amount)]
+        self.text_just: list[int] = [1 for _ in range(self.memory_addresses.text_amount)]
+        self._current_text_id: int = 0
 
         self.course_changed_time: int = 0
 
@@ -59,17 +64,21 @@ class MkddGameState():
         self.kart_upgrades: dict[int, list[game_data.KartUpgrade]] = {i:[] for i, _ in enumerate(game_data.KARTS)}
 
         self.unlocked_cups: list[int] = []
+        self.selected_cup: int = 0
         self.last_selected_cup: int = 0
 
         self.unlocked_cup_skips: int = 0
         
         self.unlocked_courses: list[int] = []
+
+        self.selected_course: int = 0
         self.last_selected_course: int = 0
         
         self.time_trial_items: int = 0
 
         self.cups_courses: list[list[int]]
-
+        
+        self.item_box: int = 0
         self.last_item_box: int = 0
 
         # These are per player.
@@ -99,8 +108,15 @@ class MkddGameState():
 
 
     def update(self):
+        self.last_selected_cup = self.selected_cup
+        self.last_selected_course = self.selected_course
+        self.last_item_box = self.item_box
+        self.last_selected_vehicle_class = self.vehicle_class
+        self.item_box = dolphin.read_word(self.memory_addresses.item_box_p)
+
         self.mode = dolphin.read_word(self.memory_addresses.mode_w)
-        self.cup = game_data.CUPS[dolphin.read_word(self.memory_addresses.cup_w)]
+        self.selected_cup = dolphin.read_word(self.memory_addresses.cup_w)
+        self.selected_course: int = int(dolphin.read_word(self.memory_addresses.menu_course_w))
         self.human_players = dolphin.read_byte(self.memory_addresses.human_players_b)
         self.vehicle_class = dolphin.read_word(self.memory_addresses.vehicle_class_w)
         self.current_lap = dolphin.read_word(self.memory_addresses.current_lap_wx) + 1
@@ -118,11 +134,11 @@ class MkddGameState():
 
         # Some ways to check what state is the game in. In game in particular has to have one frame
         # leeway in case we read finishing state after the last frame advance has happened.
-        new_in_game: bool = self.race_timer - self._last_race_timer > 0 and self.human_players > 0 # From countdown to finish.
-        self.in_game = new_in_game or self._last_in_game
-        self._last_in_game = new_in_game
+        new_in_game: bool = self.race_timer - self.last_race_timer > 0 and self.human_players > 0 # From countdown to finish.
+        self.in_game = new_in_game or self.last_in_game
+        self.last_in_game = new_in_game
         self.course_loaded = self.game_ticks > self._course_changed_time + 60 # Don't give checks in menus etc.
-        self._last_race_timer = self.race_timer
+        self.last_race_timer = self.race_timer
 
         laps = self.current_course.laps if self.mode == game_data.Modes.TIMETRIAL else self.options.custom_lap_counts.get(self.current_course.name, 3)
         self.finished = self.in_game and self.current_lap > laps
@@ -160,38 +176,37 @@ class MkddGameState():
                 return False
 
 
-    def check_item_box_locations(self, opts: options.MkddOptions) -> set[str]:
+    def check_item_box_locations(self) -> set[str]:
         """Check for locations that are granted from item boxes."""
-        if not self.in_game or opts.item_boxes_as_locations == options.ItemBoxesAsLocations.option_disabled:
+        if (not self.in_game 
+                or self.options.item_boxes_as_locations == options.ItemBoxesAsLocations.option_disabled
+                or self.item_box == self.last_item_box
+                or self.item_box == 0):
             return set()
+        
+        logger.debug(f"Box: {hex(self.item_box)}")
         course_name = self.current_course.name
         if course_name == "Luigi Circuit": # LC has different layout and boxes on 50cc.
             course_name += " 50cc" if self.vehicle_class == 0 else " 100cc"
         
-        item_box: int = dolphin.read_word(self.memory_addresses.item_box_p)
-        if item_box == self._last_item_box or item_box == 0:
-            return set()
-        logger.debug(f"Box: {hex(item_box)}")
-        self._last_item_box = item_box
-
         # Check first for custom item box.
-        if opts.add_custom_item_boxes:
-            custom_item_box = self.custom_box_table.get(course_name, {}).get(item_box)
+        if self.options.add_custom_item_boxes:
+            custom_item_box = self.custom_box_table.get(course_name, {}).get(self.item_box)
             if custom_item_box:
                 return {custom_item_box[2]}
         
         # Normal item box if custom is not enabled or not found.
         box_groups = self.memory_addresses.item_box_data_x.get(course_name, [])
         for (group_idx, box_ids) in enumerate(box_groups):
-            if item_box in box_ids:
-                if opts.item_boxes_as_locations == options.ItemBoxesAsLocations.option_boxsanity:
-                    return {locations.get_loc_name_item_box(self.current_course.name, group_idx, box_ids.index(item_box))}
+            if self.item_box in box_ids:
+                if self.options.item_boxes_as_locations == options.ItemBoxesAsLocations.option_boxsanity:
+                    return {locations.get_loc_name_item_box(self.current_course.name, group_idx, box_ids.index(self.item_box))}
                 else: # Groups or interesting locations (latter also uses groups just not all of them).
                     return {locations.get_loc_name_item_box(self.current_course.name, group_idx)}
         return set()
     
 
-    def update_item_box_visuals(self, opts: options.MkddOptions, locations_checked: set[int]) -> None:
+    def update_item_box_visuals(self, locations_checked: set[int]) -> None:
         """
         Update item box visuals (takes effect when the box spawns).
         Boxes that are unchecked, are inverted by changing their x size to -1 resulting in look reminiscent of MK64 boxes.
@@ -205,9 +220,9 @@ class MkddGameState():
         box_groups = self.memory_addresses.item_box_data_x.get(course_name, [])
         for (group_idx, box_ids) in enumerate(box_groups):
             custom_boxes = {}
-            if opts.add_custom_item_boxes:
+            if self.options.add_custom_item_boxes:
                 custom_boxes = self.custom_box_table.get(course_name, {})
-            if opts.item_boxes_as_locations == options.ItemBoxesAsLocations.option_boxsanity:
+            if self.options.item_boxes_as_locations == options.ItemBoxesAsLocations.option_boxsanity:
                 for box_idx, box_address in enumerate(box_ids):
                     if box_address in custom_boxes:
                         continue
@@ -215,7 +230,7 @@ class MkddGameState():
                     size_x = 1 if locations.name_to_id.get(loc_name) in locations_checked else -1
                     dolphin.write_float(box_address + 12, size_x)
             else:
-                if (opts.item_boxes_as_locations == options.ItemBoxesAsLocations.option_interesting_locations and
+                if (self.options.item_boxes_as_locations == options.ItemBoxesAsLocations.option_interesting_locations and
                         locations.TAG_ITEM_BOX_INTERESTING not in locations.BOX_NAMES[self.current_course.name][group_idx].tags):
                     continue
                 loc_name: str = locations.get_loc_name_item_box(self.current_course.name, group_idx)
@@ -225,14 +240,14 @@ class MkddGameState():
                         continue
                     dolphin.write_float(box_address + 12, size_x)
         
-        if not opts.add_custom_item_boxes:
+        if not self.options.add_custom_item_boxes:
             return
         for box_address, box_data in self.custom_box_table.get(course_name, {}).items():
             box_position = box_data[0]
             box_location_id = box_data[1]
             for i in range(3):
                 dolphin.write_float(box_address + i * 4, box_position[i])
-            if opts.item_boxes_as_locations != options.ItemBoxesAsLocations.option_disabled: # These boxes are always a group of 1 and interesting locations, so all options are handled the same.
+            if self.options.item_boxes_as_locations != options.ItemBoxesAsLocations.option_disabled: # These boxes are always a group of 1 and interesting locations, so all options are handled the same.
                 size_x = 1 if box_location_id in locations_checked else -1
                 dolphin.write_float(box_address + 12, size_x)
     
@@ -291,20 +306,23 @@ class MkddGameState():
     
         
     def check_gp_cup_locations(self) -> set[str]:
+        """Checks for locations that from finishing GP cups."""
         new_locations: set[str] = set()
-        if self.mode != game_data.Modes.CEREMONY or self.cup == game_data.CUPS[game_data.CUP_ALL_CUP_TOUR]:
+        if self.mode != game_data.Modes.CEREMONY or self.selected_cup == game_data.CUP_ALL_CUP_TOUR:
             return new_locations
         
+        cup_name = game_data.CUPS[self.selected_cup]
+        
         # Finish a cup.
-        new_locations.add(locations.get_loc_name_finish(self.cup))
+        new_locations.add(locations.get_loc_name_finish(cup_name))
 
         # Bronze or better. Add all variants that are considered easier than current (ie. 50 bronze for 150 gold finish).
         if self.total_ranking <= 2:
             for r in range(2, self.total_ranking - 1, -1):
                 for c in range(self.vehicle_class + 1):
-                    new_locations.add(locations.get_loc_name_cup(self.cup, r, c))
+                    new_locations.add(locations.get_loc_name_cup(cup_name, r, c))
                     if r == 0:
-                        new_locations.add(locations.get_loc_name_trophy(self.cup, c))
+                        new_locations.add(locations.get_loc_name_trophy(cup_name, c))
         
         # Gold for various vehicles.
         if self.total_ranking == 0:
@@ -319,14 +337,15 @@ class MkddGameState():
         
         # Perfect score.
         if self.total_points == 40:
-            new_locations.add(locations.get_loc_name_perfect(self.cup))
+            new_locations.add(locations.get_loc_name_perfect(cup_name))
 
         return new_locations
 
 
     def check_all_cup_tour_locations(self) -> set[str]:
+        """Checks for winning in All Cup Tour."""
         if (self.mode == game_data.Modes.CEREMONY and 
-                self.cup == game_data.CUPS[game_data.CUP_ALL_CUP_TOUR] and
+                self.selected_cup == game_data.CUP_ALL_CUP_TOUR and
                 self.total_ranking == 0):
             return {locations.WIN_ALL_CUP_TOUR}
         else:
@@ -346,7 +365,7 @@ class MkddGameState():
         return new_locations
 
 
-    def print_ingame(self, x: int, y: int, text: str, justification: int = 0, msg_id: int = 0) -> None:
+    def print_ingame(self, x: int, y: int, text: str, justification: int = 1, msg_id: int = -1) -> None:
         """
         Print text in game.
 
@@ -354,16 +373,15 @@ class MkddGameState():
         :param y: Y coordinate, from 12 (top) to 450 (bottom).
         :param text: The text to show. One line only, max 43 characters.
         :param justification: 1 for left justification, 0 for center, -1 for right.
-        :param msg_id: Id for the text. From 0 upwards. Using same id replaces the text.
+        :param msg_id: Id for the text. From 0 upwards. Using same id replaces the text. Default = automatic.
         """
-        text = text[:43]
-        font_size = 12
-        text_width = len(text) * font_size
-        x += int(text_width * (justification - 1) / 2)
-        address = self.memory_addresses.text_sx + msg_id * self.memory_addresses.text_size
-        dolphin_write_str(address, text)
-        dolphin_write_half(address + self.memory_addresses.text_x_offset_h, x)
-        dolphin_write_half(address + self.memory_addresses.text_y_offset_h, y)
+        if msg_id == -1:
+            msg_id = self._current_text_id
+            self._current_text_id = min(self._current_text_id + 1, self.memory_addresses.text_amount - 1)
+        self.text_str[msg_id] = text
+        self.text_x[msg_id] = x
+        self.text_y[msg_id] = y
+        self.text_just[msg_id] = justification
 
 
     def queue_ingame_message(self, message: str) -> None:
@@ -375,159 +393,250 @@ class MkddGameState():
         self.message_queue.append(message)
         if len(self.message_queue) == 1:
             self.message_time_left = 40
+    
+
+    def flush_ingame_text(self) -> None:
+        """Prints queued text and resets the message table."""
+        self._current_text_id = 0
+        font_size = 12
+
+        # In game message system
+        self.message_time_left -= 1
+        if self.message_time_left > 0:
+            lines: list[str] = self.message_queue[0].split("\n")
+            for i, text in enumerate(lines):
+                # Use text slots from the end to interfere minimally with other texts.
+                text_id = self.memory_addresses.text_amount - i - 1
+                self.print_ingame(304, 13 + i * font_size, text, 0, text_id)
+                
+        # Try to show the message first, only then check for new message.
+        # This causes one tick long disappearing of the message between messages,
+        # making message changing more noticeable.
+        if self.message_time_left == 0:
+            self.message_queue.pop(0)
+            if len(self.message_queue) > 0:
+                self.message_time_left = 40
+        
+        for idx in range(self.memory_addresses.text_amount):
+            text = self.text_str[idx][:43]
+            text_width = len(text) * font_size
+            x = self.text_x[idx] + int(text_width * (self.text_just[idx] - 1) / 2)
+            y = self.text_y[idx]
+            address = self.memory_addresses.text_sx + idx * self.memory_addresses.text_size
+            dolphin_write_str(address, text)
+            dolphin_write_half(address + self.memory_addresses.text_x_offset_h, x)
+            dolphin_write_half(address + self.memory_addresses.text_y_offset_h, y)
+
+            self.text_str[idx] = ""
 
 
-    def update_state(self):
-        text_s: list[str] = ["" for _ in range(self.memory_addresses.text_amount)]
-        text_x: list[int] = [0 for _ in range(self.memory_addresses.text_amount)]
-        text_y: list[int] = [0 for _ in range(self.memory_addresses.text_amount)]
-        text_j: list[int] = [1 for _ in range(self.memory_addresses.text_amount)]
-
+    def handle_character_menu(self) -> None:
         menu_pointer = dolphin.read_word(self.memory_addresses.menu_pointer)
-        if menu_pointer != 0:
-            target_icons = self.memory_addresses.menu_pointer_to_char_icons.get(menu_pointer)
-            if target_icons:
-                for (char_id, address) in enumerate(target_icons):
-                    if char_id in self.unlocked_characters:
-                        dolphin.write_word(address, 0x0100FFFF)
-                    else:
-                        dolphin.write_word(address, 0x0000FFFF)
-
-            driver = dolphin.read_word(menu_pointer + self.memory_addresses.menu_driver_w_offset)
-            rider = dolphin.read_word(menu_pointer + self.memory_addresses.menu_rider_w_offset)
-            # Save active selections for printing info.
-            p1_character: game_data.Character | None = None
-            p2_character: game_data.Character | None = None
-            p1_kart: game_data.Kart | None = None
-            # Save selections for later use (when menu pointer becomes invalid).
-            if driver >= 0 and driver < len(game_data.CHARACTERS):
-                self.active_characters[0] = game_data.CHARACTERS[driver]
-                p1_character = self.active_characters[0]
-            if rider >= 0 and rider < len(game_data.CHARACTERS):
-                self.active_characters[1] = game_data.CHARACTERS[rider]
-                p2_character = self.active_characters[1]
-            
-            for player in range(4):
-                player_offset = player * self.memory_addresses.menu_player_struct_size
-                character: int = int(dolphin.read_word(menu_pointer + self.memory_addresses.menu_character_w_offset + player_offset))
-                kart: int = int(dolphin.read_word(menu_pointer + self.memory_addresses.menu_kart_w_offset + player_offset))
-                
-                if character >= 0 and character < len(game_data.CHARACTERS):
-                    if player == 0:
-                        if not p1_character:
-                            # Player 1 is choosing the driver.
-                            p1_character = game_data.CHARACTERS[character]
-                        else:
-                            # Player 1 is choosing the rider.
-                            p2_character = game_data.CHARACTERS[character]
-                    elif player == 1:
-                        # Player 2 can choose only the rider.
-                        p2_character = game_data.CHARACTERS[character]
-
-                    # Force character selection.
-                    if character not in self.unlocked_characters:
-                        direction: int = character - self.last_selected_character[player]
-                        direction = 1 if direction == 0 or direction == 1 else -1
-                        for i in range(20):
-                            character = wrap(character + direction, len(game_data.CHARACTERS))
-                            if character in self.unlocked_characters:
-                                break
-                        dolphin.write_word(menu_pointer + self.memory_addresses.menu_character_w_offset + player_offset, character)
-
-                self.last_selected_character[player] = character
-                
-                if kart >= 0 and kart < len(game_data.KARTS):
-                    # Force kart selection.
-                    weight = max(self.active_characters[0].weight, self.active_characters[1].weight)
-                    direction: int = kart - self.last_selected_kart[player]
-                    direction = 1 if direction == 0 else int(direction / abs(direction))
-                    for i in range(21):
-                        if kart in self.unlocked_karts and (game_data.KARTS[kart].weight == weight or game_data.KARTS[kart].weight == -1):
-                            break
-                        kart = wrap(kart + direction, len(game_data.KARTS))
-                    dolphin.write_word(menu_pointer + self.memory_addresses.menu_kart_w_offset + player_offset, kart)
-
-                    if player == 0:
-                        self.active_kart = game_data.KARTS[kart]
-                        p1_kart = self.active_kart
-                self.last_selected_kart[player] = kart
-
-            # Print selected kart or characters and their items.
-            if p1_kart:
-                text_s[0] = p1_kart.name + " " + ", ".join(u.short_name for u in self.kart_upgrades[p1_kart.id])
-                text_x[0] = 92
-                text_y[0] = 215
-            elif p1_character:
-                p1_items: list[game_data.Item] = self.character_items.get(p1_character, []).copy()
-                p1_items.extend(self.global_items)
-                if p2_character:
-                    p2_items: list[game_data.Item] = self.character_items.get(p2_character, []).copy()
-                    p2_items.extend(self.global_items)
-                    # Check for synergy (default character combo).
-                    character1 = min(p1_character.id, p2_character.id)
-                    character2 = max(p1_character.id, p2_character.id)
-                    if character1 % 2 == 0 and character1 + 1 == character2 or character1 >= 16 and character2 >= 16:
-                        p1_items = p2_items
-                        if len(p2_items) > 0:
-                            text_x[2] = 92
-                            text_y[2] = 265
-                            text_s[2] = "Item synergy"
-                    text_x[1] = 92
-                    text_y[1] = 240
-                    if len(p2_items) > 0:
-                        text_s[1] = f"{p2_character.name}: {", ".join([item.name for item in p2_items])}"
-                        if len(text_s[1]) > 40:
-                            text_s[1] = f"{p2_character.name}: {", ".join([item.short_name for item in p2_items])}"
-                        if len(text_s[1]) > 43:
-                            text_s[1] = text_s[1][:41] + ".."
-                    else:
-                        text_s[1] = f"{p2_character.name} (no items)"
-                text_x[0] = 92
-                text_y[0] = 215
-                if len(p1_items) > 0:
-                    text_s[0] = f"{p1_character.name}: {", ".join([item.name for item in p1_items])}"
-                    if len(text_s[0]) > 40:
-                        text_s[0] = f"{p1_character.name}: {", ".join([item.short_name for item in p1_items])}"
-                    if len(text_s[0]) > 43:
-                        text_s[0] = text_s[0][:41] + ".."
+        if menu_pointer == 0:
+            return
+        target_icons = self.memory_addresses.menu_pointer_to_char_icons.get(menu_pointer)
+        if target_icons:
+            for (char_id, address) in enumerate(target_icons):
+                if char_id in self.unlocked_characters:
+                    dolphin.write_word(address, 0x0100FFFF)
                 else:
-                    text_s[0] = f"{p1_character.name} (no items)"
+                    dolphin.write_word(address, 0x0000FFFF)
 
-        # Apply shuffled courses upon selecting vehicle class.
-        vehicle_class = dolphin.read_word(self.memory_addresses.vehicle_class_w)
-        if vehicle_class != self.last_selected_vehicle_class:
-            self.last_selected_vehicle_class = vehicle_class
-            offset = self.memory_addresses.cup_contents_wx
-            for i_cup in self.cups_courses:
-                for i_course in i_cup:
-                    dolphin.write_word(offset, game_data.COURSES[i_course].id)
-                    dolphin.write_word(offset + 4, self.memory_addresses.course_names_s[i_course])
-                    dolphin.write_word(offset + 8, self.memory_addresses.course_previews_s[i_course])
-                    offset += 12
+        driver = dolphin.read_word(menu_pointer + self.memory_addresses.menu_driver_w_offset)
+        rider = dolphin.read_word(menu_pointer + self.memory_addresses.menu_rider_w_offset)
+        # Save active selections for printing info.
+        p1_character: game_data.Character | None = None
+        p2_character: game_data.Character | None = None
+        p1_kart: game_data.Kart | None = None
+        # Save selections for later use (when menu pointer becomes invalid).
+        if driver >= 0 and driver < len(game_data.CHARACTERS):
+            self.active_characters[0] = game_data.CHARACTERS[driver]
+            p1_character = self.active_characters[0]
+        if rider >= 0 and rider < len(game_data.CHARACTERS):
+            self.active_characters[1] = game_data.CHARACTERS[rider]
+            p2_character = self.active_characters[1]
+        
+        for player in range(4):
+            player_offset = player * self.memory_addresses.menu_player_struct_size
+            character: int = int(dolphin.read_word(menu_pointer + self.memory_addresses.menu_character_w_offset + player_offset))
+            kart: int = int(dolphin.read_word(menu_pointer + self.memory_addresses.menu_kart_w_offset + player_offset))
+            
+            if character >= 0 and character < len(game_data.CHARACTERS):
+                if player == 0:
+                    if not p1_character:
+                        # Player 1 is choosing the driver.
+                        p1_character = game_data.CHARACTERS[character]
+                    else:
+                        # Player 1 is choosing the rider.
+                        p2_character = game_data.CHARACTERS[character]
+                elif player == 1:
+                    # Player 2 can choose only the rider.
+                    p2_character = game_data.CHARACTERS[character]
+
+                # Force character selection.
+                if character not in self.unlocked_characters:
+                    direction: int = character - self.last_selected_character[player]
+                    direction = 1 if direction == 0 or direction == 1 else -1
+                    for _ in range(20):
+                        character = wrap(character + direction, len(game_data.CHARACTERS))
+                        if character in self.unlocked_characters:
+                            break
+                    dolphin.write_word(menu_pointer + self.memory_addresses.menu_character_w_offset + player_offset, character)
+
+            self.last_selected_character[player] = character
+            
+            if kart >= 0 and kart < len(game_data.KARTS):
+                # Force kart selection.
+                weight = max(self.active_characters[0].weight, self.active_characters[1].weight)
+                direction: int = kart - self.last_selected_kart[player]
+                direction = 1 if direction == 0 else int(direction / abs(direction))
+                for i in range(21):
+                    if kart in self.unlocked_karts and (game_data.KARTS[kart].weight == weight or game_data.KARTS[kart].weight == -1):
+                        break
+                    kart = wrap(kart + direction, len(game_data.KARTS))
+                dolphin.write_word(menu_pointer + self.memory_addresses.menu_kart_w_offset + player_offset, kart)
+
+                if player == 0:
+                    self.active_kart = game_data.KARTS[kart]
+                    p1_kart = self.active_kart
+            self.last_selected_kart[player] = kart
+
+        # Print selected kart or characters and their items.
+        def _get_character_text(char: game_data.Character, items: list[game_data.Item]) -> str:
+            if len(items) == 0:
+                return f"{char.name} (no items)"
+            text = f"{char.name}: {", ".join([item.name for item in items])}"
+            if len(text) > 40:
+                text = f"{char.name}: {", ".join([item.short_name for item in items])}"
+            if len(text) > 43:
+                text = text[:41] + ".."
+            return text
+
+        text_x = 92
+        text_y1 = 215
+        text_y2 = 240
+        text_y3 = 265
+        if p1_kart:
+            kart_upgrade_text = ", ".join(u.short_name for u in self.kart_upgrades[p1_kart.id])
+            self.print_ingame(text_x, text_y1, f"{p1_kart.name} {kart_upgrade_text}")
+        elif p1_character:
+            p1_items: list[game_data.Item] = self.character_items.get(p1_character, []).copy()
+            p1_items.extend(self.global_items)
+            if p2_character:
+                p2_items: list[game_data.Item] = self.character_items.get(p2_character, []).copy()
+                p2_items.extend(self.global_items)
+                # Check for synergy (default character combo).
+                character1 = min(p1_character.id, p2_character.id)
+                character2 = max(p1_character.id, p2_character.id)
+                if character1 % 2 == 0 and character1 + 1 == character2 or character1 >= 16 and character2 >= 16:
+                    # Remove global items and add p2 items (including global items).
+                    for _ in self.global_items:
+                        p1_items.pop()
+                    p1_items.extend(p2_items)
+                    p2_items = p1_items
+                    if len(p2_items) > 0:
+                        self.print_ingame(text_x, text_y3, "Item synergy")
+                self.print_ingame(text_x, text_y2, _get_character_text(p2_character, p2_items))
+            self.print_ingame(text_x, text_y1, _get_character_text(p1_character, p1_items))
 
 
-        mode: int = int(dolphin.read_word(self.memory_addresses.mode_w))
+    def apply_shuffled_courses(self) -> None:
+        """Changes what courses are in what cups."""
+        # Apply shuffled courses only upon selecting vehicle class.
+        if self.vehicle_class == self.last_selected_vehicle_class:
+            return
+        
+        offset = self.memory_addresses.cup_contents_wx
+        for i_cup in self.cups_courses:
+            for i_course in i_cup:
+                dolphin.write_word(offset, game_data.COURSES[i_course].id)
+                dolphin.write_word(offset + 4, self.memory_addresses.course_names_s[i_course])
+                dolphin.write_word(offset + 8, self.memory_addresses.course_previews_s[i_course])
+                offset += 12
+
+
+    def apply_item_box_items(self) -> None:
+        """Tells the game what items should come from item boxes."""
+        if self.mode != game_data.Modes.GRANDPRIX or not self.in_game:
+            return
+        
+        def _calculate_and_apply(adr: int, pool: list[game_data.Item], total_weight: int) -> None:
+            item_weights = [item.weight_table[self.in_race_placement] for item in pool]
+            # Yet to be unlocked items still count towards item weights so fill the rest with nothing.
+            weight_gap = total_weight - sum(item_weights)
+            if weight_gap > 0:
+                pool.append(game_data.ITEM_NONE)
+                item_weights.append(weight_gap)
+            rand_item = game_data.ITEM_NONE
+            if len(pool) > 0:
+                rand_item = random.sample(pool, 1, counts = item_weights)[0]
+            dolphin.write_byte(adr, rand_item.id)
+        
+        item_adr_0: int = self.memory_addresses.gp_next_items_bx + self.active_characters[0].item_offset
+        item_adr_1: int = self.memory_addresses.gp_next_items_bx + self.active_characters[1].item_offset
+        item_weight_global: int = self.global_items_total_weights[self.in_race_placement]
+        item_weight_0: int = self.character_item_total_weights[self.active_characters[0].name][self.in_race_placement]
+        item_weight_1: int = self.character_item_total_weights[self.active_characters[1].name][self.in_race_placement]
+        item_pool_0: list[game_data.Item] = self.character_items[self.active_characters[0]]
+        item_pool_1: list[game_data.Item] = self.character_items[self.active_characters[1]]
+        
+        if item_adr_0 != item_adr_1: # No item synergy, handle separately.
+            _calculate_and_apply(item_adr_0, self.global_items + item_pool_0, item_weight_global + item_weight_0)
+            _calculate_and_apply(item_adr_1, self.global_items + item_pool_1, item_weight_global + item_weight_1)
+        else: # Item synergy, combine item pools.
+            total_weight = item_weight_global + item_weight_0 + item_weight_1
+            item_pool = self.global_items + item_pool_0 + item_pool_1
+            _calculate_and_apply(item_adr_0, item_pool, total_weight)
+
+
+    def apply_lap_counts(self) -> None:
+        """Modifies lap counts to match custom (or short) lap counts if playing in GP."""
+        if self.mode == game_data.Modes.TIMETRIAL:
+            # Use vanilla lap counts in time trials.
+            for i_course in game_data.RACE_COURSES:
+                dolphin.write_byte(self.memory_addresses.lap_count_bx + i_course.id, i_course.laps)
+        elif self.mode == game_data.Modes.GRANDPRIX:
+            # Use custom lap counts in grand prix.
+            for i_course in game_data.RACE_COURSES:
+                dolphin.write_byte(self.memory_addresses.lap_count_bx + i_course.id, self.options.custom_lap_counts[i_course.name])
+
+
+    def handle_all_cup_tour(self) -> None:
+        """Shortens All Cup Tour if option is set and shuffles its contents."""
+        # Set All Cup Tour length by skipping to the second-last race. This ensures that Rainbow Road is still the last.
+        if (dolphin.read_word(self.memory_addresses.cup_w) == game_data.CUP_ALL_CUP_TOUR and
+            dolphin.read_word(self.memory_addresses.gp_race_no_w) == self.options.all_cup_tour_length - 2):
+            dolphin.write_word(self.memory_addresses.gp_race_no_w, 14)
+        
+        # Shuffle All Cup Tour properly with randomized courses.
+        if self.selected_cup == game_data.CUP_ALL_CUP_TOUR and self.selected_cup != self.last_selected_cup:
+            course_order = list(range(1, 15)) # First is LC, last is RR - shuffle everything between.
+            random.shuffle(course_order)
+            course_order = [0, *course_order, 15]
+            flat_course_list = [i_course for i_cup in self.cups_courses for i_course in i_cup]
+            offset = 0
+            for i_course in course_order:
+                dolphin.write_word(
+                        self.memory_addresses.all_cup_tour_contents_wx + offset,
+                        flat_course_list.index(i_course)
+                )
+                offset += 4
+
+
+    def apply_course_availability(self) -> None:
+        """Prevent the game from allowing the selection of locked courses."""
+        # Make a table of currently unlocked courses.
         available_cups_courses: dict[int, set[int]] = {} # Key: Cup (0-4), value: selectable courses in cup (0-3).
-        if mode == game_data.Modes.TIMETRIAL:
+        if self.mode == game_data.Modes.TIMETRIAL:
             for i_cup in range(4):
                 for i_course in self.unlocked_courses:
                     if i_course in self.cups_courses[i_cup]:
                         if i_cup not in available_cups_courses:
                             available_cups_courses[i_cup] = set()
                         available_cups_courses[i_cup].add(self.cups_courses[i_cup].index(i_course))
-            if len(available_cups_courses) == 0:
-                # Failsafe if no tt tracks are unlocked.
-                logger.info("No Time Trials unlocked yet! Changed mode to Grand Prix.")
-                mode = int(game_data.Modes.GRANDPRIX)
-                dolphin.write_word(self.memory_addresses.mode_w, mode)
-                dolphin.write_word(self.memory_addresses.vehicle_class_w, self.unlocked_vehicle_class)
-
-            # Use vanilla lap counts in time trials.
-            for i_course in game_data.RACE_COURSES:
-                dolphin.write_byte(self.memory_addresses.lap_count_bx + i_course.id, i_course.laps)
-
-        
-        if mode == game_data.Modes.GRANDPRIX:
+            if len(available_cups_courses) == 0 and len(self.message_queue) == 0:
+                self.queue_ingame_message("No Time Trials unlocked yet!\nChange mode to Grand Prix.")
+        elif self.mode == game_data.Modes.GRANDPRIX:
             # Give option to skip x first courses.
             gp_selectable_courses = range(self.unlocked_cup_skips + 1)
             for i_cup in self.unlocked_cups:
@@ -536,103 +645,41 @@ class MkddGameState():
                 else:
                     available_cups_courses[i_cup] = gp_selectable_courses
 
-            # Use custom lap counts in grand prix.
-            for i_course in game_data.RACE_COURSES:
-                dolphin.write_byte(self.memory_addresses.lap_count_bx + i_course.id, self.options.custom_lap_counts[i_course.name])
-
-            # Item selection.
-            in_race_placement: int = max(0, min(7, dolphin.read_word(self.memory_addresses.in_race_placement_wx) - 1))
-            item_adr: list[int] = [
-                self.memory_addresses.gp_next_items_bx + self.active_characters[0].item_offset,
-                self.memory_addresses.gp_next_items_bx + self.active_characters[1].item_offset,
-            ]
-            total_weight = self.global_items_total_weights[in_race_placement]
-            total_weight += self.character_item_total_weights[self.active_characters[0].name][in_race_placement]
-            item_pool = self.global_items + self.character_items[self.active_characters[0]]
-            # Give different items only if there's no item synergy.
-            if item_adr[0] != item_adr[1]:
-                item_weights = [item.weight_table[in_race_placement] for item in item_pool]
-                # Yet to be unlocked items still count towards item weights.
-                weight_gap = total_weight - sum(item_weights)
-                if weight_gap > 0:
-                    item_pool.append(game_data.ITEM_NONE)
-                    item_weights.append(weight_gap)
-                rand_item = game_data.ITEM_NONE
-                if len(item_pool) > 0:
-                    rand_item = random.sample(item_pool, 1, counts = item_weights)[0]
-                dolphin.write_byte(item_adr[0], rand_item.id)
-
-                # Reset pool for second player only if they aren't synced.
-                total_weight = self.global_items_total_weights[in_race_placement]
-                item_pool = self.global_items.copy()
-            total_weight += self.character_item_total_weights[self.active_characters[1].name][in_race_placement]
-            item_pool += self.character_items[self.active_characters[1]]
-            item_weights = [item.weight_table[in_race_placement] for item in item_pool]
-            # Yet to be unlocked items still count towards item weights.
-            weight_gap = total_weight - sum(item_weights)
-            if weight_gap > 0:
-                item_pool.append(game_data.ITEM_NONE)
-                item_weights.append(weight_gap)
-            rand_item = game_data.ITEM_NONE
-            if len(item_pool) > 0:
-                rand_item = random.sample(item_pool, 1, counts = item_weights)[0]
-            dolphin.write_byte(item_adr[1], rand_item.id)
-
-            # Set All Cup Tour lenght by skipping to the second-last race. This ensures that Rainbow Road is still the last.
-            if (dolphin.read_word(self.memory_addresses.cup_w) == game_data.CUP_ALL_CUP_TOUR and
-                dolphin.read_word(self.memory_addresses.gp_race_no_w) == self.options.all_cup_tour_length - 2):
-                dolphin.write_word(self.memory_addresses.gp_race_no_w, 14)
-
         # Force cup and course selection.
-        selected_cup: int = int(dolphin.read_word(self.memory_addresses.cup_w))
-        selected_course: int = int(dolphin.read_word(self.memory_addresses.menu_course_w))
         if len(available_cups_courses) > 0:
-            if selected_cup not in available_cups_courses:
-                direction: int = selected_cup - self.last_selected_cup
+            if self.selected_cup not in available_cups_courses:
+                direction: int = self.selected_cup - self.last_selected_cup
                 direction = 1 if direction == 0 or direction == 1 else -1
-                for i in range(5):
-                    selected_cup = wrap(selected_cup + direction, len(game_data.CUPS))
-                    if selected_cup in available_cups_courses:
+                for _ in range(5):
+                    self.selected_cup = wrap(self.selected_cup + direction, len(game_data.CUPS))
+                    if self.selected_cup in available_cups_courses:
                         break
-                dolphin.write_word(self.memory_addresses.cup_w, selected_cup)
+                dolphin.write_word(self.memory_addresses.cup_w, self.selected_cup)
 
             for i_cup in range(len(game_data.CUPS)):
                 dolphin.write_byte(self.memory_addresses.available_cups_bx + i_cup, int(i_cup in available_cups_courses))
 
-            if selected_course not in available_cups_courses[selected_cup]:
-                direction: int = selected_course - self.last_selected_course
+            if self.selected_course not in available_cups_courses[self.selected_cup]:
+                direction: int = self.selected_course - self.last_selected_course
                 direction = 1 if direction == 0 or direction == 1 else -1
-                for i in range(4):
-                    selected_course = wrap(selected_course + direction, 4)
-                    if selected_course in available_cups_courses[selected_cup]:
+                for _ in range(4):
+                    self.selected_course = wrap(self.selected_course + direction, 4)
+                    if self.selected_course in available_cups_courses[self.selected_cup]:
                         break
-                dolphin.write_word(self.memory_addresses.menu_course_w, selected_course)
-        
-        # Shuffle All Cup Tour properly with randomized courses.
-        if selected_cup == game_data.CUP_ALL_CUP_TOUR and selected_cup != self.last_selected_cup:
-            course_order = list(range(1, 15)) # First is LC, last is RR - shuffle everything between.
-            random.shuffle(course_order)
-            course_order = [0, *course_order, 15]
-            flat_course_list = [i_course for i_cup in self.cups_courses for i_course in i_cup]
-            offset = 0
-            for i_course in course_order:
-                dolphin.write_word(self.memory_addresses.all_cup_tour_contents_wx + offset,
-                                flat_course_list.index(i_course))
-                offset += 4
-            
+                dolphin.write_word(self.memory_addresses.menu_course_w, self.selected_course)
 
-        self.last_selected_cup = selected_cup
-        self.last_selected_course = selected_course
 
-        # Set kart stats.
-        vehicle_class: int = dolphin.read_word(self.memory_addresses.vehicle_class_w)
-        if mode == game_data.Modes.GRANDPRIX and vehicle_class == 3 and self.options.mirror_200cc:
+    def apply_200cc(self) -> None:
+        """Makes mirror mode 200cc if option is enabled."""
+        if self.mode == game_data.Modes.GRANDPRIX and self.vehicle_class == 3 and self.options.mirror_200cc:
             dolphin.write_float(self.memory_addresses.speed_multiplier_150cc_f, 1.4)
             dolphin.write_float(self.memory_addresses.max_speed_f, 250)
         else:
             dolphin.write_float(self.memory_addresses.speed_multiplier_150cc_f, 1.15)
             dolphin.write_float(self.memory_addresses.max_speed_f, 200)
 
+
+    def apply_kart_stats(self) -> None:
         kart_stats_pointer = self.memory_addresses.kart_stats_pointer
         for i in range(len(game_data.KARTS)):
             kart: game_data.Kart = game_data.KARTS[i]
@@ -683,30 +730,6 @@ class MkddGameState():
             dolphin.write_float(kart_address + self.memory_addresses.kart_mass_f_offset, stats.mass + weight_addition)
             dolphin.write_float(kart_address + self.memory_addresses.kart_roll_f_offset, stats.roll)
             dolphin.write_float(kart_address + self.memory_addresses.kart_steer_f_offset, stats.steer + steer_addition)
-        
-
-        # In game message system
-        self.message_time_left -= 1
-        if self.message_time_left > 0:
-            lines: list[str] = self.message_queue[0].split("\n")
-            for i, text in enumerate(lines):
-                # Use text slots from the end to interfere minimally with other texts.
-                text_id = self.memory_addresses.text_amount - i - 1
-                text_s[text_id] = text
-                text_x[text_id] = 304
-                text_y[text_id] = 13 + i * 12
-                text_j[text_id] = 0
-                
-        # Try to show the message first, only then check for new message.
-        # This causes one tick long disappearing of the message between messages,
-        # making message changing more noticeable.
-        if self.message_time_left == 0:
-            self.message_queue.pop(0)
-            if len(self.message_queue) > 0:
-                self.message_time_left = 40
-
-        for i in range(len(text_s)):
-            self.print_ingame(text_x[i], text_y[i], text_s[i], text_j[i], i)
 
 
 def dolphin_write_half(address: int, value: int) -> None:

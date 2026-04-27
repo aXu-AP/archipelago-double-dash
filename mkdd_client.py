@@ -543,9 +543,7 @@ async def check_locations(ctx: MkddContext) -> None:
     if ctx.trophies >= ctx.options.trophy_requirement:
         new_location_names.add(locations.TROPHY_GOAL)
     
-    ctx.game_state.update()
-    new_location_names |= ctx.game_state.check_item_box_locations(ctx.options)
-    ctx.game_state.update_item_box_visuals(ctx.options, ctx.locations_checked)
+    new_location_names |= ctx.game_state.check_item_box_locations()
     new_location_names |= ctx.game_state.check_finish_course_locations()
     new_location_names |= ctx.game_state.check_take_lead_locations()
     new_location_names |= ctx.game_state.check_gp_race_locations()
@@ -569,14 +567,22 @@ def update_game(ctx: MkddContext) -> None:
     :param ctx: Mario Kart Double Dash client context.
     """
     _apply_ar_code(ar_codes.unlock_everything)
-    ctx.game_state.update_state()
+    ctx.game_state.handle_character_menu()
+    ctx.game_state.apply_shuffled_courses()
+    ctx.game_state.apply_item_box_items()
+    ctx.game_state.update_item_box_visuals(ctx.locations_checked)
+    ctx.game_state.apply_lap_counts()
+    ctx.game_state.handle_all_cup_tour()
+    ctx.game_state.apply_course_availability()
+    ctx.game_state.apply_200cc()
+    ctx.game_state.apply_kart_stats()
+    ctx.game_state.flush_ingame_text()
 
 
 async def check_current_course_changed(ctx: MkddContext) -> None:
     """
     Check if the player has moved to a new stage.
     If so, update all trackers with the new stage name.
-    If the stage has never been visited, additionally update the server.
 
     :param ctx: Mario Kart Double Dash client context.
     """
@@ -638,6 +644,8 @@ async def dolphin_sync_task(ctx: MkddContext) -> None:
                     if "DeathLink" in ctx.tags:
                         await check_death(ctx)
                     await give_items(ctx)
+
+                    ctx.game_state.update()
                     await check_current_course_changed(ctx)
                     await check_locations(ctx)
                     update_game(ctx)
