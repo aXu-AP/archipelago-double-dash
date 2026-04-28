@@ -1,112 +1,28 @@
 import asyncio
 import os
-import random
 import time
 import traceback
 from typing import TYPE_CHECKING, Any, Optional
-
-import dolphin_memory_engine as dolphin
 
 import Utils
 from CommonClient import get_base_parser, gui_enabled, logger, server_loop
 from NetUtils import ClientStatus, NetworkItem
 
+import dolphin_memory_engine as dolphin
+
 from . import game_data, game_state, items, locations, patches, mem_addresses, ar_codes, version, options
 from .items import ItemType, MkddItemData
-from .settings import MkddSettings
-from settings import get_settings
-
-tracker_loaded = False
-try:
-    from worlds.tracker.TrackerClient import (TrackerCommandProcessor as ClientCommandProcessor,
-                                              TrackerGameContext as CommonContext, UT_VERSION)
-    tracker_loaded = True
-except ImportError:
-    from CommonClient import ClientCommandProcessor, CommonContext
-
+from .command_processor import MkddCommandProcessor, DME_DOLPHIN_PROCESS_NAME_ENV_VARIABLE
+from .ut_common_client_importer import CommonContext, tracker_loaded, UT_VERSION
 
 if TYPE_CHECKING:
     import kvui
 
-CONNECTION_REFUSED_GAME_STATUS = (
-    "Dolphin failed to connect. Please load a ROM for Mario Kart Double Dash (USA). Trying again in 5 seconds..."
-)
-CONNECTION_LOST_STATUS = (
-    "Dolphin connection was lost. Please restart your emulator and make sure Mario Kart Double Dash is running."
-)
+
+CONNECTION_REFUSED_GAME_STATUS = "Dolphin failed to connect. Please load a ROM for Mario Kart Double Dash (USA). Trying again in 5 seconds..."
+CONNECTION_LOST_STATUS = "Dolphin connection was lost. Please restart your emulator and make sure Mario Kart Double Dash is running."
 CONNECTION_CONNECTED_STATUS = "Dolphin connected successfully."
 CONNECTION_INITIAL_STATUS = "Dolphin connection has not been initiated."
-
-DME_DOLPHIN_PROCESS_NAME_ENV_VARIABLE = "DME_DOLPHIN_PROCESS_NAME"
-
-settings : MkddSettings = get_settings().mario_kart_double_dash_options
-if settings.dolphin_process_name:
-    os.environ[DME_DOLPHIN_PROCESS_NAME_ENV_VARIABLE] = settings.dolphin_process_name
-elif DME_DOLPHIN_PROCESS_NAME_ENV_VARIABLE in os.environ:
-    del os.environ[DME_DOLPHIN_PROCESS_NAME_ENV_VARIABLE]
-
-class MkddCommandProcessor(ClientCommandProcessor):
-    """
-    Command Processor for Mario Kart Double Dash client commands.
-
-    This class handles commands specific to Mario Kart Double Dash.
-    """
-
-    def __init__(self, ctx: CommonContext):
-        """
-        Initialize the command processor with the provided context.
-
-        :param ctx: Context for the client.
-        """
-        super().__init__(ctx)
-
-    def _cmd_dolphin(self) -> None:
-        """Display the current Dolphin emulator connection status."""
-        if isinstance(self.ctx, MkddContext):
-            logger.info(f"Dolphin Status: {self.ctx.dolphin_status}")
-    
-    def _cmd_unlocked(self) -> None:
-        """Show list of unlocked items."""
-        if isinstance(self.ctx, MkddContext):
-            logger.info(f"Trophies: {self.ctx.trophies}/{self.ctx.options.trophy_requirement}")
-            logger.info(f"Unlocked characters: {", ".join([game_data.CHARACTERS[c].name for c in self.ctx.game_state.unlocked_characters])}")
-            logger.info(f"Unlocked karts (upgrades): {", ".join([f"{game_data.KARTS[c].name} ({(
-                ", ".join(u.name for u in self.ctx.game_state.kart_upgrades[c]))})" for c in self.ctx.game_state.unlocked_karts])}")
-            logger.info(f"Speed upgrades: {self.ctx.game_state.engine_upgrade_level}")
-            logger.info(f"Max vehicle class: {["50cc", "100cc", "150cc", "Mirror"][self.ctx.game_state.game_state.unlocked_vehicle_class]}")
-            logger.info(f"Unlocked cups: {", ".join([game_data.CUPS[c] for c in self.ctx.game_state.unlocked_cups])}")
-            logger.info(f"Unlocked time trial courses: {", ".join([game_data.COURSES[c].name for c in self.ctx.game_state.unlocked_courses])}")
-            logger.info("Unlocked item box items:")
-            if len(self.ctx.game_state.global_items) > 0:
-                logger.info(f"Everybody: {", ".join([item.name for item in self.ctx.game_state.global_items])}")
-            for character, items in self.ctx.game_state.character_items.items():
-                if len(items) > 0:
-                   logger.info(f"{character.name}: {", ".join([item.name for item in items])}")
-
-    def _cmd_dolphin_process_name(self, dolphin_process_name: str) -> None:
-        """Specify the name of the Dolphin process to connect to. "" for system default."""
-        settings.dolphin_process_name = dolphin_process_name
-        get_settings().save()
-        logger.info(f"Dolphin process name set to {dolphin_process_name or "default"}. You must open a new client for this to take effect.")
-    
-    def _cmd_launch(self) -> None:
-        """Launch Dolphin running Mario Kart Double Dash."""
-        import os
-        if not os.path.isfile(settings.rom_path):
-            new_path = settings.rom_path.browse([("Rom file", ["*.ISO", "*.RVZ", "*.GCZ"])])
-            if new_path != None:
-                settings.rom_path = new_path
-                get_settings().save()
-        if os.path.isfile(settings.rom_path) and os.path.isfile(settings.dolphin_path):
-            os.startfile(settings.dolphin_path, arguments=f'"{settings.rom_path}"')
-        else:
-            logger.error("Dolphin or ROM path not valid.")
-    
-    def _cmd_reset_paths(self) -> None:
-        """Reset file paths to Dolphin and ROM."""
-        settings.rom_path = settings.RomPath()
-        settings.dolphin_path = settings.DolphinPath()
-        get_settings().save()
 
 
 class MkddContext(CommonContext):
