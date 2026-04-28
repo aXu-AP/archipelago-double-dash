@@ -123,7 +123,7 @@ class MkddMemAddressesUsa(MkddMemAddresses):
     current_course_ranking_w = 0x803b0f3b
     total_ranking_w = 0x803b1260
     total_points_wx = 0x803b11cc
-    game_ticks_w = 0x803b0754
+    game_ticks_w = 0x803b0754 # Currently unused.
     kart_stats_pointer = 0x80bd5000
     gp_race_no_w = 0x803b0fc8
     speed_multiplier_150cc_f = 0x80361d4c

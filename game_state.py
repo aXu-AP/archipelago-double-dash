@@ -1,20 +1,7 @@
-import asyncio
-import os
-import random
-import time
-import traceback
-from typing import TYPE_CHECKING, Any, Optional
-
 import dolphin_memory_engine as dolphin
-
-import Utils
-from CommonClient import get_base_parser, gui_enabled, logger, server_loop
-from NetUtils import ClientStatus, NetworkItem
-
-from . import game_data, items, locations, patches, mem_addresses, ar_codes, version, options
-from .items import ItemType, MkddItemData
-from .settings import MkddSettings
-from settings import get_settings
+import random
+from . import game_data, locations, mem_addresses, options
+from CommonClient import logger
 
 
 class MkddGameState():
@@ -22,29 +9,46 @@ class MkddGameState():
     Class to handle the connection to Dolphin running MKDD.
     """
     def __init__(self, memory_addresses: mem_addresses.MkddMemAddresses):
+        # Unlocks and other data from server.
         self.options: options.MkddOptions
         self.memory_addresses: mem_addresses.MkddMemAddresses = memory_addresses
+        self.unlocked_vehicle_class: int = 0
+        self.unlocked_characters: list[int] = []
+        self.unlocked_karts: list[int] = []
+        self.unlocked_cups: list[int] = []
+        self.engine_upgrade_level = 0
+        self.kart_upgrades: dict[int, list[game_data.KartUpgrade]] = {i:[] for i, _ in enumerate(game_data.KARTS)}
+        self.unlocked_cup_skips: int = 0
+        self.unlocked_courses: list[int] = []
+        self.time_trial_items: int = 0
+        self.cups_courses: list[list[int]]
+        self.character_item_total_weights: dict[str, list[int]] = {}
+        self.global_items_total_weights: list[int] = []
+        self.character_items: dict[game_data.Character, list[game_data.Item]] = {character:[] for character in game_data.CHARACTERS}
+        self.global_items: list[game_data.Item] = []
+
+        # Menu-level data.
+        self.menu_pointer: int = 0
         self.mode: int = 0
-        self.selected_cup: int = 0
-        self.human_players: int = 0
         self.vehicle_class: int = 0
-        self.current_lap: int = 0
-        self.in_race_placement: int = 0
+        self.active_characters: list[game_data.Character] = [game_data.CHARACTERS[0], game_data.CHARACTERS[0]]
+        self.active_kart: game_data.Kart = game_data.KARTS[0]
+        self.selected_cup: int = 0
+        self.selected_course: int = 0
+        # Course-level data.
+        self.current_course: game_data.Course = game_data.Course()
         self.total_ranking: int = 0
         self.total_points: int = 0
-        self.game_ticks: int  = 0
+        # Race-level data.
+        self.in_game: bool = False
+        self.human_players: int = 0
+        self.current_lap: int = 0
+        self.in_race_placement: int = 0
         self.race_timer: int = 0
         self.race_timer_s: float = 0.0
-        self.in_game: bool = False
+        self.item_box: int = 0
         self.finished: bool = False
-        self.current_course: game_data.Course = game_data.Course()
-        self.course_loaded: bool = False
-
-        self._course_changed_time: int = 0
-        self.last_race_timer: int = 0
-        self.last_in_game: bool = False
-        self.last_item_box: int = 0
-
+        # Print system.
         self.message_queue: list[str] = []
         self.message_time_left: int = 0
         self.text_str: list[str] = ["" for _ in range(self.memory_addresses.text_amount)]
@@ -53,45 +57,13 @@ class MkddGameState():
         self.text_just: list[int] = [1 for _ in range(self.memory_addresses.text_amount)]
         self._current_text_id: int = 0
 
-        self.course_changed_time: int = 0
-
-        self.unlocked_vehicle_class: int = 0
+        # Track changes over time.
         self.last_selected_vehicle_class: int = 0
-
-        self.unlocked_characters: list[int] = []
-        self.unlocked_karts: list[int] = []
-        self.engine_upgrade_level = 0
-        self.kart_upgrades: dict[int, list[game_data.KartUpgrade]] = {i:[] for i, _ in enumerate(game_data.KARTS)}
-
-        self.unlocked_cups: list[int] = []
-        self.selected_cup: int = 0
         self.last_selected_cup: int = 0
-
-        self.unlocked_cup_skips: int = 0
-        
-        self.unlocked_courses: list[int] = []
-
-        self.selected_course: int = 0
         self.last_selected_course: int = 0
-        
-        self.time_trial_items: int = 0
-
-        self.cups_courses: list[list[int]]
-        
-        self.item_box: int = 0
         self.last_item_box: int = 0
-
-        # These are per player.
         self.last_selected_character: list[int] = [0 for _ in range(4)]
         self.last_selected_kart: list[int] = [0 for _ in range(4)]
-
-        self.active_characters: list[game_data.Character] = [game_data.CHARACTERS[0], game_data.CHARACTERS[0]]
-        self.active_kart: game_data.Kart = game_data.KARTS[0]
-        
-        self.character_item_total_weights: dict[str, list[int]] = {}
-        self.global_items_total_weights: list[int] = []
-        self.character_items: dict[game_data.Character, list[game_data.Item]] = {character:[] for character in game_data.CHARACTERS}
-        self.global_items: list[game_data.Item] = []
 
         # Populate custom box table.
         self.custom_box_table: dict[str, dict[int, tuple[tuple[float, float, float], int, str]]] = {}
@@ -112,36 +84,35 @@ class MkddGameState():
         self.last_selected_course = self.selected_course
         self.last_item_box = self.item_box
         self.last_selected_vehicle_class = self.vehicle_class
-        self.item_box = dolphin.read_word(self.memory_addresses.item_box_p)
-
+        # Menu-level data.
+        self.menu_pointer = dolphin.read_word(self.memory_addresses.menu_pointer)
         self.mode = dolphin.read_word(self.memory_addresses.mode_w)
+        self.vehicle_class = dolphin.read_word(self.memory_addresses.vehicle_class_w)
         self.selected_cup = dolphin.read_word(self.memory_addresses.cup_w)
         self.selected_course: int = int(dolphin.read_word(self.memory_addresses.menu_course_w))
-        self.human_players = dolphin.read_byte(self.memory_addresses.human_players_b)
-        self.vehicle_class = dolphin.read_word(self.memory_addresses.vehicle_class_w)
-        self.current_lap = dolphin.read_word(self.memory_addresses.current_lap_wx) + 1
-        # Get placement and modify it to be 0-based for less confusion (rankings are also 0-based).
-        self.in_race_placement = dolphin.read_word(self.memory_addresses.in_race_placement_wx) - 1
+        # Course-level data.
         self.total_ranking = dolphin.read_word(self.memory_addresses.total_ranking_w)
         self.total_points = dolphin.read_word(self.memory_addresses.total_points_wx)
-        self.game_ticks = dolphin.read_word(self.memory_addresses.game_ticks_w)
+        # Race-level data.
+        self.human_players = dolphin.read_byte(self.memory_addresses.human_players_b)
+        self.current_lap = dolphin.read_word(self.memory_addresses.current_lap_wx) + 1
+        self.item_box = dolphin.read_word(self.memory_addresses.item_box_p)
+        # Get placement and modify it to be 0-based for less confusion (rankings are also 0-based).
+        self.in_race_placement = dolphin.read_word(self.memory_addresses.in_race_placement_wx) - 1
 
+        last_race_timer = self.race_timer
         self.race_timer = dolphin.read_word(self.memory_addresses.race_timer_w)
         # Remove 182 frame headstart and convert to seconds.
         # Close enough (to 1/10th of a second), altough probably exact formula should be investigated.
         # Rounded in favor of the player.
         self.race_timer_s = (self.race_timer - 182) / 60
 
-        # Some ways to check what state is the game in. In game in particular has to have one frame
-        # leeway in case we read finishing state after the last frame advance has happened.
-        new_in_game: bool = self.race_timer - self.last_race_timer > 0 and self.human_players > 0 # From countdown to finish.
-        self.in_game = new_in_game or self.last_in_game
-        self.last_in_game = new_in_game
-        self.course_loaded = self.game_ticks > self._course_changed_time + 60 # Don't give checks in menus etc.
-        self.last_race_timer = self.race_timer
+        last_in_game = self.in_game
+        self.in_game = self.race_timer - last_race_timer > 0 and self.human_players > 0 # From countdown to finish.
 
+        # One frame leeway in case we read finishing state after the last frame advance has happened.
         laps = self.current_course.laps if self.mode == game_data.Modes.TIMETRIAL else self.options.custom_lap_counts.get(self.current_course.name, 3)
-        self.finished = self.in_game and self.current_lap > laps
+        self.finished = (self.in_game or last_in_game) and self.current_lap > laps
 
 
     def sync_state(self) -> None:
@@ -168,7 +139,6 @@ class MkddGameState():
         if len(courses) > 0:
             new_course = courses[0]
             if new_course != self.current_course:
-                self._course_changed_time = dolphin.read_word(self.memory_addresses.game_ticks_w)
                 self.current_course = new_course
                 dolphin.write_word(self.memory_addresses.item_box_p, 0) # Clean up item box data.
                 return True
@@ -211,8 +181,6 @@ class MkddGameState():
         Update item box visuals (takes effect when the box spawns).
         Boxes that are unchecked, are inverted by changing their x size to -1 resulting in look reminiscent of MK64 boxes.
         """
-        if not self.course_loaded:
-            return
         course_name = self.current_course.name
         if course_name == "Luigi Circuit": # LC has different layout and boxes on 50cc.
             course_name += " 50cc" if self.vehicle_class == 0 else " 100cc"
@@ -431,10 +399,14 @@ class MkddGameState():
 
 
     def handle_character_menu(self) -> None:
-        menu_pointer = dolphin.read_word(self.memory_addresses.menu_pointer)
-        if menu_pointer == 0:
+        """
+        Updates state about selected characters and karts.
+        Ensures that the player chooses valid characters and karts.
+        Prints character/kart info in game.
+        """
+        if self.menu_pointer == 0:
             return
-        target_icons = self.memory_addresses.menu_pointer_to_char_icons.get(menu_pointer)
+        target_icons = self.memory_addresses.menu_pointer_to_char_icons.get(self.menu_pointer)
         if target_icons:
             for (char_id, address) in enumerate(target_icons):
                 if char_id in self.unlocked_characters:
@@ -442,8 +414,8 @@ class MkddGameState():
                 else:
                     dolphin.write_word(address, 0x0000FFFF)
 
-        driver = dolphin.read_word(menu_pointer + self.memory_addresses.menu_driver_w_offset)
-        rider = dolphin.read_word(menu_pointer + self.memory_addresses.menu_rider_w_offset)
+        driver = dolphin.read_word(self.menu_pointer + self.memory_addresses.menu_driver_w_offset)
+        rider = dolphin.read_word(self.menu_pointer + self.memory_addresses.menu_rider_w_offset)
         # Save active selections for printing info.
         p1_character: game_data.Character | None = None
         p2_character: game_data.Character | None = None
@@ -458,8 +430,8 @@ class MkddGameState():
         
         for player in range(4):
             player_offset = player * self.memory_addresses.menu_player_struct_size
-            character: int = int(dolphin.read_word(menu_pointer + self.memory_addresses.menu_character_w_offset + player_offset))
-            kart: int = int(dolphin.read_word(menu_pointer + self.memory_addresses.menu_kart_w_offset + player_offset))
+            character: int = int(dolphin.read_word(self.menu_pointer + self.memory_addresses.menu_character_w_offset + player_offset))
+            kart: int = int(dolphin.read_word(self.menu_pointer + self.memory_addresses.menu_kart_w_offset + player_offset))
             
             if character >= 0 and character < len(game_data.CHARACTERS):
                 if player == 0:
@@ -477,11 +449,11 @@ class MkddGameState():
                 if character not in self.unlocked_characters:
                     direction: int = character - self.last_selected_character[player]
                     direction = 1 if direction == 0 or direction == 1 else -1
-                    for _ in range(20):
+                    for _ in range(len(game_data.CHARACTERS)):
                         character = wrap(character + direction, len(game_data.CHARACTERS))
                         if character in self.unlocked_characters:
                             break
-                    dolphin.write_word(menu_pointer + self.memory_addresses.menu_character_w_offset + player_offset, character)
+                    dolphin.write_word(self.menu_pointer + self.memory_addresses.menu_character_w_offset + player_offset, character)
 
             self.last_selected_character[player] = character
             
@@ -490,11 +462,11 @@ class MkddGameState():
                 weight = max(self.active_characters[0].weight, self.active_characters[1].weight)
                 direction: int = kart - self.last_selected_kart[player]
                 direction = 1 if direction == 0 else int(direction / abs(direction))
-                for i in range(21):
+                for _ in range(len(game_data.KARTS)):
                     if kart in self.unlocked_karts and (game_data.KARTS[kart].weight == weight or game_data.KARTS[kart].weight == -1):
                         break
                     kart = wrap(kart + direction, len(game_data.KARTS))
-                dolphin.write_word(menu_pointer + self.memory_addresses.menu_kart_w_offset + player_offset, kart)
+                dolphin.write_word(self.menu_pointer + self.memory_addresses.menu_kart_w_offset + player_offset, kart)
 
                 if player == 0:
                     self.active_kart = game_data.KARTS[kart]
@@ -603,13 +575,14 @@ class MkddGameState():
 
     def handle_all_cup_tour(self) -> None:
         """Shortens All Cup Tour if option is set and shuffles its contents."""
+        if self.selected_cup != game_data.CUP_ALL_CUP_TOUR:
+            return
         # Set All Cup Tour length by skipping to the second-last race. This ensures that Rainbow Road is still the last.
-        if (dolphin.read_word(self.memory_addresses.cup_w) == game_data.CUP_ALL_CUP_TOUR and
-            dolphin.read_word(self.memory_addresses.gp_race_no_w) == self.options.all_cup_tour_length - 2):
+        if dolphin.read_word(self.memory_addresses.gp_race_no_w) == self.options.all_cup_tour_length - 2:
             dolphin.write_word(self.memory_addresses.gp_race_no_w, 14)
         
         # Shuffle All Cup Tour properly with randomized courses.
-        if self.selected_cup == game_data.CUP_ALL_CUP_TOUR and self.selected_cup != self.last_selected_cup:
+        if self.selected_cup != self.last_selected_cup:
             course_order = list(range(1, 15)) # First is LC, last is RR - shuffle everything between.
             random.shuffle(course_order)
             course_order = [0, *course_order, 15]
@@ -680,6 +653,7 @@ class MkddGameState():
 
 
     def apply_kart_stats(self) -> None:
+        """Writes custom kart stats into game."""
         kart_stats_pointer = self.memory_addresses.kart_stats_pointer
         for i in range(len(game_data.KARTS)):
             kart: game_data.Kart = game_data.KARTS[i]
@@ -694,6 +668,7 @@ class MkddGameState():
             mini_turbo_addition = 0.0
             weight_addition = 0.0
             steer_addition = 0.0
+            # Upgrades apply to the player only (by side-effect also bots using the same kart).
             if kart == self.active_kart:
                 # Engine upgrades by levels: .9, 1, 1.05, 1.1
                 if self.engine_upgrade_level == 0:
@@ -733,16 +708,12 @@ class MkddGameState():
 
 
 def dolphin_write_half(address: int, value: int) -> None:
-    """
-    Write a half-word/short (2 bytes) into memory.
-    """
+    """Write a half-word/short (2 bytes) into memory."""
     dolphin.write_bytes(address, value.to_bytes(2, byteorder="big"))
 
 
 def dolphin_write_str(address: int, value: str) -> None:
-    """
-    Write a string into memory.
-    """
+    """Write a string into memory."""
     dolphin.write_bytes(address, bytes(value, "ascii", "replace"))
     dolphin.write_byte(address + len(value), 0)
 
