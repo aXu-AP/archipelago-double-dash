@@ -75,12 +75,7 @@ class MkddWorld(World):
         # Universal Tracker passthrough.
         if hasattr(self.multiworld, "re_gen_passthrough"):
             slot_data: dict = self.multiworld.re_gen_passthrough["Mario Kart Double Dash"]
-            self.options.trophy_requirement = slot_data["trophy_requirement"]
-            self.options.logic_difficulty = slot_data["logic_difficulty"]
-            # Staff ghosts were on by default before this option was introduced.
-            self.options.time_trials = slot_data.get("time_trials", options.TimeTrials.option_include_staff_ghosts)
-            self.options.item_boxes_as_locations = slot_data["item_boxes_as_locations"]
-            self.options.add_custom_item_boxes = slot_data["add_custom_item_boxes"]
+            self.options.update_from_slot_data(slot_data)
 
 
     def create_regions(self) -> None:
@@ -174,7 +169,7 @@ class MkddWorld(World):
         precollected_characters = 0
         while precollected_characters < 2:
             character_name: str = self.random.choice(game_data.CHARACTERS).name
-            if not character_name in precollected:
+            if character_name not in precollected:
                 precollected.append(character_name)
                 precollected_characters += 1
         # Give 1 kart in each weight class.
@@ -226,9 +221,9 @@ class MkddWorld(World):
             item = self.random.sample(items_left, 1, counts = weights)[0]
             item_pool.append(self.create_item(items.get_item_name_character_item(None, item.name)))
             global_items.append(item)
-            id = items_left.index(item)
-            items_left.pop(id)
-            weights.pop(id)
+            idx = items_left.index(item)
+            items_left.pop(idx)
+            weights.pop(idx)
 
         # If there's too much global items there's going to be multiples.
         # Make the pool bigger to avoid every character having the same items.
@@ -244,7 +239,7 @@ class MkddWorld(World):
                 # Try rolling for unique items.
                 for j in range(50):
                     item = self.random.sample(items_left, 1, counts = weights)[0]
-                    if not item in items_per_character[character]:
+                    if item not in items_per_character[character]:
                         break
                     # If item hasn't been found after 10 tries, try refilling the pool.
                     elif j == 10:
@@ -256,11 +251,11 @@ class MkddWorld(World):
                     self.multiworld.push_precollected(self.create_item(items.get_item_name_character_item(character.name, item.name)))
                 else:
                     item_pool.append(self.create_item(items.get_item_name_character_item(character.name, item.name)))
-                id = items_left.index(item)
-                weights[id] -= 1
-                if weights[id] == 0:
-                    items_left.pop(id)
-                    weights.pop(id)
+                idx = items_left.index(item)
+                weights[idx] -= 1
+                if weights[idx] == 0:
+                    items_left.pop(idx)
+                    weights.pop(idx)
                 if len(items_left) == 0:
                     # Refill the pool with some balancing.
                     items_left = items_left_characters_pool.copy()
@@ -287,9 +282,9 @@ class MkddWorld(World):
         self.multiworld.itempool += item_pool
 
     def create_item(self, name: str) -> MkddItem:
-        id = items.name_to_id[name]
-        item_data = items.data_table[id]
-        return MkddItem(name, item_data.classification, id, self.player)
+        idx = items.name_to_id[name]
+        item_data = items.data_table[idx]
+        return MkddItem(name, item_data.classification, idx, self.player)
 
     def get_filler_item_name(self) -> str:
         return items.RANDOM_ITEM
@@ -312,26 +307,20 @@ class MkddWorld(World):
         return change
 
     def fill_slot_data(self) -> dict[str, Any]:
-        lap_counts = {course.name:course.laps for course in game_data.RACE_COURSES}
-        if self.options.shorter_courses:
-            for course, laps in lap_counts.items():
-                lap_counts[course] = int(math.ceil(laps * 2 / 3))
-        for course, laps in self.options.custom_lap_counts.items():
-            if laps > 0:
-                lap_counts[course] = laps
+        # Fill in lap data into custom lap table.
+        # Priority: custom > short > vanilla.
+        for course in game_data.RACE_COURSES:
+            if course.name not in self.options.custom_lap_counts:
+                if self.options.shorter_courses:
+                    self.options.custom_lap_counts[course] = int(math.ceil(course.laps * 2 / 3))
+                else:
+                    self.options.custom_lap_counts[course] = course.laps
         return {
             "version": version.get_version(),
-            "trophy_requirement": int(self.options.trophy_requirement),
-            "logic_difficulty": int(self.options.logic_difficulty) if not self.options.tracker_unrestricted_logic else 100,
-            "time_trials": int(self.options.time_trials),
             "cups_courses": self.cups_courses,
-            "all_cup_tour_length": int(self.options.all_cup_tour_length),
-            "mirror_200cc": int(self.options.mirror_200cc),
-            "lap_counts": lap_counts,
             "character_item_total_weights": self.character_item_total_weights,
             "global_items_total_weights": self.global_items_total_weights,
-            "item_boxes_as_locations": int(self.options.item_boxes_as_locations),
-            "add_custom_item_boxes": int(self.options.add_custom_item_boxes),
+            **self.options.to_slot_data(),
         }
     
     # Rerun Universal Tracker with received options.

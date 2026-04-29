@@ -47,12 +47,6 @@ class LogicDifficulty(NamedRange):
         "unrestricted": 100,
     }
 
-class TrackerUnrestrictedLogic(Toggle):
-    """If enabled, the Universal Tracker will show all locations that are techically accessible (as if Logic Difficulty was set to unrestricted).
-    DEPRECATED - Using latest version of UT on Archipelago 0.6.2 installation shows out of logic locations as glitched logic."""
-    display_name = "Tracker Unrestricted Logic"
-    visibility = Visibility.none
-
 class TimeTrials(Choice):
     """Are time trials in logic? If enabled, item pool has course unlocks for time trials.
     Basic adds locations for beating certain times.
@@ -68,7 +62,7 @@ class CourseShuffle(Choice):
     display_name = "Course Shuffle"
     option_vanilla = 0
     option_shuffle_once = 1
-    #option_shuffle_per_class = 2
+    # TODO: option_shuffle_per_class = 2
     default = 1
 
 class AllCupTourLength(Range):
@@ -154,7 +148,6 @@ class MkddOptions(PerGameCommonOptions):
     grand_prix_trophies: GrandPrixTrophies
     shuffle_extra_trophies: ShuffleExtraTrophies
     logic_difficulty: LogicDifficulty
-    tracker_unrestricted_logic: TrackerUnrestrictedLogic
     time_trials: TimeTrials
 
     course_shuffle: CourseShuffle
@@ -175,3 +168,26 @@ class MkddOptions(PerGameCommonOptions):
     add_custom_item_boxes: AddCustomItemBoxes
 
     start_inventory_from_pool: StartInventoryPool
+
+    def to_slot_data(self) -> dict[str, any]:
+        """Returns dict of relevant options for UT or the client."""
+        return self.as_dict(
+            "trophy_requirement",
+            "logic_difficulty",
+            "time_trials",
+            "all_cup_tour_length",
+            "custom_lap_counts",
+            "mirror_200cc",
+            "item_boxes_as_locations",
+            "add_custom_item_boxes",
+        )
+
+    def update_from_slot_data(self, slot_data: dict[str, any]) -> None:
+        """Sets options that are relayed in slot data."""
+        for key, val in slot_data.items():
+            if key in MkddOptions.type_hints: # Filter non-option data.
+                setattr(self, key, val)
+
+def init_options() -> MkddOptions:
+    """Initializes options object with default values."""
+    return MkddOptions(**{key: val.default for key, val in MkddOptions.type_hints.items()})
