@@ -607,8 +607,9 @@ class MkddGameState():
                         if i_cup not in available_cups_courses:
                             available_cups_courses[i_cup] = set()
                         available_cups_courses[i_cup].add(self.cups_courses[i_cup].index(i_course))
-            if len(available_cups_courses) == 0 and len(self.message_queue) == 0:
-                self.queue_ingame_message("No Time Trials unlocked yet!\nChange mode to Grand Prix.")
+            if len(available_cups_courses) == 0 and self.menu_pointer == 0:
+                self.print_ingame(304, 180, "No Time Trials unlocked yet!", 0)
+                self.print_ingame(304, 200, "Change mode to Grand Prix.", 0)
         elif self.mode == game_data.Modes.GRANDPRIX:
             # Give option to skip x first courses.
             gp_selectable_courses = range(self.unlocked_cup_skips + 1)
