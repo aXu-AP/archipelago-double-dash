@@ -1,22 +1,56 @@
+.set insert_adr, 0x80001080
+
+# Writes code into specified address.
 .macro WriteTo address
-.long \address
-.long \address
+    .long 0x00aabbee
+    .long \address
 .endm
 
-.set char_unlock_table, 0x80001000
-.set kart_unlock_table, 0x80001000 + 0x14
-.set race_counter, 0x80001000 + 0x2c
-.set menu_pointer, 0x80001000 + 0x30
-.set race_timer, 0x80001000 + 0x34
-.set max_vehicle_class, 0x80001000 + 0x38
-.set cup_unlock_table, 0x80001000 + 0x3c
-.set tt_driver_item, 0x80001000 + 0x41
-.set tt_rider_item, 0x80001000 + 0x42
-.set gp_next_item, 0x80001000 + 0x43
-.set item_box_id, 0x80001000 + 0x60
+# Writes a branch from specified address to separate block.
+.macro InsertAt address, lines
+    WriteTo \address
+    b   insert_adr - \address
+    WriteTo insert_adr
+    .set insert_adr, insert_adr + \lines * 4
+    .set _last_insert, \address + 4
+.endm
 
-# 4 bytes for position, 44 for string per text. text_table points to the start of the string, x and y are offset -4 and -2.
-.set text_table, 0x80000da0 + 4
+# Does a linked jump (bl) into new address. Assumed to be placed after InsertAt/Write lines.
+.macro BranchLinkAt address
+    bl  \address - insert_adr
+    .set insert_adr, insert_adr + 4
+.endm
+
+# Jumps into new address after using InsertAt/Write. Assumed to be placed after InsertAt/Write lines.
+.macro ReturnAt address
+    b   \address - insert_adr
+    .set insert_adr, insert_adr + 4
+.endm
+
+# Resumes program after using InsertAt. Assumed to be placed after InsertAt/Write lines.
+.macro Return
+    ReturnAt _last_insert
+.endm
+
+# Writes code into free memory.
+.macro Write lines
+    WriteTo insert_adr
+    .set insert_adr, insert_adr + \lines * 4
+.endm
+
+
+.set available_characters_bx,   0x80001000 # Size 20
+.set available_karts_bx,        0x80001014 # Size 21
+.set menu_pointer,              0x80001030
+.set max_vehicle_class_w,       0x80001038
+.set available_cups_bx,         0x8000103c # Size 5
+.set tt_items_driver_b,         0x80001041
+.set tt_items_rider_b,          0x80001042
+.set gp_next_items_bx,          0x80001043
+.set item_box_p,                0x80001060
+
+# 4 bytes for position, 44 for string per text. text_sx points to the start of the string, x and y are offset -4 and -2.
+.set text_sx, 0x80000da0 + 4
 .set text_size, 0x30
 .set text_amount, 5
 
@@ -26,333 +60,266 @@
 # The original function must be left intact as it's used for cpu character selection also.
 .set jump_set_char_flags, 0x80165744 + 0x4 - 0x801638b0
 WriteTo 0x801638b0
-bl      jump_set_char_flags
+    bl      jump_set_char_flags
 
 # Character flag setter, checks for unclocked ap characters.
 WriteTo 0x80165744
-blr     # Return early, skip checking for vanilla character unlocks.
-li      r0, 20
-li      r5, 0
-lis     r31, char_unlock_table@ha
-addi    r31, r31, char_unlock_table@l
-mtctr   r0
-addi    r0, r5, 8864
-lbzx    r4, r31, r5
-stbx    r4, r3, r0
-addi    r5, r5, 1
-bdnz+   -0x10
-blr
+    blr     # Return early, skip checking for vanilla character unlocks.
+    # set_char_flags:
+    li      r0, 20
+    li      r5, 0
+    lis     r31, available_characters_bx@ha
+    addi    r31, r31, available_characters_bx@l
+    mtctr   r0
+    addi    r0, r5, 8864
+    lbzx    r4, r31, r5
+    stbx    r4, r3, r0
+    addi    r5, r5, 1
+    bdnz+   -0x10
+    blr
 
 # Select left. After checking if we can move left once, continue in zig zag pattern.
-.set select_left_jump, 0x800010d8 - 0x801636cc
-.set select_left_return, 0x801636cc + 4 - 0x800010d8 - 0x24
-WriteTo 0x801636cc
-b   select_left_jump
-WriteTo 0x800010d8
-bne-    0x24
-addi    r4, r29, 19
-divw    r0, r4, r3
-mullw   r0, r0, r3
-sub     r29, r4, r0
-addi    r0, r29, 0x228c
-lbzx    r0, r28, r0
-cmplwi  r0, 0
-beq+    -0x1c
-b       select_left_return
+InsertAt 0x801636cc, 9
+    bne-    0x24
+    addi    r4, r29, 19
+    divw    r0, r4, r3
+    mullw   r0, r0, r3
+    sub     r29, r4, r0
+    addi    r0, r29, 0x228c
+    lbzx    r0, r28, r0
+    cmplwi  r0, 0
+    beq+    -0x1c
+Return
 
 # Select right. After checking if we can move right once, continue in zig zag pattern.
-.set select_right_jump, 0x80001100 - 0x801636f8
-.set select_right_return, 0x801636f8 + 4 - 0x80001100 - 0x24
-WriteTo 0x801636f8
-b   select_right_jump
-WriteTo 0x80001100
-bne-    0x24
-addi    r4, r29, 21
-divw    r0, r4, r3
-mullw   r0, r0, r3
-sub     r29, r4, r0
-addi    r0, r29, 0x228c
-lbzx    r0, r28, r0
-cmplwi  r0, 0
-beq+    -0x1c
-b       select_right_return
+InsertAt 0x801636f8, 9
+    bne-    0x24
+    addi    r4, r29, 21
+    divw    r0, r4, r3
+    mullw   r0, r0, r3
+    sub     r29, r4, r0
+    addi    r0, r29, 0x228c
+    lbzx    r0, r28, r0
+    cmplwi  r0, 0
+    beq+    -0x1c
+Return
 
 # Intercept cursor moving function checking flags for valid characters.
 WriteTo 0x801639bc
-lis     r6, char_unlock_table@ha
-addi    r6, r6, char_unlock_table@l
-mtctr   r0
-b       0xb8
-
+    lis     r6, available_characters_bx@ha
+    addi    r6, r6, available_characters_bx@l
+    mtctr   r0
+    b       0xb8                # Jump to unlock_check.
 # No need for check Toads + Boo + Petey, replace with checking ap characters.
 WriteTo 0x80163a7c
-blr     # Return earlier than the original function.
-addi    r0, r5, 8844
-lbzx    r4, r6, r5
-stbx    r4, r3, r0
-addi    r5, r5, 1
-bdnz+   -0x10
-b       -0xc0
-
-
-# SECTION race_counter
-.set race_counter_jump, 0x80163a98 - 0x801ce0cc
-.set race_counter_return, 0x801ce0d0 - 0x80163ab0
-lis     r3, race_counter@ha
-addi    r3, r3, race_counter@l
-lwz     r23, 0 (r3)
-addi    r23, r23, 1
-stw     r23, 0 (r3)
-li      r0, 0 # default code
-b       race_counter_return
-
-WriteTo 0x801ce0cc
-b       race_counter_jump
+    blr     # Return earlier than the original function.
+    addi    r0, r5, 8844        # unlock_check
+    lbzx    r4, r6, r5
+    stbx    r4, r3, r0
+    addi    r5, r5, 1
+    bdnz+   -0x10
+    b       -0xc0
 
 
 # SECTION kart_selection
+# Just overwrite the kart unlock check, there's nothing we need from the original code.
 WriteTo 0x801dbc90
-lis     r12, kart_unlock_table@ha
-addi    r12, r12, kart_unlock_table@l
-lbzx    r3, r12, r3
-blr
+    lis     r5, menu_pointer@ha
+    lwz     r5, menu_pointer@l (r5)
+    cmpwi   r5, 0
+    beq     5 * 4
+    lis     r5, available_karts_bx@ha
+    addi    r5, r5, available_karts_bx@l
+    lbzx    r3, r5, r3
+    blr
+    li      r3, 1               # If not in character selection menu, just return 1 (used for cpu karts).
+    blr
 
-.set menu_pointer_write_jump, 0x80000f98 - 0x801599fc
-.set menu_pointer_write_return, 0x80159a00 - 0x80000fa8
-WriteTo 0x801599fc
-b       menu_pointer_write_jump
-WriteTo 0x80000f98
-lis     r3, menu_pointer@ha
-addi    r3, r3, menu_pointer@l
-stw     r30, 0 (r3)
-mr      r3, r30 # default code
-b       menu_pointer_write_return
 
-.set menu_pointer_clear_jump, 0x80000fac - 0x8016a4e0
-.set menu_pointer_clear_return, 0x8016a4e4 - 0x80000fc0
-WriteTo 0x8016a4e0
-b       menu_pointer_clear_jump
-WriteTo 0x80000fac
-lis     r3, menu_pointer@ha
-addi    r3, r3, menu_pointer@l
-li      r0, 0
-stw     r0, 0 (r3)
-lwz     r3, -0x5588 (r13) # default code
-b       menu_pointer_clear_return
+# SECTION menu_pointer
+# Write the pointer while in the character selection menu.
+InsertAt 0x801599fc, 3
+    lis     r3, menu_pointer@ha
+    stw     r30, menu_pointer@l (r3)
+    mr      r3, r30 # Default code.
+Return
+
+# Clear the pointer when exiting character selection menu.
+InsertAt 0x8016a4e0, 4
+    li      r0, 0
+    lis     r3, menu_pointer@ha
+    stw     r0, menu_pointer@l (r3)
+    lwz     r3, -0x5588 (r13) # Default code.
+Return
 
 
 # SECTION cup_selection
-# Move right
-.set cup_selection_right_jump, 0x80000fd4 - 0x8016b090 - 0x8
-.set cup_selection_right_return, 0x8016b090 + 0xc - 0x80000ff0
-WriteTo 0x8016b090
-lis     r4, cup_unlock_table@ha
-addi    r4, r4, cup_unlock_table@l
-b       cup_selection_right_jump
-nop
-lwz     r4, 0x0390 (r31)    # default code
-lfs     f0, -0x5FF4 (rtoc)  # default code
-WriteTo 0x80000fd4
-addi    r3, r3, 1           # Move cursor
-cmpwi   r3, 5               # Wrap around
-bne     0x8
-li      r3, 0
-lbzx    r5, r4, r3          # Check cup availability, loops if =0
-cmpwi   r5, 0
-beq     -6 * 4
-b       cup_selection_right_return
-
 # Make All Cup Tour visible even in time trials (because we are using tt menu for gp also).
 WriteTo 0x80169f20
-nop
+    nop
+
+# Move right
+WriteTo 0x8016b090
+    lis     r4, available_cups_bx@ha
+    addi    r4, r4, available_cups_bx@l
+    nop                         # Code below is inserted here.
+    nop
+    lwz     r4, 0x0390 (r31)    # Default code.
+    lfs     f0, -0x5FF4 (rtoc)  # Default code.
+InsertAt 0x8016b098, 7
+    addi    r3, r3, 1           # Move cursor.
+    cmpwi   r3, 5               # Wrap around.
+    bne     0x8
+    li      r3, 0
+    lbzx    r5, r4, r3          # Check cup availability, loops if =0.
+    cmpwi   r5, 0
+    beq     -6 * 4
+Return
 
 # Move left
-.set cup_selection_left_jump, 0x80001080 - 0x8016b028 - 0xc
-.set cup_selection_left_return, 0x8016b028 + 0x10 - 0x8000109c
 WriteTo 0x8016b028
-lwz     r3, -0x5C78 (r13)
-lis     r4, cup_unlock_table@ha
-addi    r4, r4, cup_unlock_table@l
-b       cup_selection_left_jump
-nop
-nop
-li      r0, 0               # default code
-lwz     r5, 0x0390 (r31)    # default code
-lfs     f0, -0x5FF4 (rtoc)  # default code
-WriteTo 0x80001080
-subi    r3, r3, 1           # Move cursor
-cmpwi   r3, -1              # Wrap around
-bne     0x8
-li      r3, 4
-lbzx    r5, r4, r3          # Check cup availability, loops if =0
-cmpwi   r5, 0
-beq     -6 * 4
-b       cup_selection_left_return
-
-
-# SECTION race_timer
-.set race_timer_jump, 0x80000fc4 - 0x801dce0c
-WriteTo 0x801dce0c
-b   race_timer_jump
-WriteTo 0x80000fc4
-lis     r3, race_timer@ha
-addi    r3, r3, race_timer@l
-stw     r0, 0 (r3)
-blr
+    lwz     r3, -0x5C78 (r13)
+    lis     r4, available_cups_bx@ha
+    addi    r4, r4, available_cups_bx@l
+    nop                         # Code below is inserted here.
+    nop
+    nop
+    li      r0, 0               # Default code.
+    lwz     r5, 0x0390 (r31)    # Default code.
+    lfs     f0, -0x5FF4 (rtoc)  # Default code.
+InsertAt 0x8016b034, 7
+    subi    r3, r3, 1           # Move cursor
+    cmpwi   r3, -1              # Wrap around
+    bne     0x8
+    li      r3, 4
+    lbzx    r5, r4, r3          # Check cup availability, loops if =0.
+    cmpwi   r5, 0
+    beq     -6 * 4
+Return
 
 
 # SECTION vehicle_class_selector
 # Move right.
 WriteTo 0x8015ee60
-lis     r3, max_vehicle_class@ha
-addi    r3, r3, max_vehicle_class@l
-lwz     r3, 0 (r3)
-cmpw    r0, r3
-ble     0xf0
-nop
+    lis     r3, max_vehicle_class_w@ha
+    addi    r3, r3, max_vehicle_class_w@l
+    lwz     r3, 0 (r3)
+    cmpw    r0, r3
+    ble     0xf0
+    nop
+
 # Move left.
 WriteTo 0x8015edac
-lis     r3, max_vehicle_class@ha
-addi    r3, r3, max_vehicle_class@l
-lwz     r3, 0 (r3)
-cmpw    r0, r3
-ble     0x8015ee80 - 0x8015edbc
-mr      r0, r3
-nop
+    lis     r3, max_vehicle_class_w@ha
+    addi    r3, r3, max_vehicle_class_w@l
+    lwz     r3, 0 (r3)
+    cmpw    r0, r3
+    ble     0x8015ee80 - 0x8015edbc
+    mr      r0, r3
+    nop
 
 
 # SECTION time_trial_items
 # Driver
-.set driver_item_jump, 0x800010a0 - 0x802baf7c
-.set driver_item_return, 0x802baf7c + 4 - 0x800010a0 - 8
-WriteTo 0x802baf7c
-b driver_item_jump
-WriteTo 0x800010a0
-lis     r4, tt_driver_item@ha
-lbz     r4, tt_driver_item@l (r4)
-b driver_item_return
+InsertAt 0x802baf7c, 2
+    lis     r4, tt_items_driver_b@ha
+    lbz     r4, tt_items_driver_b@l (r4)
+Return
+
 # Rider
-.set rider_item_jump, 0x800010ac - 0x802bafa8
-.set rider_item_return, 0x802bafa8 + 4 - 0x800010ac - 8
-WriteTo 0x802bafa8
-b rider_item_jump
-WriteTo 0x800010ac
-lis     r4, tt_rider_item@ha
-lbz     r4, tt_rider_item@l (r4)
-b rider_item_return
+InsertAt 0x802bafa8, 2
+    lis     r4, tt_items_rider_b@ha
+    lbz     r4, tt_items_rider_b@l (r4)
+Return
 
 
 # SECTION item_shuffle
-.set item_shuffle_jump, 0x800010b8 - 0x8020cbc0
-.set item_shuffle_return_player, 0x8020cbc0 + 8 - 0x800010b8 - 0x18
-.set item_shuffle_return_cpu, 0x8020cbc0 + 4 - 0x800010b8 - 0x1c
-WriteTo 0x8020cbc0
-b       item_shuffle_jump
-WriteTo 0x800010b8
-stw     r0, 0x24 (r1)
-cmplwi  r0, 0
-bne+    0x14
-lis     r3, gp_next_item@ha
-addi    r3, r3, gp_next_item@l
-lbzx    r3, r3, r5 # Offset by assumed special item.
-b       item_shuffle_return_player
-b       item_shuffle_return_cpu
+.set item_shuffle_jump, 0x8020cbc0
+.set item_shuffle_return_player, item_shuffle_jump + 8
+InsertAt item_shuffle_jump, 6
+    stw     r0, 0x24 (r1)
+    cmplwi  r0, 0
+    bne+    0x14            # Return if cpu.
+    lis     r3, gp_next_items_bx@ha
+    addi    r3, r3, gp_next_items_bx@l
+    lbzx    r3, r3, r5      # Offset by assumed special item.
+ReturnAt item_shuffle_return_player
+Return
 
 
-# SECTION item_box_id
-.set item_box_id_jump, 0x80001198 - 0x801fbe1c
-.set item_box_id_return, 0x801fbe1c + 4 - 0x80001198 - 7*4
-WriteTo 0x801fbe1c
-b       item_box_id_jump
-WriteTo 0x80001198
-cmplwi  r4, 0               # Skip for other karts than no. 0 (player).
-bne+    5*4
-lwz     r4, 0xe8 (r3)       # Load box's id.
-lis     r3, item_box_id@ha
-stw     r4, item_box_id@l (r3)
-li      r4, 0               # Return value to 0.
-lwz	    r3, -0x5560 (r13)   # default code
-b       item_box_id_return
+# SECTION item_box_p
+InsertAt 0x801fbe1c, 7
+    cmplwi  r4, 0               # Skip for other karts than no. 0 (player).
+    bne+    5*4
+    lwz     r4, 0xe8 (r3)       # Load box's id.
+    lis     r3, item_box_p@ha
+    stw     r4, item_box_p@l (r3)
+    li      r4, 0               # Return value to 0.
+    lwz	    r3, -0x5560 (r13)   # Default code.
+Return
 
 
-# SECTION rolling_item_box_id
-.set rolling_item_box_id_jump, 0x800011b8 - 0x8027d1e4
-.set rolling_item_box_id_return, 0x8027d1e4 + 4 - 0x800011b8 - 7*4
-WriteTo 0x8027d1e4
-b       rolling_item_box_id_jump
-WriteTo 0x800011b8
-cmplwi  r4, 0               # Skip for other karts than no. 0 (player).
-bne+    5*4
-lwz     r4, 0xe8 (r3)       # Load box's id.
-lis     r31, item_box_id@ha
-stw     r4, item_box_id@l (r31)
-li      r4, 0               # Return value to 0.
-mr      r31, r3             # default code
-b       rolling_item_box_id_return
+# SECTION rolling_item_box_p
+InsertAt 0x8027d1e4, 7
+    cmplwi  r4, 0               # Skip for other karts than no. 0 (player).
+    bne+    5*4
+    lwz     r4, 0xe8 (r3)       # Load box's id.
+    lis     r31, item_box_p@ha
+    stw     r4, item_box_p@l (r31)
+    li      r4, 0               # Return value to 0.
+    mr      r31, r3             # Default code.
+Return
 
 
-# SECTION car_item_box_id
-.set car_item_box_id_jump, 0x800011d8 - 0x8019a69c
-.set car_item_box_id_return, 0x8019a69c + 4 - 0x800011d8 - 6*4
-WriteTo 0x8019a69c
-b       car_item_box_id_jump
-WriteTo 0x800011d8
-cmplwi  r4, 0               # Skip for other karts than no. 0 (player).
-bne+    4*4
-lwz     r30, 0xe8 (r3)       # Load box's id.
-lis     r31, item_box_id@ha
-stw     r30, item_box_id@l (r31)
-mr      r30, r3             # default code
-b       car_item_box_id_return
+# SECTION car_item_box_p
+InsertAt 0x8019a69c, 6
+    cmplwi  r4, 0               # Skip for other karts than no. 0 (player).
+    bne+    4*4
+    lwz     r30, 0xe8 (r3)      # Load box's id.
+    lis     r31, item_box_p@ha
+    stw     r30, item_box_p@l (r31)
+    mr      r30, r3             # Default code.
+Return
 
 
 # SECTION draw_string
-.set jutreport_jump, 0x80019c4c - 0x80001128 - 10*4
-WriteTo 0x80001128
-# Push stack.
-stwu    sp, -0x10 (sp)
-mflr    r0
-stw     r0, 0x14 (sp)
-stw     r31, 0x8 (sp)
-# Draw texts.
-li      r31, 0
-lis     r5, text_table@ha   # String address
-addi    r5, r5, text_table@l
-add     r5, r5, r31
-lhz     r3, -4 (r5)         # X position
-lhz     r4, -2 (r5)         # Y position
-bl      jutreport_jump
-addi    r31, r31, text_size
-cmplwi  r31, text_size * text_amount
-blt+    -0x20
-# Pop stack.
-lwz     r31, 0x8 (sp)
-lwz     r0, 0x14 (sp)
-mtlr    r0
-addi    sp, sp, 0x10
-blr
 # Call the print function in the character selection screen.
-.set draw_string_character_jump, 0x80001128 + 19*4 - 0x80159434
-.set draw_string_character_return, 0x80159434 + 4 - 0x80001128 - 21*4
-bl      -19 * 4
-lwz     r0, 0x20E0 (r31)    # default code
-b       draw_string_character_return
+InsertAt 0x80159434, 2
+    bl      9 * 4
+    lwz     r0, 0x20E0 (r31)    # Default code.
+Return
 # Call the print function in the course selection screen.
-.set draw_string_course_jump, 0x80001128 + 22*4 - 0x8016a380
-.set draw_string_course_return, 0x8016a380 + 4 - 0x80001128 - 24*4
-bl      -22 * 4
-lfs     f1, -0x603C (rtoc)  # default code
-b       draw_string_course_return
+InsertAt 0x8016a380, 2
+    bl      6 * 4
+    lfs     f1, -0x603C (rtoc)  # Default code.
+Return
 # Call the print function during race.
-.set draw_string_race_jump, 0x80001128 + 25*4 - 0x801cd91c
-.set draw_string_race_return, 0x801cd91c + 4 - 0x80001128 - 27*4
-bl      -25 * 4
-lwz     r0, 0x0014 (sp)     # default code
-b       draw_string_race_return
+InsertAt 0x801cd91c, 2
+    bl      3 * 4
+    lwz     r0, 0x0014 (sp)     # Default code.
+Return
 
-WriteTo 0x80159434
-b       draw_string_character_jump
-WriteTo 0x8016a380
-b       draw_string_course_jump
-WriteTo 0x801cd91c
-b       draw_string_race_jump
+Write 10
+    # Push stack.
+    stwu    sp, -0x10 (sp)
+    mflr    r0
+    stw     r0, 0x14 (sp)
+    stw     r31, 0x8 (sp)
+    # Draw texts.
+    li      r31, 0
+    lis     r5, text_sx@ha   # String address.
+    addi    r5, r5, text_sx@l
+    add     r5, r5, r31
+    lhz     r3, -4 (r5)         # X position.
+    lhz     r4, -2 (r5)         # Y position.
+BranchLinkAt 0x80019c4c         # JutReport / print text.
+Write 8
+    addi    r31, r31, text_size
+    cmplwi  r31, text_size * text_amount
+    blt+    -0x20
+    # Pop stack.
+    lwz     r31, 0x8 (sp)
+    lwz     r0, 0x14 (sp)
+    mtlr    r0
+    addi    sp, sp, 0x10
+    blr

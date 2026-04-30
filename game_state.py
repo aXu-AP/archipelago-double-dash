@@ -101,7 +101,11 @@ class MkddGameState():
         self.in_race_placement = dolphin.read_word(self.memory_addresses.in_race_placement_wx) - 1
 
         last_race_timer = self.race_timer
-        self.race_timer = dolphin.read_word(self.memory_addresses.race_timer_w)
+        timer_pointer = dolphin.read_word(self.memory_addresses.race_timer_pointer)
+        if timer_pointer:
+            self.race_timer = dolphin.read_word(timer_pointer)
+        else:
+            self.race_timer = 0
         # Remove 182 frame headstart and convert to seconds.
         # Close enough (to 1/10th of a second), altough probably exact formula should be investigated.
         # Rounded in favor of the player.
