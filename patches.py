@@ -245,6 +245,11 @@ car_item_box: dict[int, list[int]] = {
         0x481994dc,
     ],
 }
+disable_start_pos_shuffle: dict[int, list[int]] = {
+    0x8016c65c: [
+        0x60000000,
+    ],
+}
 draw_string: dict[int, list[int]] = {
     0x80159434: [
         0x4bea7d94,

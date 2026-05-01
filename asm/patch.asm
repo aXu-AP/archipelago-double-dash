@@ -284,6 +284,9 @@ InsertAt 0x8019a69c, 6
     mr      r30, r3             # Default code.
 Return
 
+REGION disable_start_pos_shuffle
+WriteTo 0x8016c65c
+    nop
 
 REGION draw_string
 # Call the print function in the character selection screen.

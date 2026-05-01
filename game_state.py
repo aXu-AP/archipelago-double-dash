@@ -26,6 +26,7 @@ class MkddGameState():
         self.global_items_total_weights: list[int] = []
         self.character_items: dict[game_data.Character, list[game_data.Item]] = {character:[] for character in game_data.CHARACTERS}
         self.global_items: list[game_data.Item] = []
+        self.starting_position: int = 7
 
         # Menu-level data.
         self.menu_pointer: int = 0
@@ -710,6 +711,22 @@ class MkddGameState():
             dolphin.write_float(kart_address + self.memory_addresses.kart_mass_f_offset, stats.mass + weight_addition)
             dolphin.write_float(kart_address + self.memory_addresses.kart_roll_f_offset, stats.roll)
             dolphin.write_float(kart_address + self.memory_addresses.kart_steer_f_offset, stats.steer + steer_addition)
+
+
+    def handle_starting_position(self) -> None:
+        player_position: int = dolphin.read_word(self.memory_addresses.starting_positions_wx)
+        if player_position != self.starting_position:
+            dolphin.write_word(self.memory_addresses.starting_positions_wx, self.starting_position)
+            for i in range(1, 8):
+                cpu_position = dolphin.read_word(self.memory_addresses.starting_positions_wx + i * 4)
+                # Push up if player should be below this.
+                if cpu_position >= self.starting_position and cpu_position < player_position:
+                    cpu_position += 1
+                # Push down if player should be above this.
+                elif cpu_position <= self.starting_position and cpu_position > player_position:
+                    cpu_position -= 1
+                dolphin.write_word(self.memory_addresses.starting_positions_wx + i * 4, cpu_position)
+
 
 
 def dolphin_write_half(address: int, value: int) -> None:

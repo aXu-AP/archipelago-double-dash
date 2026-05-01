@@ -203,6 +203,7 @@ def apply_patch():
     apply_dict_patch(patches.rolling_item_box)
     apply_dict_patch(patches.item_box)
     apply_dict_patch(patches.car_item_box)
+    apply_dict_patch(patches.disable_start_pos_shuffle)
     apply_dict_patch(patches.draw_string)
     apply_ar_code(ar_codes.lap_modifier)
     apply_ar_code(ar_codes.gp_course_selection)
@@ -252,6 +253,8 @@ def _give_item(ctx: MkddContext, item: MkddItemData) -> bool:
             ctx.game_state.global_items.append(item.meta["item"])
         else:
             ctx.game_state.character_items[item.meta["character"]].append(item.meta["item"])
+    elif item.name == items.PROGRESSIVE_STARTING_POSITION:
+        ctx.game_state.starting_position = max(0, ctx.game_state.starting_position - 1)
     elif item.name == items.TROPHY:
         ctx.trophies += 1
     elif item.name == items.VICTORY:
@@ -327,6 +330,7 @@ def update_game(ctx: MkddContext) -> None:
     ctx.game_state.apply_course_availability()
     ctx.game_state.apply_200cc()
     ctx.game_state.apply_kart_stats()
+    ctx.game_state.handle_starting_position()
 
 
 async def check_current_course_changed(ctx: MkddContext) -> None:
