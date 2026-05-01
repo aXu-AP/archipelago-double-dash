@@ -676,11 +676,7 @@ class MkddGameState():
             steer_addition = 0.0
             # Upgrades apply to the player only (by side-effect also bots using the same kart).
             if kart == self.active_kart:
-                # Engine upgrades by levels: .9, 1, 1.05, 1.1
-                if self.engine_upgrade_level == 0:
-                    speed_1_multiplier = .9
-                elif self.engine_upgrade_level > 1:
-                    speed_1_multiplier = .95 + self.engine_upgrade_level * .05
+                speed_1_multiplier = self.calculate_speed_multiplier()
                 for upgrade in self.kart_upgrades[i]:
                     if upgrade == game_data.KART_UPGRADE_ACC:
                         acceleration_1_addition += 1
@@ -711,6 +707,14 @@ class MkddGameState():
             dolphin.write_float(kart_address + self.memory_addresses.kart_mass_f_offset, stats.mass + weight_addition)
             dolphin.write_float(kart_address + self.memory_addresses.kart_roll_f_offset, stats.roll)
             dolphin.write_float(kart_address + self.memory_addresses.kart_steer_f_offset, stats.steer + steer_addition)
+
+
+    def calculate_speed_multiplier(self) -> float:
+        # Engine upgrades by levels: .9, 1, 1.05, 1.1
+        if self.engine_upgrade_level == 0:
+            return .9
+        elif self.engine_upgrade_level > 1:
+            return .95 + self.engine_upgrade_level * .05
 
 
     def handle_starting_position(self) -> None:
