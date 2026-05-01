@@ -19,6 +19,8 @@ class MkddMemAddresses():
     """Currently selected class. Updated after select character screen. 0 = 50cc, 3 = Mirror."""
     current_course_w: int
     """Currently loaded course. For values see game_data.COURSES"""
+    race_timer_pointer: int
+    """Increased each frame during the race (inc. countdown of 185 frames)."""
     current_lap_wx: int
     """Table of players' current lap from 1st player to 4th. 0 = 1st lap."""
     in_race_placement_wx: int
@@ -79,10 +81,6 @@ class MkddMemAddresses():
     """Table of available characters from Mario to King Boo (size 20). 1 = unlocked."""
     available_karts_bx: int
     """Table of available karts from Goo-Goo Buggy to Parade Kart (size 21). 1 = unlocked."""
-    race_counter_w: int
-    """Increased each time the player finishes."""
-    race_timer_w: int
-    """Increased each frame during the race (inc. countdown of 185 frames)."""
     lap_count_bx: int
     """Lap count for each course. Offsets from course ids."""
     max_vehicle_class_w: int
@@ -118,6 +116,7 @@ class MkddMemAddressesUsa(MkddMemAddresses):
     human_players_b = 0x803b147b
     vehicle_class_w = 0x803b146c
     current_course_w = 0x803cbd44
+    race_timer_pointer = 0x803cbe5c
     current_lap_wx = 0x8037ff60
     in_race_placement_wx = 0x8037ffa0
     current_course_ranking_w = 0x803b0f3b
@@ -187,12 +186,9 @@ class MkddMemAddressesUsa(MkddMemAddresses):
     kart_steer_f_offset = 0xb4
 
     # Custom addresses:
-    menu_pointer = 0x80001030
     available_characters_bx = 0x80001000
     available_karts_bx = 0x80001014
-    race_counter_w = 0x8000102c
-    race_timer_w = 0x80001034
-    lap_count_bx = 0x80005460 - 0x21 # First course has id of 0x21
+    menu_pointer = 0x80001030
     max_vehicle_class_w = 0x80001038
     available_cups_bx = 0x8000103c
     tt_items_bx = 0x80001041
@@ -204,6 +200,8 @@ class MkddMemAddressesUsa(MkddMemAddresses):
     text_x_offset_h = -4
     text_y_offset_h = -2
     text_amount = 5
+    
+    lap_count_bx = 0x80005460 - 0x21 # First course has id of 0x21
 
     menu_pointer_to_char_icons = {
         0x812BFACC: [

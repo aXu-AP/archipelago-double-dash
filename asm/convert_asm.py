@@ -1,37 +1,78 @@
 import os
 import subprocess
 
+END_OF_PROGRAM = 0x002E7379
+NEW_REGION = 0x00aabbaa
+NEW_BLOCK = 0x00aabbee
+
 def convert(input_path: str, out: list) -> None:
+    region_names: list[str] = ["patch"] # Default name before any regions are defined.
+    with open(input_path) as f:
+        while True:
+            line: str = f.readline()
+            if not line:
+                break
+            if line.startswith("REGION"):
+                region_names.append(line.split()[1])
+    
     if subprocess.call(["powerpc-gekko-as.exe", "-a32", "-mbig", "-mregnames", "-mgekko", input_path]) != 0:
         print(f"Couldn't convert file {input_path}.")
         return
     
-    out.append(f"{input_path.removesuffix(".asm")} = {{\n")
+    regions: dict[str, dict[int, int]] = {}
     with open("a.out", "rb") as obj:
         obj.seek(0x34)
-        last_word = 0
-        first_address = True
+        current_region_idx = 0
+        new_region_name: str = region_names[current_region_idx]
+        new_region: dict[int, int] = {}
+        new_address: int = 0
+        new_block: list[int] = []
         while True:
             read_bytes = obj.read(4)
             if len(read_bytes) < 4:
                 break
             word = int.from_bytes(read_bytes, "big")
-            # Beginning of the other data... Let's just hope this value is never met in the code.
-            if word == 0x002E7379:
-                out.append(f"    ]\n}}\n")
+            if word == END_OF_PROGRAM:
                 break
-            # Another hack. 2 sequential, identical words which could be valid addresses mark an offset for the code.
-            # Probably a safe assumption that this would never make sense in actual program data.
-            if last_word == word and word >= 0x8000_0000 and word < 0x817f_ffff:
-                out.pop()
-                if first_address:
-                    out.append(f"    0x{word:08x}: [\n")
-                    first_address = False
-                else:
-                    out.append(f"    ],\n    0x{word:08x}: [\n")
+            elif word == NEW_REGION:
+                if new_address != 0: # Finish current block.
+                    new_region[new_address] = new_block
+                    new_address = 0
+                    new_block = []
+                if len(new_region) > 0:
+                    regions[new_region_name] = new_region
+                current_region_idx += 1
+                new_region_name = region_names[current_region_idx]
+                new_region = {}
+                print(f"Region {new_region_name}")
+            elif word == NEW_BLOCK:
+                if new_address == 0:
+                    continue
+                new_region[new_address] = new_block
+                new_address = 0
+                new_block = []
+            elif new_address == 0:
+                # New block is just started, the first word should be used as the key.
+                new_address = word
+                print(f"  Block {new_address}")
             else:
-                out.append(f"        0x{word:08x},\n")
-            last_word = word
+                new_block.append(word)
+        
+        # At the end of file flush new blocks and regions.
+        if new_address != 0:
+            new_region[new_address] = new_block
+        if len(new_region) > 0:
+            regions[new_region_name] = new_region
+    
+    # Finally, write the contents.
+    for name, region in regions.items():
+        out.append(f"{name}: dict[int, list[int]] = {{\n")
+        for address, block in region.items():
+            out.append(f"    0x{address:08x}: [\n")
+            for line in block:
+                out.append(f"        0x{line:08x},\n")
+            out.append("    ],\n")
+        out.append("}\n")
 
 os.chdir("worlds/mario_kart_double_dash/asm")
 
