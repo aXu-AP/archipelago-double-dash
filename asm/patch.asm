@@ -38,6 +38,9 @@
     .set insert_adr, insert_adr + \lines * 4
 .endm
 
+.macro REGION name
+    .long 0x00aabbaa
+.endm
 
 .set available_characters_bx,   0x80001000 # Size 20
 .set available_karts_bx,        0x80001014 # Size 21
@@ -55,7 +58,7 @@
 .set text_amount, 5
 
 
-# SECTION character_selection
+REGION character_selection
 # Change character flag setter to a custom one (below) when picking random characters.
 # The original function must be left intact as it's used for cpu character selection also.
 .set jump_set_char_flags, 0x80165744 + 0x4 - 0x801638b0
@@ -121,7 +124,7 @@ WriteTo 0x80163a7c
     b       -0xc0
 
 
-# SECTION kart_selection
+REGION kart_selection
 # Just overwrite the kart unlock check, there's nothing we need from the original code.
 WriteTo 0x801dbc90
     lis     r5, menu_pointer@ha
@@ -136,7 +139,7 @@ WriteTo 0x801dbc90
     blr
 
 
-# SECTION menu_pointer
+REGION update_menu_pointer
 # Write the pointer while in the character selection menu.
 InsertAt 0x801599fc, 3
     lis     r3, menu_pointer@ha
@@ -153,7 +156,7 @@ InsertAt 0x8016a4e0, 4
 Return
 
 
-# SECTION cup_selection
+REGION cup_selection
 # Make All Cup Tour visible even in time trials (because we are using tt menu for gp also).
 WriteTo 0x80169f20
     nop
@@ -198,7 +201,7 @@ InsertAt 0x8016b034, 7
 Return
 
 
-# SECTION vehicle_class_selector
+REGION vehicle_class_selector
 # Move right.
 WriteTo 0x8015ee60
     lis     r3, max_vehicle_class_w@ha
@@ -219,7 +222,7 @@ WriteTo 0x8015edac
     nop
 
 
-# SECTION time_trial_items
+REGION time_trial_items
 # Driver
 InsertAt 0x802baf7c, 2
     lis     r4, tt_items_driver_b@ha
@@ -233,7 +236,7 @@ InsertAt 0x802bafa8, 2
 Return
 
 
-# SECTION item_shuffle
+REGION item_shuffle
 .set item_shuffle_jump, 0x8020cbc0
 .set item_shuffle_return_player, item_shuffle_jump + 8
 InsertAt item_shuffle_jump, 6
@@ -247,7 +250,7 @@ ReturnAt item_shuffle_return_player
 Return
 
 
-# SECTION item_box_p
+REGION item_box
 InsertAt 0x801fbe1c, 7
     cmplwi  r4, 0               # Skip for other karts than no. 0 (player).
     bne+    5*4
@@ -259,7 +262,7 @@ InsertAt 0x801fbe1c, 7
 Return
 
 
-# SECTION rolling_item_box_p
+REGION rolling_item_box
 InsertAt 0x8027d1e4, 7
     cmplwi  r4, 0               # Skip for other karts than no. 0 (player).
     bne+    5*4
@@ -271,7 +274,7 @@ InsertAt 0x8027d1e4, 7
 Return
 
 
-# SECTION car_item_box_p
+REGION car_item_box
 InsertAt 0x8019a69c, 6
     cmplwi  r4, 0               # Skip for other karts than no. 0 (player).
     bne+    4*4
@@ -282,7 +285,7 @@ InsertAt 0x8019a69c, 6
 Return
 
 
-# SECTION draw_string
+REGION draw_string
 # Call the print function in the character selection screen.
 InsertAt 0x80159434, 2
     bl      9 * 4

@@ -192,7 +192,18 @@ def apply_dict_patch(code: dict[int, list[int]]):
 
 
 def apply_patch():
-    apply_dict_patch(patches.patch)
+    apply_dict_patch(patches.character_selection)
+    apply_dict_patch(patches.kart_selection)
+    apply_dict_patch(patches.update_menu_pointer)
+    apply_dict_patch(patches.cup_selection)
+    apply_dict_patch(patches.vehicle_class_selector)
+    apply_dict_patch(patches.time_trial_items)
+    apply_dict_patch(patches.item_shuffle)
+    apply_dict_patch(patches.item_box)
+    apply_dict_patch(patches.rolling_item_box)
+    apply_dict_patch(patches.item_box)
+    apply_dict_patch(patches.car_item_box)
+    apply_dict_patch(patches.draw_string)
     apply_ar_code(ar_codes.lap_modifier)
     apply_ar_code(ar_codes.gp_course_selection)
     apply_ar_code(ar_codes.fireball_limit)

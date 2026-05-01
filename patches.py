@@ -1,6 +1,6 @@
 # This file is generated automatically by convert_asm.py.
 # To modify the patches, edit .asm files directly and rerun convert.
-patch = {
+character_selection: dict[int, list[int]] = {
     0x801638b0: [
         0x48001e99,
     ],
@@ -63,6 +63,8 @@ patch = {
         0x4200fff0,
         0x4bffff40,
     ],
+}
+kart_selection: dict[int, list[int]] = {
     0x801dbc90: [
         0x3ca08000,
         0x80a51030,
@@ -75,6 +77,8 @@ patch = {
         0x38600001,
         0x4e800020,
     ],
+}
+update_menu_pointer: dict[int, list[int]] = {
     0x801599fc: [
         0x4bea76d4,
     ],
@@ -94,6 +98,8 @@ patch = {
         0x806daa78,
         0x481693f4,
     ],
+}
+cup_selection: dict[int, list[int]] = {
     0x80169f20: [
         0x60000000,
     ],
@@ -142,6 +148,8 @@ patch = {
         0x4182ffe8,
         0x48169f08,
     ],
+}
+vehicle_class_selector: dict[int, list[int]] = {
     0x8015ee60: [
         0x3c608000,
         0x38631038,
@@ -159,6 +167,8 @@ patch = {
         0x7c601b78,
         0x60000000,
     ],
+}
+time_trial_items: dict[int, list[int]] = {
     0x802baf7c: [
         0x4bd461b8,
     ],
@@ -175,6 +185,8 @@ patch = {
         0x88841042,
         0x482b9e64,
     ],
+}
+item_shuffle: dict[int, list[int]] = {
     0x8020cbc0: [
         0x4bdf458c,
     ],
@@ -188,6 +200,8 @@ patch = {
         0x4820ba64,
         0x4820ba5c,
     ],
+}
+item_box: dict[int, list[int]] = {
     0x801fbe1c: [
         0x4be05350,
     ],
@@ -201,6 +215,8 @@ patch = {
         0x806daaa0,
         0x481fac98,
     ],
+}
+rolling_item_box: dict[int, list[int]] = {
     0x8027d1e4: [
         0x4bd83fa8,
     ],
@@ -214,6 +230,8 @@ patch = {
         0x7c7f1b78,
         0x4827c040,
     ],
+}
+car_item_box: dict[int, list[int]] = {
     0x8019a69c: [
         0x4be66b10,
     ],
@@ -226,6 +244,8 @@ patch = {
         0x7c7e1b78,
         0x481994dc,
     ],
+}
+draw_string: dict[int, list[int]] = {
     0x80159434: [
         0x4bea7d94,
     ],
