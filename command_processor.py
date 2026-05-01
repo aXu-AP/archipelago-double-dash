@@ -1,5 +1,6 @@
 import os
 from CommonClient import logger
+from NetUtils import JSONMessagePart
 from settings import get_settings
 from . import game_data, mkdd_client
 from .game_state import MkddGameState
@@ -37,28 +38,6 @@ class MkddCommandProcessor(ClientCommandProcessor):
             logger.info(f"Dolphin Status: {self.ctx.dolphin_status}")
 
 
-    def _cmd_unlocked(self) -> None:
-        """Show list of unlocked items."""
-        if not isinstance(self.ctx, mkdd_client.MkddContext):
-            return
-        gs: MkddGameState = self.ctx.game_state
-        logger.info(f"Trophies: {self.ctx.trophies}/{self.ctx.options.trophy_requirement}")
-        logger.info(f"Unlocked characters: {", ".join([game_data.CHARACTERS[c].name for c in gs.unlocked_characters])}")
-        logger.info(f"Unlocked karts (upgrades): {", ".join([f"{game_data.KARTS[c].name} ({(
-            ", ".join(u.name for u in gs.kart_upgrades[c]))})" for c in gs.unlocked_karts])}")
-        logger.info(f"Speed upgrades: {gs.engine_upgrade_level}")
-        logger.info(f"Max vehicle class: {["50cc", "100cc", "150cc", "Mirror"][gs.unlocked_vehicle_class]}")
-        logger.info(f"Starting position: {gs.starting_position + 1}")
-        logger.info(f"Unlocked cups: {", ".join([game_data.CUPS[c] for c in gs.unlocked_cups])}")
-        logger.info(f"Unlocked time trial courses: {", ".join([game_data.COURSES[c].name for c in gs.unlocked_courses])}")
-        logger.info("Unlocked item box items:")
-        if len(gs.global_items) > 0:
-            logger.info(f"Everybody: {", ".join([item.name for item in gs.global_items])}")
-        for character, items in gs.character_items.items():
-            if len(items) > 0:
-                logger.info(f"{character.name}: {", ".join([item.name for item in items])}")
-
-
     def _cmd_dolphin_process_name(self, dolphin_process_name: str) -> None:
         """Specify the name of the Dolphin process to connect to. "" for system default."""
         settings.dolphin_process_name = dolphin_process_name
@@ -85,3 +64,34 @@ class MkddCommandProcessor(ClientCommandProcessor):
         settings.rom_path = settings.RomPath()
         settings.dolphin_path = settings.DolphinPath()
         get_settings().save()
+
+
+    def _cmd_unlocked(self) -> None:
+        """Show list of unlocked items."""
+        if not isinstance(self.ctx, mkdd_client.MkddContext):
+            return
+        
+        def _msg(title: str, val: str) -> list[JSONMessagePart]:
+            return [
+                {"type": "text", "text": str(title)},
+                {"type": "color", "color": "cyan", "text": str(val)},
+            ]
+        
+        gs: MkddGameState = self.ctx.game_state
+        pr: function = self.ctx.ui.print_json
+        pr(_msg("Trophies: ", f"{self.ctx.trophies}/{self.ctx.options.trophy_requirement}"))
+        pr(_msg("Unlocked characters: ", ", ".join([game_data.CHARACTERS[c].name for c in gs.unlocked_characters])))
+        pr(_msg("Unlocked karts (upgrades): ", ", ".join([f"{game_data.KARTS[c].name} ({(
+            ", ".join(u.name for u in gs.kart_upgrades[c]))})" for c in gs.unlocked_karts])))
+        pr(_msg("Speed upgrades: ", f"{gs.engine_upgrade_level} ({int(gs.calculate_speed_multiplier() * 100)} % speed)"))
+        pr(_msg("Max vehicle class: ", ["50cc", "100cc", "150cc", "Mirror"][gs.unlocked_vehicle_class]))
+        pr(_msg("Starting position: ", gs.starting_position + 1))
+        pr(_msg("Unlocked cups: ", ", ".join([game_data.CUPS[c] for c in gs.unlocked_cups])))
+        pr(_msg("Unlocked time trial courses: ", ", ".join([game_data.COURSES[c].name for c in gs.unlocked_courses])))
+        item_box_msg = (_msg("Unlocked item box items", ""))
+        if len(gs.global_items) > 0:
+            item_box_msg.extend(_msg("\n    Everybody: ", ", ".join([item.name for item in gs.global_items])))
+        for character, items in gs.character_items.items():
+            if len(items) > 0:
+                item_box_msg.extend(_msg(f"\n    {character.name}: ", ", ".join([item.name for item in items])))
+        pr(item_box_msg)
