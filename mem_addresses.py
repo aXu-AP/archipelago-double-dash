@@ -25,7 +25,8 @@ class MkddMemAddresses():
     """Table of players' current lap from 1st player to 4th. 0 = 1st lap."""
     in_race_placement_wx: int
     """Table of player placements from 1st player to 4th. 1 = 1st place. -1 for unused player slots."""
-    current_course_ranking_w: int
+    starting_positions_wx: int
+    """Table of player placements in last race. 0 = 1st place. Used for starting positions in the next race. Length 8."""
     total_ranking_w: int
     """Player's placement in the current cup. 0 = 1st place."""
     total_points_wx: int
@@ -41,7 +42,7 @@ class MkddMemAddresses():
     max_speed_f: int
     """Max kart speed which cannot be exceeded even with mushrooms. Default 200."""
     all_cup_tour_contents_wx: int
-    """All cup tour course ids - uses ids 0 (Luigi Circuit) - 16 (Rainbow Road). Lenght 16, first value is unused."""
+    """All cup tour course ids - uses ids 0 (Luigi Circuit) - 16 (Rainbow Road). Length 16, first value is unused."""
     cup_contents_wx: int
     """Table of cup course ids, name and preview images in cup order (ie. from Luigi Circuit to Rainbow Road).
     Example: Mushroom cup course 3: course id = 2*12, name = 2*12+4, preview = 2*12+8."""
@@ -119,7 +120,7 @@ class MkddMemAddressesUsa(MkddMemAddresses):
     race_timer_pointer = 0x803cbe5c
     current_lap_wx = 0x8037ff60
     in_race_placement_wx = 0x8037ffa0
-    current_course_ranking_w = 0x803b0f3b
+    starting_positions_wx = 0x803b0f38
     total_ranking_w = 0x803b1260
     total_points_wx = 0x803b11cc
     game_ticks_w = 0x803b0754 # Currently unused.

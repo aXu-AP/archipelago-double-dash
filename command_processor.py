@@ -48,6 +48,7 @@ class MkddCommandProcessor(ClientCommandProcessor):
             ", ".join(u.name for u in gs.kart_upgrades[c]))})" for c in gs.unlocked_karts])}")
         logger.info(f"Speed upgrades: {gs.engine_upgrade_level}")
         logger.info(f"Max vehicle class: {["50cc", "100cc", "150cc", "Mirror"][gs.unlocked_vehicle_class]}")
+        logger.info(f"Starting position: {gs.starting_position + 1}")
         logger.info(f"Unlocked cups: {", ".join([game_data.CUPS[c] for c in gs.unlocked_cups])}")
         logger.info(f"Unlocked time trial courses: {", ".join([game_data.COURSES[c].name for c in gs.unlocked_courses])}")
         logger.info("Unlocked item box items:")

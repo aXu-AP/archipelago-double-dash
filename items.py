@@ -47,6 +47,7 @@ PROGRESSIVE_CLASS = "Progressive CC"
 PROGRESSIVE_CUP_SKIP = "Progressive GP Race Skip"
 PROGRESSIVE_TIME_TRIAL_ITEM = "Progressive Time Trial Item"
 PROGRESSIVE_ENGINE = "Progressive Speed Upgrade"
+PROGRESSIVE_STARTING_POSITION = "Progressive Starting Position"
 RANDOM_ITEM = "Nothing"
 TROPHY = "Trophy"
 VICTORY = "Victory"
@@ -101,6 +102,8 @@ for item in game_data.ITEMS:
                 name, classification, ItemType.ITEM_UNLOCK, count = 0,
                 meta = {"character": character, "item": item}, tags = TAG_ITEMS_FOR_X
             ))
+
+data_table.append(MkddItemData(PROGRESSIVE_STARTING_POSITION, USEF, count=7))
 
 # Used by Universal Tracker glitched logic.
 data_table.append(MkddItemData(SKIP_DIFFICULTY, PROG, count = 0))
