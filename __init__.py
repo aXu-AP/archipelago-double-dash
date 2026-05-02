@@ -309,12 +309,15 @@ class MkddWorld(World):
     def fill_slot_data(self) -> dict[str, Any]:
         # Fill in lap data into custom lap table.
         # Priority: custom > short > vanilla.
+        new_lap_counts: dict[str, int] = {}
         for course in game_data.RACE_COURSES:
-            if course.name not in self.options.custom_lap_counts:
-                if self.options.shorter_courses:
-                    self.options.custom_lap_counts[course] = int(math.ceil(course.laps * 2 / 3))
-                else:
-                    self.options.custom_lap_counts[course] = course.laps
+            if course.name in self.options.custom_lap_counts:
+                new_lap_counts[course.name] = self.options.custom_lap_counts[course.name]
+            elif self.options.shorter_courses:
+                new_lap_counts[course.name] = int(math.ceil(course.laps * 2 / 3))
+            else:
+                new_lap_counts[course.name] = course.laps
+        self.options.custom_lap_counts.value = new_lap_counts
         return {
             "version": version.get_version(),
             "cups_courses": self.cups_courses,
