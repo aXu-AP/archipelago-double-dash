@@ -277,7 +277,10 @@ class MkddWorld(World):
                     sum([item.weight_table[i] for item in items_per_character[character]])
                 )
 
-        item_pool += [self.create_item(self.get_filler_item_name()) for _ in range(total_locations - len(item_pool))]
+        remaining_item_count = total_locations - len(item_pool)
+        trap_count = int(remaining_item_count * self.options.trap_chance / 100)
+        item_pool += [self.create_item(items.OVERLAPPING_START_TRAP) for _ in range(trap_count)]
+        item_pool += [self.create_item(self.get_filler_item_name()) for _ in range(remaining_item_count - trap_count)]
         
         self.multiworld.itempool += item_pool
 
