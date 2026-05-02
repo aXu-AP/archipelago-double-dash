@@ -110,6 +110,7 @@ class CourseType(IntEnum):
     RACE = 0
     BATTLE = 1
     CEREMONY = 2
+    MENU = 3
 
 class Course(NamedTuple):
     name: str = ""
@@ -142,16 +143,17 @@ RACE_COURSES = [
 ]
 
 COURSES = RACE_COURSES + [
-    # Battle courses:
     Course("Cookie Land", 0x3a, CourseType.BATTLE),
     Course("Pipe Plaza", 0x3b, CourseType.BATTLE),
     Course("Block City", 0x36, CourseType.BATTLE),
     Course("Nintendo Gamecube", 0x35, CourseType.BATTLE),
     Course("Luigi's Mansion", 0x34, CourseType.BATTLE),
     Course("Tilt-A-Kart", 0x38, CourseType.BATTLE),
-    # Award Ceremony
+    
     Course("Award Ceremony", 0x44, CourseType.CEREMONY),
+    Course("Menu", 0, CourseType.MENU),
 ]
+
 
 class Modes(IntEnum):
     TIMETRIAL = 1

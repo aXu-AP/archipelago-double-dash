@@ -141,6 +141,14 @@ class AddCustomItemBoxes(DefaultOnToggle):
     """Moves some item boxes to interesting places, like shortcuts."""
     display_name = "Add Custom Item Boxes"
 
+class TrapChance(Range):
+    """Percentage of how many filler items are converted into traps."""
+    display_name = "Trap Chance"
+    range_start = 0
+    range_end = 100
+    default = 5
+
+
 @dataclass
 class MkddOptions(PerGameCommonOptions):
     goal: Goal
@@ -166,6 +174,8 @@ class MkddOptions(PerGameCommonOptions):
 
     item_boxes_as_locations: ItemBoxesAsLocations
     add_custom_item_boxes: AddCustomItemBoxes
+    
+    trap_chance: TrapChance
 
     start_inventory_from_pool: StartInventoryPool
 

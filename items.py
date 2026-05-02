@@ -19,6 +19,8 @@ TAG_CHARACTERS = "Characters"
 TAG_KARTS = "Karts"
 TAG_ITEMS = "Items"
 TAG_KART_UPGRADES = "Kart Upgrades"
+TAG_TRAPS = "Trap"
+TAG_SYNC_ONLY = "*Sync/Online Only"
 
 class ItemType(Enum):
     OTHER = 0
@@ -52,6 +54,8 @@ RANDOM_ITEM = "Nothing"
 TROPHY = "Trophy"
 VICTORY = "Victory"
 SKIP_DIFFICULTY = "Skip Difficulty Calculation"
+
+OVERLAPPING_START_TRAP = "Overlapping Start Trap"
 
 def get_item_name_tt_course(course: str) -> str:
     return f"{course} Time Trial"
@@ -104,6 +108,7 @@ for item in game_data.ITEMS:
             ))
 
 data_table.append(MkddItemData(PROGRESSIVE_STARTING_POSITION, USEF, count=7))
+data_table.append(MkddItemData(OVERLAPPING_START_TRAP, TRAP, count=0, tags={TAG_TRAPS, TAG_SYNC_ONLY}))
 
 # Used by Universal Tracker glitched logic.
 data_table.append(MkddItemData(SKIP_DIFFICULTY, PROG, count = 0))
@@ -112,7 +117,7 @@ name_to_id: dict[str, int] = {item.name:id for (id, item) in enumerate(data_tabl
 
 group_names: set[str] = set()
 for data in data_table:
-    group_names.update(data.tags)
+    group_names.update({tag for tag in data.tags if not tag.startswith("*")})
 groups: dict[str: set[str]] = {
     group:{data.name for data in data_table if group in data.tags}
     for group in group_names

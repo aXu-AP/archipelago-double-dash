@@ -46,7 +46,7 @@ class MkddContext(CommonContext):
         """
         super().__init__(server_address, password)
         # Client data.
-        self.mkdd_items_received: list[tuple[NetworkItem, int]] = []
+        self.unhandled_items: list[tuple[NetworkItem, int]] = []
         self.last_item_handled: int = -1
         self.last_rcvd_index: int = -1
         self.mkdd_locations_checked: set[int] = set()
@@ -69,7 +69,7 @@ class MkddContext(CommonContext):
         """
         Disconnect the client from the server and reset game state variables.
         """
-        self.mkdd_items_received = []
+        self.unhandled_items = []
         self.last_rcvd_index = -1
         self.last_item_handled = -1
         self.mkdd_locations_checked = set()
@@ -133,9 +133,9 @@ class MkddContext(CommonContext):
                 if args["index"] >= self.last_rcvd_index:
                     self.last_rcvd_index = args["index"]
                     for item in args["items"]:
-                        self.mkdd_items_received.append((item, self.last_rcvd_index))
+                        self.unhandled_items.append((item, self.last_rcvd_index))
                         self.last_rcvd_index += 1
-                self.mkdd_items_received.sort(key=lambda v: v[1])
+                self.unhandled_items.sort(key=lambda v: v[1])
             case "RoomUpdate":
                 self.mkdd_locations_checked.update(args.get("checked_locations", set()))
             case "PrintJSON":
@@ -222,14 +222,16 @@ def sync_ui(ctx: MkddContext) -> None:
         ctx.ui.update_trophies(ctx.trophies, ctx.options.trophy_requirement)
 
 
-def _give_item(ctx: MkddContext, item: MkddItemData) -> bool:
+def give_item(ctx: MkddContext, item: MkddItemData) -> None:
     """
     Give an item to the player in-game.
 
     :param ctx: Mario Kart Double Dash client context.
     :param item_name: Name of the item to give.
-    :return: Whether the item was successfully given.
     """
+    if ctx.last_item_handled < 0 and items.TAG_SYNC_ONLY in item.tags:
+        return
+
     if item.item_type == ItemType.CHARACTER:
         ctx.game_state.unlocked_characters.append(item.address)
     elif item.item_type == ItemType.KART:
@@ -255,32 +257,31 @@ def _give_item(ctx: MkddContext, item: MkddItemData) -> bool:
             ctx.game_state.character_items[item.meta["character"]].append(item.meta["item"])
     elif item.name == items.PROGRESSIVE_STARTING_POSITION:
         ctx.game_state.starting_position = max(0, ctx.game_state.starting_position - 1)
+    elif item.name == items.OVERLAPPING_START_TRAP:
+        ctx.game_state.overlapping_start_traps += 1
     elif item.name == items.TROPHY:
         ctx.trophies += 1
     elif item.name == items.VICTORY:
         ctx.victory = True
-    
-    return True
 
 
-async def give_items(ctx: MkddContext) -> None:
+def give_items(ctx: MkddContext) -> None:
     """
     Give the player all outstanding items they have yet to receive.
 
     :param ctx: Mario Kart Double Dash client context.
     """
-    # Loop through items to give.
-    for item, idx in ctx.mkdd_items_received:
-        # If the item's index is greater than the player's expected index, give the player the item.
+    if len(ctx.unhandled_items) == 0:
+        return
+    last_item = ctx.last_item_handled
+    for item, idx in ctx.unhandled_items:
         if ctx.last_item_handled < idx:
-            # Attempt to give the item and increment the expected index.
-            while not _give_item(ctx, items.data_table[item.item]):
-                await asyncio.sleep(0.01)
-
-            # Increment the expected index.
-            ctx.last_item_handled = idx
-            ctx.game_state.sync_state()
-            sync_ui(ctx)
+            give_item(ctx, items.data_table[item.item])
+            last_item = idx
+    ctx.last_item_handled = last_item
+    ctx.game_state.sync_state()
+    sync_ui(ctx)
+    ctx.unhandled_items.clear()
 
 
 async def check_locations(ctx: MkddContext) -> None:
@@ -331,6 +332,7 @@ def update_game(ctx: MkddContext) -> None:
     ctx.game_state.apply_200cc()
     ctx.game_state.apply_kart_stats()
     ctx.game_state.handle_starting_position()
+    ctx.game_state.handle_overlapping_start_trap()
 
 
 async def check_current_course_changed(ctx: MkddContext) -> None:
@@ -340,7 +342,7 @@ async def check_current_course_changed(ctx: MkddContext) -> None:
 
     :param ctx: Mario Kart Double Dash client context.
     """
-    if ctx.game_state.check_current_course_changed():
+    if ctx.game_state.course_changed:
         # Send a Bounced message containing the new stage name to all trackers connected to the current slot.
         data_to_send = {"mkdd_course_name": ctx.game_state.current_course.name}
         message = {
@@ -366,7 +368,7 @@ async def dolphin_sync_task(ctx: MkddContext) -> None:
                 if ctx.ui:
                     ctx.ui.show_launch_button(False)
                 if ctx.slot is not None:
-                    await give_items(ctx)
+                    give_items(ctx)
 
                     ctx.game_state.update()
                     await check_current_course_changed(ctx)
@@ -403,7 +405,7 @@ async def dolphin_sync_task(ctx: MkddContext) -> None:
                         ctx.dolphin_status = CONNECTION_CONNECTED_STATUS
                         apply_patch()
                         ctx.game_state.sync_state()
-                        await give_items(ctx)
+                        give_items(ctx)
                 else:
                     logger.info(f"Connection to {dolphin_name} failed, attempting again in 5 seconds...")
                     ctx.dolphin_status = CONNECTION_LOST_STATUS

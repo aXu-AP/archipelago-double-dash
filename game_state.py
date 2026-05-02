@@ -27,6 +27,7 @@ class MkddGameState():
         self.character_items: dict[game_data.Character, list[game_data.Item]] = {character:[] for character in game_data.CHARACTERS}
         self.global_items: list[game_data.Item] = []
         self.starting_position: int = 7
+        self.overlapping_start_traps: int = 0
 
         # Menu-level data.
         self.menu_pointer: int = 0
@@ -38,8 +39,10 @@ class MkddGameState():
         self.selected_course: int = 0
         # Course-level data.
         self.current_course: game_data.Course = game_data.Course()
+        self.course_changed: bool = False
         self.total_ranking: int = 0
         self.total_points: int = 0
+        self.current_starting_position: int = 0
         # Race-level data.
         self.in_game: bool = False
         self.human_players: int = 0
@@ -94,12 +97,27 @@ class MkddGameState():
         # Course-level data.
         self.total_ranking = dolphin.read_word(self.memory_addresses.total_ranking_w)
         self.total_points = dolphin.read_word(self.memory_addresses.total_points_wx)
+        self.current_starting_position = dolphin.read_word(self.memory_addresses.starting_positions_wx)
         # Race-level data.
         self.human_players = dolphin.read_byte(self.memory_addresses.human_players_b)
         self.current_lap = dolphin.read_word(self.memory_addresses.current_lap_wx) + 1
-        self.item_box = dolphin.read_word(self.memory_addresses.item_box_p)
         # Get placement and modify it to be 0-based for less confusion (rankings are also 0-based).
         self.in_race_placement = dolphin.read_word(self.memory_addresses.in_race_placement_wx) - 1
+
+        # Course changing. Reset current course if in menu.
+        if self.menu_pointer != 0 and self.current_course.id != 0:
+            dolphin.write_word(self.memory_addresses.current_course_w, 0)
+        course_id = dolphin.read_word(self.memory_addresses.current_course_w)
+        courses: list[game_data.Course] = [c for c in game_data.COURSES if c.id == course_id]
+        if course_id != self.current_course.id and len(courses) > 0:
+            new_course = courses[0]
+            logger.debug(f"Course changed: {new_course.name}")
+            self.current_course = new_course
+            self.course_changed = True
+            dolphin.write_word(self.memory_addresses.item_box_p, 0) # Clean up item box data.
+        else:
+            self.course_changed = False
+            self.item_box = dolphin.read_word(self.memory_addresses.item_box_p)
 
         last_race_timer = self.race_timer
         timer_pointer = dolphin.read_word(self.memory_addresses.race_timer_pointer)
@@ -136,20 +154,6 @@ class MkddGameState():
         dolphin.write_word(self.memory_addresses.max_vehicle_class_w, self.unlocked_vehicle_class)
         dolphin.write_bytes(self.memory_addresses.tt_items_bx, game_data.TT_ITEM_TABLE[self.time_trial_items])
     
-
-    def check_current_course_changed(self) -> bool:
-        """Check if the player has moved to a new stage."""
-        course_id = dolphin.read_word(self.memory_addresses.current_course_w)
-        courses: list[game_data.Course] = [c for c in game_data.COURSES if c.id == course_id]
-        if len(courses) > 0:
-            new_course = courses[0]
-            if new_course != self.current_course:
-                self.current_course = new_course
-                dolphin.write_word(self.memory_addresses.item_box_p, 0) # Clean up item box data.
-                return True
-            else:
-                return False
-
 
     def check_item_box_locations(self) -> set[str]:
         """Check for locations that are granted from item boxes."""
@@ -719,19 +723,39 @@ class MkddGameState():
 
 
     def handle_starting_position(self) -> None:
-        player_position: int = dolphin.read_word(self.memory_addresses.starting_positions_wx)
-        if player_position != self.starting_position:
-            dolphin.write_word(self.memory_addresses.starting_positions_wx, self.starting_position)
-            for i in range(1, 8):
-                cpu_position = dolphin.read_word(self.memory_addresses.starting_positions_wx + i * 4)
-                # Push up if player should be below this.
-                if cpu_position >= self.starting_position and cpu_position < player_position:
-                    cpu_position += 1
-                # Push down if player should be above this.
-                elif cpu_position <= self.starting_position and cpu_position > player_position:
-                    cpu_position -= 1
-                dolphin.write_word(self.memory_addresses.starting_positions_wx + i * 4, cpu_position)
+        """Forces the player to start at the right position."""
+        if self.current_starting_position == self.starting_position:
+            return
+        
+        dolphin.write_word(self.memory_addresses.starting_positions_wx, self.starting_position)
+        for i in range(1, 8):
+            cpu_position = dolphin.read_word(self.memory_addresses.starting_positions_wx + i * 4)
+            # Push up if player should be below this.
+            if cpu_position >= self.starting_position and cpu_position < self.current_starting_position:
+                cpu_position += 1
+            # Push down if player should be above this.
+            elif cpu_position <= self.starting_position and cpu_position > self.current_starting_position:
+                cpu_position -= 1
+            dolphin.write_word(self.memory_addresses.starting_positions_wx + i * 4, cpu_position)
+        logger.debug(f"Adjusted starting position to {self.starting_position}")
 
+
+    def handle_overlapping_start_trap(self) -> None:
+        """Forces all karts into the same starting position if trap is received."""
+        if self.overlapping_start_traps == 0:
+            return
+        
+        if self.course_changed and self.current_course in game_data.RACE_COURSES:
+            self.overlapping_start_traps = max(0, self.overlapping_start_traps - 1)
+            logger.debug(f"Removed overlap trap. Traps remaining: {self.overlapping_start_traps}")
+
+        p2_pos: int = dolphin.read_word(self.memory_addresses.starting_positions_wx + 4)
+        if p2_pos == self.current_starting_position:
+            return
+        
+        for i in range(8):
+            dolphin.write_word(self.memory_addresses.starting_positions_wx + i * 4, self.starting_position)
+        logger.debug(f"Applied overlap trap. Traps remaining: {self.overlapping_start_traps}")
 
 
 def dolphin_write_half(address: int, value: int) -> None:
