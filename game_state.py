@@ -715,6 +715,7 @@ class MkddGameState():
             return .9
         elif self.engine_upgrade_level > 1:
             return .95 + self.engine_upgrade_level * .05
+        return 1.0
 
 
     def handle_starting_position(self) -> None:
