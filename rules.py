@@ -36,8 +36,11 @@ class MkddRules:
             if locations.TAG_REQUIRES_BOOST in location.tags:
                 self.add_loc_rule(location.name, lambda state: has_boost_item(state, self.player))
             if locations.TAG_TT in location.tags:
+                tt_difficulty: int = location.difficulty
+                if not self.world.options.speed_upgrades and self.world.options.kart_upgrades < 2:
+                    tt_difficulty -= 8 # Prevent generation failures if stupid settings.
                 self.add_loc_rule(location.name,
-                        lambda state, difficulty = location.difficulty:
+                        lambda state, difficulty = tt_difficulty:
                             calculate_player_level(state, self.player, kart_only = True) + 
                             self.world.options.logic_difficulty +
                             state.count(items.PROGRESSIVE_TIME_TRIAL_ITEM, self.player) * 4 >= difficulty)
