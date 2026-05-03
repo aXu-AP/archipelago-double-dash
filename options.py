@@ -76,6 +76,10 @@ class Mirror200cc(Toggle):
     """Mirror mode is 200cc if enabled."""
     display_name = "Mirror is 200cc"
 
+class Faster50cc100cc(Toggle):
+    """Makes 50cc as fast as 100cc and 100cc closer to 150cc."""
+    display_name = "Faster 50cc and 100cc"
+
 class ShorterCourses(Toggle):
     """Makes most courses 2 laps long. Might make the flow of the game better."""
     display_name = "Shorter Courses"
@@ -161,6 +165,7 @@ class MkddOptions(PerGameCommonOptions):
     all_cup_tour_length: AllCupTourLength
 
     mirror_200cc: Mirror200cc
+    faster_50cc_100cc: Faster50cc100cc
     shorter_courses: ShorterCourses
     custom_lap_counts: CustomLapCounts
 
@@ -187,6 +192,7 @@ class MkddOptions(PerGameCommonOptions):
             "all_cup_tour_length",
             "custom_lap_counts",
             "mirror_200cc",
+            "faster_50cc_100cc",
             "item_boxes_as_locations",
             "add_custom_item_boxes",
         )

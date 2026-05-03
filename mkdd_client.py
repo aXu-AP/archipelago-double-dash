@@ -330,7 +330,7 @@ def update_game(ctx: MkddContext) -> None:
     ctx.game_state.apply_lap_counts()
     ctx.game_state.handle_all_cup_tour()
     ctx.game_state.apply_course_availability()
-    ctx.game_state.apply_200cc()
+    ctx.game_state.apply_speed_modifiers()
     ctx.game_state.apply_kart_stats()
     ctx.game_state.handle_starting_position()
     ctx.game_state.handle_overlapping_start_trap()

@@ -652,14 +652,21 @@ class MkddGameState():
                 dolphin.write_word(self.memory_addresses.menu_course_w, self.selected_course)
 
 
-    def apply_200cc(self) -> None:
-        """Makes mirror mode 200cc if option is enabled."""
+    def apply_speed_modifiers(self) -> None:
+        """Makes 50cc, 100cc and mirror mode faster if options are enabled."""
         if self.mode == game_data.Modes.GRANDPRIX and self.vehicle_class == 3 and self.options.mirror_200cc:
-            dolphin.write_float(self.memory_addresses.speed_multiplier_150cc_f, 1.4)
+            dolphin.write_float(self.memory_addresses.class_speed_multipliers_fx + 8, 1.4)
             dolphin.write_float(self.memory_addresses.max_speed_f, 250)
         else:
-            dolphin.write_float(self.memory_addresses.speed_multiplier_150cc_f, 1.15)
+            dolphin.write_float(self.memory_addresses.class_speed_multipliers_fx + 8, 1.15)
             dolphin.write_float(self.memory_addresses.max_speed_f, 200)
+        
+        if self.options.faster_50cc_100cc:
+            dolphin.write_float(self.memory_addresses.class_speed_multipliers_fx + 0, 1.0)
+            dolphin.write_float(self.memory_addresses.class_speed_multipliers_fx + 4, 1.1)
+        else:
+            dolphin.write_float(self.memory_addresses.class_speed_multipliers_fx + 0, 0.9)
+            dolphin.write_float(self.memory_addresses.class_speed_multipliers_fx + 4, 1.0)
 
 
     def apply_kart_stats(self) -> None:
