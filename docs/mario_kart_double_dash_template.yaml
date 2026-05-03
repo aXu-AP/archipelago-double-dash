@@ -101,20 +101,19 @@ Mario Kart Double Dash:
 
   items_per_character: 3
     # How many item unlocks there are per character.
-    # Note: this setting raises the amount of items in item pool considerably, and might cause the generation to fail.
     # Minimum value is 0
-    # Maximum value is 4
+    # Maximum value is 5
 
   start_items_per_character: 1
     # Unlocks some items for the characters straight away.
     # Minimum value is 0
     # Maximum value is 5
 
-  kart_upgrades: 10
+  kart_upgrades: 20
     # How many random kart stat upgrades there are total.
     # Unlike progressive engine upgrades, these upgrades are tied to certain vehicles.
     # Minimum value is 0
-    # Maximum value is 40
+    # Maximum value is 100
 
   speed_upgrades: true
     # Adds 3 Progressive Speed Upgrades to the pool.
@@ -125,6 +124,11 @@ Mario Kart Double Dash:
   item_boxes_as_locations: interesting_locations
     # Makes some item boxes count as checks.
     # Possible values: disabled, interesting_locations
+
+  trap_chance: 5
+    # Percentage of how many filler items are converted into traps.
+    # Minimum value is 0
+    # Maximum value is 100
 
   # Item & Location Options
   local_items: []
