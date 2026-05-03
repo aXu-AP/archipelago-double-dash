@@ -85,6 +85,10 @@ Mario Kart Double Dash:
     # Mirror mode is 200cc if enabled.
     # Possible values: true, false
 
+  faster_50cc_100cc: false
+    # Makes 50cc as fast as 100cc and 100cc closer to 150cc.
+    # Possible values: true, false
+
   shorter_courses: false
     # Makes most courses 2 laps long. Might make the flow of the game better.
     # Possible values: true, false
