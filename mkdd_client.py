@@ -51,6 +51,7 @@ class MkddContext(CommonContext):
         self.last_rcvd_index: int = -1
         self.mkdd_locations_checked: set[int] = set()
         self.victory_sent: bool = False
+        self.latest_error: str|None = None
 
         self.dolphin_sync_task: Optional[asyncio.Task[None]] = None
         self.dolphin_status: str = CONNECTION_INITIAL_STATUS
@@ -381,16 +382,13 @@ async def dolphin_sync_task(ctx: MkddContext) -> None:
                 else:
                     ctx.game_state.print_ingame(304, 13, "Waiting connection to server", 0)
                 ctx.game_state.flush_ingame_text() # Show text regardless of connection to server.
-                if dolphin.read_bytes(0x80000000, 6) != b"GM4E01":
-                    logger.info(f"Connection to {dolphin_name} lost, reconnecting...")
-                    ctx.dolphin_status = CONNECTION_LOST_STATUS
                 await asyncio.sleep(0.1)
             else:
                 if ctx.ui:
                     ctx.ui.set_launch_func(ctx.command_processor._cmd_launch)
                     ctx.ui.show_launch_button(True)
                 if ctx.dolphin_status == CONNECTION_CONNECTED_STATUS:
-                    logger.info(f"Connection to {dolphin_name} lost, reconnecting...")
+                    logger.warning(f"Connection to {dolphin_name} lost, reconnecting...")
                     ctx.dolphin_status = CONNECTION_LOST_STATUS
                 logger.info(f"Attempting to connect to {dolphin_name}...")
                 dolphin.hook()
@@ -411,10 +409,14 @@ async def dolphin_sync_task(ctx: MkddContext) -> None:
                     ctx.dolphin_status = CONNECTION_LOST_STATUS
                     await asyncio.sleep(5)
                     continue
-        except Exception:
+        except Exception as error:
             dolphin.un_hook()
-            logger.info(f"Connection to {dolphin_name} failed, attempting again in 5 seconds...")
-            logger.warning(traceback.format_exc())
+            if str(error).startswith("Could not write memory") or str(error).startswith("Could not read memory"):
+                logger.warning(f"Connection to {dolphin_name} was lost.")
+            else:
+                logger.warning("Unexpected error happened. Use /error to get details.")
+            logger.debug(traceback.format_exc())
+            ctx.latest_error = traceback.format_exc()
             ctx.dolphin_status = CONNECTION_LOST_STATUS
             await asyncio.sleep(5)
             continue

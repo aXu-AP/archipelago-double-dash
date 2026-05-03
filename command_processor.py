@@ -66,6 +66,14 @@ class MkddCommandProcessor(ClientCommandProcessor):
         get_settings().save()
 
 
+    def _cmd_error(self) -> None:
+        """Shows the latest exception if any."""
+        if self.ctx.latest_error:
+            logger.info(self.ctx.latest_error)
+        else:
+            logger.info("No errors caught!")
+
+
     def _cmd_unlocked(self) -> None:
         """Show list of unlocked items."""
         if not isinstance(self.ctx, mkdd_client.MkddContext):
