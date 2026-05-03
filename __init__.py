@@ -323,6 +323,20 @@ class MkddWorld(World):
             rules.add_item(state, self.player, item, -1)
         return change
 
+    def extend_hint_information(self, hint_data: dict[int, dict[int, str]]):
+        hints: dict[int, str] = {}
+        for course_no, course in enumerate(game_data.RACE_COURSES):
+            entrance: str = ""
+            for cup_no, cup in enumerate(self.cups_courses):
+                if course_no in cup:
+                    entrance = game_data.CUPS[cup_no]
+                    break
+            for loc in self.multiworld.get_locations(self.player):
+                if course.name in locations.data_table[loc.address].tags:
+                    hints[loc.address] = entrance
+        print(hint_data)
+        hint_data[self.player] = hints
+
     def fill_slot_data(self) -> dict[str, Any]:
         # Fill in lap data into custom lap table.
         # Priority: custom > short > vanilla.
