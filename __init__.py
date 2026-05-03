@@ -59,6 +59,8 @@ class MkddWorld(World):
         self.cups_courses: list[list[int]] = []
         self.character_item_total_weights: dict[str, list[int]] = {}
         self.global_items_total_weights: list[int] = []
+
+        self.logger: logging.Logger = logging.getLogger("MKDD Logger")
         super(MkddWorld, self).__init__(world, player)
 
     def generate_early(self):
@@ -67,7 +69,7 @@ class MkddWorld(World):
         if self.options.grand_prix_trophies:
             max_requirement += 16
         if self.options.trophy_requirement.value > max_requirement:
-            logging.getLogger("MKDD Logger").warning(f"{self.player_name}: Requirement for trophies is higher than available trophies. Adding extra trophies...")
+            self.logger.warning(f"{self.player_name}: Requirement for trophies is higher than available trophies. Adding extra trophies...")
             self.options.shuffle_extra_trophies.value = self.options.trophy_requirement.value
             if self.options.grand_prix_trophies:
                 self.options.shuffle_extra_trophies.value -= 16
@@ -189,7 +191,7 @@ class MkddWorld(World):
             # Set minimum difficulty on "hard", otherwise the seed can be unbeatable.
             if self.options.logic_difficulty.value < game_data.ENGINE_UPGRADE_USEFULNESS:
                 self.options.logic_difficulty.value = game_data.ENGINE_UPGRADE_USEFULNESS
-                logging.getLogger("MKDD Logger").warning(f"{self.player_name}: No engine upgrades are available, setting difficulty to hard.")
+                self.logger.warning(f"{self.player_name}: No engine upgrades are available, setting difficulty to hard.")
         for item in precollected:
             self.multiworld.push_precollected(self.create_item(item))
 
@@ -268,11 +270,6 @@ class MkddWorld(World):
                     # Refill the pool with some balancing.
                     items_left = items_left_characters_pool.copy()
                     weights = [10 - item.usefulness for item in items_left]
-                # There can be too much of these, so generate only as long as there's enough locations.
-                if len(item_pool) == total_locations:
-                    break
-            if len(item_pool) == total_locations:
-                break
         # In case the user has specified no items, force at least one boost item for all locations be reachable.
         if self.options.items_for_everybody + self.options.items_per_character + self.options.start_items_per_character == 0:
             item_pool.append(self.create_item(items.get_item_name_character_item(game_data.CHARACTERS[0].name, game_data.ITEM_MUSHROOM.name)))
@@ -284,6 +281,15 @@ class MkddWorld(World):
                 self.character_item_total_weights[character.name].append(
                     sum([item.weight_table[i] for item in items_per_character[character]])
                 )
+
+        # Remove some items if there are more items than locations.
+        if len(item_pool) > total_locations:
+            self.logger.warning(f"{self.player_name}: Too many items, removing {len(item_pool) - total_locations} items from the pool.")
+        while len(item_pool) > total_locations:
+            item: items.MkddItem = self.random.choice(item_pool)
+            item_type: items.ItemType = items.data_table[item.code].item_type
+            if item_type == items.ItemType.KART_UPGRADE or item_type == items.ItemType.ITEM_UNLOCK:
+                item_pool.remove(item)
 
         remaining_item_count = total_locations - len(item_pool)
         trap_count = int(remaining_item_count * self.options.trap_chance / 100)

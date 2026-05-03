@@ -97,11 +97,10 @@ class ItemsForEverybody(Range):
     default = 4
 
 class ItemsPerCharacter(Range):
-    """How many item unlocks there are per character.
-    Note: this setting raises the amount of items in item pool considerably, and might cause the generation to fail."""
+    """How many item unlocks there are per character."""
     display_name = "Items per Character"
     range_start = 0
-    range_end = 4
+    range_end = 5
     default = 3
 
 class StartItemsPerCharacter(Range):
@@ -116,8 +115,8 @@ class KartUpgrades(Range):
     Unlike progressive engine upgrades, these upgrades are tied to certain vehicles."""
     display_name = "Kart Upgrades"
     range_start = 0
-    range_end = 40
-    default = 10
+    range_end = 100
+    default = 20
 
 class SpeedUpgrades(DefaultOnToggle):
     """Adds 3 Progressive Speed Upgrades to the pool.
