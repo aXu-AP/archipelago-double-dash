@@ -242,7 +242,7 @@ class MkddGameState():
         if (self.mode == game_data.Modes.GRANDPRIX
                 and self.in_game
                 and self.current_lap > 1 
-                and self.in_race_placement != 0):
+                and self.in_race_placement == 0):
             return {locations.get_loc_name_lead(self.current_course.name)}
         else:
             return set()
