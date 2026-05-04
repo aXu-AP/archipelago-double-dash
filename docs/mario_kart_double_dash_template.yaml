@@ -113,6 +113,12 @@ Mario Kart Double Dash:
     # Minimum value is 0
     # Maximum value is 5
 
+  frantic_items: vanilla
+    # Changes the item distribution to give all items evenly regardless of current position.
+    # Minimum value is 0
+    # Maximum value is 100
+    # Possible values: vanilla (=0), medium (=50), frantic (=100)
+
   kart_upgrades: 20
     # How many random kart stat upgrades there are total.
     # Unlike progressive engine upgrades, these upgrades are tied to certain vehicles.

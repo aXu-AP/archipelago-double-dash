@@ -542,7 +542,7 @@ class MkddGameState():
             return
         
         def _calculate_and_apply(adr: int, pool: list[game_data.Item], total_weight: int) -> None:
-            item_weights = [item.weight_table[self.in_race_placement] for item in pool]
+            item_weights = [item.get_weight(self.in_race_placement, self.options.frantic_items) for item in pool]
             # Yet to be unlocked items still count towards item weights so fill the rest with nothing.
             weight_gap = total_weight - sum(item_weights)
             if weight_gap > 0:
