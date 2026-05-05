@@ -276,10 +276,10 @@ class MkddWorld(World):
 
         self.character_item_total_weights = {character.name:[] for character in game_data.CHARACTERS}
         for i in range(8):
-            self.global_items_total_weights.append(sum([item.weight_table[i] for item in global_items]))
+            self.global_items_total_weights.append(sum([item.get_weight(i, self.options.frantic_items) for item in global_items]))
             for character in game_data.CHARACTERS:
                 self.character_item_total_weights[character.name].append(
-                    sum([item.weight_table[i] for item in items_per_character[character]])
+                    sum([item.get_weight(i, self.options.frantic_items) for item in items_per_character[character]])
                 )
 
         # Remove some items if there are more items than locations.

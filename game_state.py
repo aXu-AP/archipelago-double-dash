@@ -542,15 +542,21 @@ class MkddGameState():
             return
         
         def _calculate_and_apply(adr: int, pool: list[game_data.Item], total_weight: int) -> None:
-            item_weights = [item.weight_table[self.in_race_placement] for item in pool]
+            item_weights = [item.get_weight(self.in_race_placement, self.options.frantic_items) for item in pool]
             # Yet to be unlocked items still count towards item weights so fill the rest with nothing.
+            normal_pool: list[game_data.Item] = pool.copy()
             weight_gap = total_weight - sum(item_weights)
             if weight_gap > 0:
-                pool.append(game_data.ITEM_NONE)
+                normal_pool.append(game_data.ITEM_NONE)
                 item_weights.append(weight_gap)
             rand_item = game_data.ITEM_NONE
-            if len(pool) > 0:
-                rand_item = random.sample(pool, 1, counts = item_weights)[0]
+            if len(normal_pool) > 0:
+                rand_item = random.sample(normal_pool, 1, counts = item_weights)[0]
+            if rand_item == game_data.ITEM_NONE and self.options.guaranteed_items:
+                guaranteed_pool: list[game_data.Item] = [i for i in pool if i.is_guaranteened(self.in_race_placement, self.options.frantic_items)]
+                item_weights = [max(30, item.get_weight(self.in_race_placement, self.options.frantic_items)) for item in guaranteed_pool]
+                if len(guaranteed_pool) > 0:
+                    rand_item = random.sample(guaranteed_pool, 1, counts = item_weights)[0]
             dolphin.write_byte(adr, rand_item.id)
         
         item_adr_0: int = self.memory_addresses.gp_next_items_bx + self.active_characters[0].item_offset

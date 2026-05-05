@@ -114,6 +114,23 @@ class StartItemsPerCharacter(Range):
     range_end = 5
     default = 1
 
+class FranticItems(Range):
+    """Changes the item distribution to give all items evenly regardless of current position."""
+    display_name = "Frantic Items"
+    range_start = 0
+    range_end = 100
+    default = 0
+    special_range_names = {
+        "vanilla": 0,
+        "medium": 50,
+        "frantic": 100,
+    }
+
+class GuaranteedItems(DefaultOnToggle):
+    """Guarantees getting unlocked items if they are appropriate for your position.
+    For example, if your character has mushroom unlocked, you cannot get blank item at 4th or worse place."""
+    display_name = "Guaranteed Items"
+
 class KartUpgrades(Range):
     """How many random kart stat upgrades there are total.
     Unlike progressive engine upgrades, these upgrades are tied to certain vehicles."""
@@ -172,6 +189,8 @@ class MkddOptions(PerGameCommonOptions):
     items_for_everybody: ItemsForEverybody
     items_per_character: ItemsPerCharacter
     start_items_per_character: StartItemsPerCharacter
+    frantic_items: FranticItems
+    guaranteed_items: GuaranteedItems
 
     kart_upgrades: KartUpgrades
     speed_upgrades: SpeedUpgrades
@@ -193,6 +212,8 @@ class MkddOptions(PerGameCommonOptions):
             "custom_lap_counts",
             "mirror_200cc",
             "faster_50cc_100cc",
+            "frantic_items",
+            "guaranteed_items",
             "item_boxes_as_locations",
             "add_custom_item_boxes",
         )
