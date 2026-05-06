@@ -51,6 +51,8 @@
 .set tt_items_rider_b,          0x80001042
 .set gp_next_items_bx,          0x80001043
 .set item_box_p,                0x80001060
+.set shuffle_queue_w,           0x80001064
+.set rolling_from_queue_w,      0x80001068
 
 # 4 bytes for position, 44 for string per text. text_sx points to the start of the string, x and y are offset -4 and -2.
 .set text_sx, 0x80000da0 + 4
@@ -239,14 +241,55 @@ Return
 REGION item_shuffle
 .set item_shuffle_jump, 0x8020cbc0
 .set item_shuffle_return_player, item_shuffle_jump + 8
-InsertAt item_shuffle_jump, 6
+InsertAt item_shuffle_jump, 13
     stw     r0, 0x24 (r1)
     cmplwi  r0, 0
-    bne+    0x14            # Return if cpu.
+    bne+    12 * 4                  # Return if cpu.
+
+    lis     r31, rolling_from_queue_w@ha  # Check if we should receive global random item.
+    lwz     r30, rolling_from_queue_w@l (r31)
+    cmplwi  r30, 0
+    beq     4 * 4
+    li      r5, 0                   # Use offset of 0 if global item.
+    subi    r30, r30, 1
+    stw     r30, rolling_from_queue_w@l (r31)
+
     lis     r3, gp_next_items_bx@ha
     addi    r3, r3, gp_next_items_bx@l
-    lbzx    r3, r3, r5      # Offset by assumed special item.
+    lbzx    r3, r3, r5              # Offset by assumed special item.
 ReturnAt item_shuffle_return_player
+Return
+
+
+REGION force_item_shuffle
+.set item_obj_mgr, 0x803cbf40
+InsertAt 0x80189c50, 4
+    li      r5, 1
+    li      r4, 0
+    lis     r3, item_obj_mgr@ha
+    lwz     r3, item_obj_mgr@l (r3)
+BranchLinkAt 0x8020b62c             # Check for available slot.
+Write 15
+    rlwinm. r0, r3, 0, 24, 31
+    beq     15 * 4
+
+    lis     r5, shuffle_queue_w@ha  # Check if we have queued items.
+    lwz     r4, shuffle_queue_w@l (r5)
+    cmplwi  r4, 0
+    beq     11 * 4
+    subi    r4, r4, 1               # Remove from to be shuffled queue.
+    stw     r4, shuffle_queue_w@l (r5)
+    lwz     r4, rolling_from_queue_w@l (r5)
+    addi    r4, r4, 1               # Add to currently rolling queue.
+    stw     r4, rolling_from_queue_w@l (r5)
+
+    li      r5, 0
+    li      r4, 0
+    lis     r3, item_obj_mgr@ha
+    lwz     r3, item_obj_mgr@l (r3)
+BranchLinkAt 0x8020b800             # Shuffle item.
+Write 1
+    mr      r3, r31                 # Default code.
 Return
 
 

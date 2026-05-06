@@ -94,10 +94,12 @@ class MkddMemAddresses():
     """Item for player in grand prix. Offset by character's special item id (size 22)."""
     item_box_p: int
     """Pointer for last gotten item box data."""
+    shuffle_queue_w: int
+    """Counter for how many items should be given to player."""
     text_sx: int
     """Text to print."""
     text_size: int
-    """Max lenght of the text."""
+    """Max length of the text."""
     text_x_offset_h: int
     """Offset from text, x coordinate for the text."""
     text_y_offset_h: int
@@ -195,6 +197,7 @@ class MkddMemAddressesUsa(MkddMemAddresses):
     tt_items_bx = 0x80001041
     gp_next_items_bx = 0x80001043
     item_box_p = 0x80001060
+    shuffle_queue_w = 0x80001064
 
     text_sx = 0x80000da4
     text_size = 0x30
