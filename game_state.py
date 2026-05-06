@@ -28,6 +28,7 @@ class MkddGameState():
         self.global_items: list[game_data.Item] = []
         self.starting_position: int = 7
         self.overlapping_start_traps: int = 0
+        self.queued_items: int = 0
 
         # Menu-level data.
         self.menu_pointer: int = 0
@@ -574,6 +575,21 @@ class MkddGameState():
             total_weight = item_weight_global + item_weight_0 + item_weight_1
             item_pool = self.global_items + item_pool_0 + item_pool_1
             _calculate_and_apply(item_adr_0, item_pool, total_weight)
+        
+        in_game_queue = dolphin.read_word(self.memory_addresses.shuffle_queue_w)
+        if self.queued_items > 0:
+            in_game_queue += self.queued_items
+            self.queued_items = 0
+            dolphin.write_word(self.memory_addresses.shuffle_queue_w, in_game_queue)
+        if in_game_queue > 0:
+            all_unlocked_items: set[int] = {item.id for item in self.global_items}
+            for idx, c in enumerate(game_data.CHARACTERS):
+                if idx in self.unlocked_characters:
+                    all_unlocked_items.update({item.id for item in self.character_items[c]})
+            if len(all_unlocked_items) == 0:
+                all_unlocked_items.add(game_data.ITEM_FAKE_ITEM.id)
+            dolphin.write_byte(self.memory_addresses.gp_next_items_bx, random.choice(list(all_unlocked_items)))
+            self.print_ingame(192, 82, f"+{in_game_queue}", -1)
 
 
     def apply_lap_counts(self) -> None:

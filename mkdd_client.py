@@ -202,6 +202,7 @@ def apply_patch():
     apply_dict_patch(patches.item_shuffle)
     apply_dict_patch(patches.item_box)
     apply_dict_patch(patches.rolling_item_box)
+    apply_dict_patch(patches.force_item_shuffle)
     apply_dict_patch(patches.item_box)
     apply_dict_patch(patches.car_item_box)
     apply_dict_patch(patches.disable_start_pos_shuffle)
@@ -260,6 +261,8 @@ def give_item(ctx: MkddContext, item: MkddItemData) -> None:
         ctx.game_state.starting_position = max(0, ctx.game_state.starting_position - 1)
     elif item.name == items.OVERLAPPING_START_TRAP:
         ctx.game_state.overlapping_start_traps += 1
+    elif item.name == items.RANDOM_ITEM:
+        ctx.game_state.queued_items += 1
     elif item.name == items.TROPHY:
         ctx.trophies += 1
     elif item.name == items.VICTORY:
