@@ -42,6 +42,22 @@
     .long 0x00aabbaa
 .endm
 
+# Pushes stack backing up 4 registers (r28-r31).
+.macro PushStack4
+    stwu    sp, -0x18 (sp)
+    mflr    r0
+    stw     r0, 0x1c (sp)
+    stmw    r28, 0x8 (sp)
+.endm
+# Pops stack retrieving 4 registers (r28-r31).
+.macro PopStack4
+    lmw     r28, 0x8 (sp)
+    lwz     r0, 0x1c (sp)
+    mtlr    r0
+    addi    sp, sp, 0x18
+.endm
+
+
 .set available_characters_bx,   0x80001000 # Size 20
 .set available_karts_bx,        0x80001014 # Size 21
 .set menu_pointer,              0x80001030
@@ -294,6 +310,7 @@ Return
 
 
 REGION item_box
+# Send box id.
 InsertAt 0x801fbe1c, 7
     cmplwi  r4, 0               # Skip for other karts than no. 0 (player).
     bne+    5*4
@@ -303,9 +320,24 @@ InsertAt 0x801fbe1c, 7
     li      r4, 0               # Return value to 0.
     lwz	    r3, -0x5560 (r13)   # Default code.
 Return
-
+# Update box size.
+# Grow the stack frame bigger to use more registers.
+WriteTo 0x801fb77c
+    PushStack4
+WriteTo 0x801fb79c
+    PopStack4
+InsertAt 0x801fb78c, 7
+    lwz     r12, 0x17c (r3)     # Load current mode.
+    cmpwi   r12, 2
+    bne-    5 * 4               # Skip if not idle.
+    lwz     r12, 0xe8 (r3)      # Load box data address.
+    lmw     r29, 0xc (r12)      # Load x, y, z sizes.
+    stmw    r29, 0x40 (r3)      # Save x, y, z sizes.
+    mr	    r31, r3             # Default code.
+Return
 
 REGION rolling_item_box
+# Send box id.
 InsertAt 0x8027d1e4, 7
     cmplwi  r4, 0               # Skip for other karts than no. 0 (player).
     bne+    5*4
@@ -315,9 +347,22 @@ InsertAt 0x8027d1e4, 7
     li      r4, 0               # Return value to 0.
     mr      r31, r3             # Default code.
 Return
+# Update box size.
+# Grow the stack frame bigger to use more registers.
+WriteTo 0x8027cb1c
+    PushStack4
+WriteTo 0x8027cb60
+    PopStack4
+InsertAt 0x8027cb2c, 4
+    lwz     r12, 0xe8 (r3)      # Load box data address.
+    lmw     r29, 0xc (r12)      # Load x, y, z sizes.
+    stmw    r29, 0x40 (r3)      # Save x, y, z sizes.
+    mr	    r31, r3             # Default code.
+Return
 
 
 REGION car_item_box
+# Send box id.
 InsertAt 0x8019a69c, 6
     cmplwi  r4, 0               # Skip for other karts than no. 0 (player).
     bne+    4*4
@@ -326,6 +371,19 @@ InsertAt 0x8019a69c, 6
     stw     r30, item_box_p@l (r31)
     mr      r30, r3             # Default code.
 Return
+# Update box size.
+# Grow the stack frame bigger to use more registers.
+WriteTo 0x8019a630
+    PushStack4
+WriteTo 0x8019a660
+    PopStack4
+InsertAt 0x8019a640, 4
+    lwz     r12, 0xe8 (r3)      # Load box data address.
+    lmw     r29, 0xc (r12)      # Load x, y, z sizes.
+    stmw    r29, 0x40 (r3)      # Save x, y, z sizes.
+    mr	    r31, r3             # Default code.
+Return
+
 
 REGION disable_start_pos_shuffle
 WriteTo 0x8016c65c
