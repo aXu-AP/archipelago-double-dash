@@ -1,6 +1,6 @@
 import dolphin_memory_engine as dolphin
 import random
-from . import game_data, locations, mem_addresses, options
+from . import game_data, locations, locations_routes, mem_addresses, options
 from CommonClient import logger
 
 
@@ -53,6 +53,9 @@ class MkddGameState():
         self.race_timer_s: float = 0.0
         self.item_box: int = 0
         self.finished: bool = False
+        self.kart_position: tuple[float, float, float] = (0, 0, 0)
+        self.route_attempt: locations_routes.RouteLocation|None = None
+        self.route_attempt_time: float = 0
         # Print system.
         self.message_queue: list[str] = []
         self.message_time_left: int = 0
@@ -67,6 +70,7 @@ class MkddGameState():
         self.last_selected_cup: int = 0
         self.last_selected_course: int = 0
         self.last_item_box: int = 0
+        self.last_kart_position: tuple[float, float, float] = (0, 0, 0)
         self.last_selected_character: list[int] = [0 for _ in range(4)]
         self.last_selected_kart: list[int] = [0 for _ in range(4)]
 
@@ -137,6 +141,19 @@ class MkddGameState():
         # One frame leeway in case we read finishing state after the last frame advance has happened.
         laps = self.current_course.laps if self.mode == game_data.Modes.TIMETRIAL else self.options.custom_lap_counts.get(self.current_course.name, 3)
         self.finished = (self.in_game or last_in_game) and self.current_lap > laps
+
+        if self.in_game:
+            self.last_kart_position = self.kart_position
+            kart_ctrl: int = dolphin.read_word(self.memory_addresses.kart_control_pointer)
+            kart_address: int = dolphin.read_word(kart_ctrl + self.memory_addresses.kart_control_kart_pointers_offset)
+            self.kart_position = (
+                dolphin.read_float(kart_address + self.memory_addresses.kart_position_fx_offset),
+                dolphin.read_float(kart_address + self.memory_addresses.kart_position_fx_offset + 4),
+                dolphin.read_float(kart_address + self.memory_addresses.kart_position_fx_offset + 8),
+            )
+        else:
+            self.last_kart_position = (0, 0, 0)
+            self.kart_position = (0, 0, 0)
 
 
     def sync_state(self) -> None:
@@ -228,7 +245,43 @@ class MkddGameState():
             if self.options.item_boxes_as_locations != options.ItemBoxesAsLocations.option_disabled: # These boxes are always a group of 1 and interesting locations, so all options are handled the same.
                 size_x = 1 if box_location_id in locations_checked else -1
                 dolphin.write_float(box_address + 12, size_x)
-    
+
+
+    def check_route_locations(self) -> set[str]:
+        """Checks for route locations like shortcuts."""
+        routes: list[locations_routes.RouteLocation]|None = locations_routes.ROUTE_LOCATIONS.get(self.current_course.name)
+        if not self.in_game or not routes:
+            return set()
+        
+        # Check against line from last kart position to the current one (in x-z plane)
+        player_line: locations_routes.Line = locations_routes.Line(
+            self.last_kart_position[0], self.last_kart_position[2],
+            self.kart_position[0], self.kart_position[2]
+        )
+        if self.route_attempt:
+            if self.route_attempt_time - self.race_timer_s < 0:
+                logger.debug("Route timed out.")
+                self.route_attempt = None
+                return set()
+            if self.kart_position[1] < self.route_attempt.void_height:
+                logger.debug("Fell off the route.")
+                self.route_attempt = None
+                return set()
+            if locations_routes.lines_intersect(player_line, self.route_attempt.end):
+                logger.debug(f"Route success in {self.route_attempt.time_limit / self.get_current_speed_modifier() - self.route_attempt_time + self.race_timer_s:.1f}/{self.route_attempt.time_limit / self.get_current_speed_modifier():.1f}.")
+                loc_name = locations_routes.get_loc_name_route(self.current_course.name, self.route_attempt)
+                self.route_attempt = None
+                return {loc_name}
+        
+        for route in routes:
+            if locations_routes.lines_intersect(player_line, route.start):
+                logger.debug(f"Attempting route: {route.name}")
+                self.route_attempt = route
+                self.route_attempt_time = self.race_timer_s + route.time_limit / self.get_current_speed_modifier()
+                break
+        
+        return set()
+            
 
     def check_finish_course_locations(self) -> set[str]:
         """Checks for locations that are given upon finishing a track in either TT or GP mode."""
@@ -689,6 +742,21 @@ class MkddGameState():
         else:
             dolphin.write_float(self.memory_addresses.class_speed_multipliers_fx + 0, 0.9)
             dolphin.write_float(self.memory_addresses.class_speed_multipliers_fx + 4, 1.0)
+
+
+    def get_current_speed_modifier(self) -> float:
+        """Calculates the speed modifier for current cc."""
+        match self.vehicle_class:
+            case 0:
+                return 1.0 if self.options.faster_50cc_100cc else .9
+            case 1:
+                return 1.1 if self.options.faster_50cc_100cc else 1.0
+            case 2:
+                return 1.15
+            case 3:
+                return 1.4 if self.options.mirror_200cc else 1.15
+            case _:
+                return 1.0
 
 
     def apply_kart_stats(self) -> None:

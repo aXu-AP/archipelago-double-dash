@@ -143,6 +143,10 @@ Mario Kart Double Dash:
     # Boxsanity adds checks to every box individually.
     # Possible values: disabled, interesting_locations, box_groups, boxsanity
 
+  shortcuts_as_locations: true
+    # Grants checks from completing shortcuts. Some shortcuts require items like mushrooms.
+    # Possible values: true, false
+
   trap_chance: 5
     # Percentage of how many filler items are converted into traps.
     # Minimum value is 0

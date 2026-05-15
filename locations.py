@@ -2,6 +2,7 @@ from typing import NamedTuple, TYPE_CHECKING
 
 from BaseClasses import Location
 from . import game_data, items, version
+from .locations_routes import ROUTE_LOCATIONS, get_loc_name_route
 
 if TYPE_CHECKING:
     from . import MkddWorld
@@ -21,12 +22,14 @@ TAG_TT = "Time Trial"
 TAG_TT_GOOD = "Time Trial Good Time"
 TAG_TT_GHOST = "Time Trial Staff Ghost"
 TAG_ITEM_BOX = "Item Box"
+TAG_SHORTCUT = "Shortcut"
 TAG_ITEM_BOX_INTERESTING = "*Interesting Item Box" # Tags starting with * are for gen purposes only, not user facing.
 TAG_ITEM_BOX_GROUP = "*Item Box Group"
 TAG_ITEM_BOX_SANITY = "*Boxsanity Item Box"
 TAG_ITEM_BOX_CUSTOM = "*Custom Item Box"
 TAG_ITEM_BOX_REPLACEABLE = "*Replaceable Item Box"
 TAG_REQUIRES_BOOST = "*Requires Boost"
+TAG_CHAIN_CHOMP = "*Requires Chain Chomp"
 
 
 class MkddLocation(Location):
@@ -185,7 +188,7 @@ BOX_NAMES: dict[str, list[ItemBoxGroup]] = {
         ItemBoxGroup("Start", 4),
         ItemBoxGroup("Mountain Top", 4),
         ItemBoxGroup("Cliff U-turn", 4),
-        ItemBoxGroup("Last Turn", 5),
+        ItemBoxGroup("Hairpin Turn", 5),
     ],
     "Wario Colosseum": [
         ItemBoxGroup("First Jump", 1),
@@ -347,6 +350,9 @@ for course, box_groups in BOX_NAMES.items():
                 get_loc_name_custom_box(course, idx), 0, f"{course} GP",
                 tags={course, TAG_ITEM_BOX, TAG_ITEM_BOX_GROUP, TAG_ITEM_BOX_INTERESTING, TAG_ITEM_BOX_SANITY, TAG_ITEM_BOX_CUSTOM} | box.tags))
 
+for course, routes in ROUTE_LOCATIONS.items():
+    for route in routes:
+        data_table.append(MkddLocationData(get_loc_name_route(course, route), 0, course, tags={course, TAG_SHORTCUT} | route.tags))
 
 name_to_id: dict[str, int] = {data.name:id for (id, data) in enumerate(data_table) if id > 0}
 

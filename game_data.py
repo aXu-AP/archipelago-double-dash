@@ -192,7 +192,7 @@ ITEMS = [
     Item(4, "Giant Banana", "GBa",          2, [120, 100,  90,  60,  30,   0,   0,   0], 0),
     Item(5, "Mushroom", "Mu",               4, [  0,  40,  65,  75,  65,  35,  10,  10], 3, is_boost_item=True),
     Item(6, "Star", "St",                   5, [  0,   0,   0,  10,  20,  30,  40,  40], 6, is_boost_item=True),
-    Item(7, "Chain Chomp", "CC",            4, [  0,   0,   0,   3,  20,  60, 130, 180], 6, is_boost_item=True),
+    Item(7, "Chain Chomp", "CC",            4, [  0,   0,   0,   3,  20,  60, 130, 180], 6),
     Item(8, "Bob-omb", "Bo",                1, [ 10,  70, 100, 100, 100,  90,  40,   0], 1),
     Item(10, "Lightning", "Li",             3, [  0,   0,   0,   0,   3,  10,  20,  30], 7),
     Item(11, "Yoshi Egg", "Eg",             4, [ 50,  70,  80,  80,  80,  70,  60,  40], 1),
