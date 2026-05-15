@@ -33,6 +33,8 @@ class MkddMemAddresses():
     """Players' and cpus' points in a table."""
     game_ticks_w: int
     """Frames since game startup. 60 per second."""
+    kart_control_pointer: int
+    """Pointer to kart manager."""
     kart_stats_pointer: int
     """Pointer to kart stat table."""
     gp_race_no_w: int
@@ -62,6 +64,10 @@ class MkddMemAddresses():
     """Offset from menu_pointer, confirmed rider."""
     menu_player_struct_size: int
     """Size of player menu struct. Add this to menu offsets to get different players' selections."""
+    kart_control_kart_pointers_offset: int
+    """Pointers for karts are found here from kart_control (size 8)."""
+    kart_position_fx_offset: int
+    """Kart's position is here from kart pointer (x, y, z)."""
     kart_struct_size: int
     """Use this in combination with kart_stats_pointer and stat offsets to modify karts."""
     kart_speed_on_road_f_offset: int
@@ -126,6 +132,7 @@ class MkddMemAddressesUsa(MkddMemAddresses):
     total_ranking_w = 0x803b1260
     total_points_wx = 0x803b11cc
     game_ticks_w = 0x803b0754 # Currently unused.
+    kart_control_pointer = 0x803CC588
     kart_stats_pointer = 0x80bd5000
     gp_race_no_w = 0x803b0fc8
     class_speed_multipliers_fx = 0x80361d44
@@ -175,6 +182,9 @@ class MkddMemAddressesUsa(MkddMemAddresses):
     menu_driver_w_offset = 0x2138
     menu_rider_w_offset = 0x213c
     menu_player_struct_size = 28
+
+    kart_control_kart_pointers_offset = 0xA0
+    kart_position_fx_offset = 0x23c
 
     kart_struct_size = 0x100
     kart_speed_on_road_f_offset = 0x50

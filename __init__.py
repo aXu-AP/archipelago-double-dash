@@ -141,6 +141,8 @@ class MkddWorld(World):
                                 continue
                             if self.options.add_custom_item_boxes and locations.TAG_ITEM_BOX_REPLACEABLE in location_data.tags:
                                 continue
+                if not self.options.shortcuts_as_locations and locations.TAG_SHORTCUT in location_data.tags:
+                    continue
                 if id > 0 and location_data.region == region_name:
                     region.add_locations({location_data.name: id})
                     self.current_locations.append(location_data)

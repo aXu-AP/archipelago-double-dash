@@ -161,6 +161,10 @@ class AddCustomItemBoxes(DefaultOnToggle):
     """Moves some item boxes to interesting places, like shortcuts."""
     display_name = "Add Custom Item Boxes"
 
+class ShortcutsAsLocations(DefaultOnToggle):
+    """Grants checks from completing shortcuts. Some shortcuts require items like mushrooms."""
+    display_name = "Shortcuts as Locations"
+
 class TrapChance(Range):
     """Percentage of how many filler items are converted into traps."""
     display_name = "Trap Chance"
@@ -197,6 +201,7 @@ class MkddOptions(PerGameCommonOptions):
 
     item_boxes_as_locations: ItemBoxesAsLocations
     add_custom_item_boxes: AddCustomItemBoxes
+    shortcuts_as_locations: ShortcutsAsLocations
     
     trap_chance: TrapChance
 
@@ -216,6 +221,7 @@ class MkddOptions(PerGameCommonOptions):
             "guaranteed_items",
             "item_boxes_as_locations",
             "add_custom_item_boxes",
+            "shortcuts_as_locations",
         )
 
     def update_from_slot_data(self, slot_data: dict[str, any]) -> None:
