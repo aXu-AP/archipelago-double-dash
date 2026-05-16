@@ -158,7 +158,9 @@ class ItemBoxesAsLocations(Choice):
     default = 1
 
 class AddCustomItemBoxes(DefaultOnToggle):
-    """Moves some item boxes to interesting places, like shortcuts."""
+    """Moves some item boxes to interesting places.
+    These boxes might need going off route and hard to reach places.
+    Note: Boxes aren't created, just moved to custom positions (so some vanilla boxes are missing)."""
     display_name = "Add Custom Item Boxes"
 
 class ShortcutsAsLocations(DefaultOnToggle):
