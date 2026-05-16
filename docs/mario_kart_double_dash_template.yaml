@@ -143,6 +143,12 @@ Mario Kart Double Dash:
     # Boxsanity adds checks to every box individually.
     # Possible values: disabled, interesting_locations, box_groups, boxsanity
 
+  add_custom_item_boxes: true
+    # Moves some item boxes to interesting places.
+    # These boxes might need going off route and hard to reach places.
+    # Note: Boxes aren't created, just moved to custom positions (so some vanilla boxes are missing).
+    # Possible values: true, false
+
   shortcuts_as_locations: true
     # Grants checks from completing shortcuts. Some shortcuts require items like mushrooms.
     # Possible values: true, false
