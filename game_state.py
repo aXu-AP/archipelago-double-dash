@@ -218,6 +218,9 @@ class MkddGameState():
         Update item box visuals (takes effect when the box spawns).
         Boxes that are unchecked, are inverted by changing their x size to -1 resulting in look reminiscent of MK64 boxes.
         """
+        if self.options.item_boxes_as_locations == options.ItemBoxesAsLocations.option_disabled:
+            return
+        
         course_name = self.current_course.name
         if course_name == "Luigi Circuit": # LC has different layout and boxes on 50cc.
             course_name += " 50cc" if self.vehicle_class == 0 else " 100cc"
