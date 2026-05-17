@@ -30,6 +30,7 @@ class ItemType(Enum):
     TT_COURSE = 4
     ITEM_UNLOCK = 5
     KART_UPGRADE = 6
+    RAIN_TRAP = 7
 
 class MkddItem(Item):
     game = version.get_game_name()
@@ -56,6 +57,9 @@ VICTORY = "Victory"
 SKIP_DIFFICULTY = "Skip Difficulty Calculation"
 
 OVERLAPPING_START_TRAP = "Overlapping Start Trap"
+BANANA_RAIN_TRAP = "Banana Rain Trap"
+SHELL_RAIN_TRAP = "Shell Rain Trap"
+BOMB_RAIN_TRAP = "Bomb Rain Trap"
 
 def get_item_name_tt_course(course: str) -> str:
     return f"{course} Time Trial"
@@ -109,6 +113,9 @@ for item in game_data.ITEMS:
 
 data_table.append(MkddItemData(PROGRESSIVE_STARTING_POSITION, USEF, count=7))
 data_table.append(MkddItemData(OVERLAPPING_START_TRAP, TRAP, count=0, tags={TAG_TRAPS, TAG_SYNC_ONLY}))
+data_table.append(MkddItemData(BANANA_RAIN_TRAP, TRAP, ItemType.RAIN_TRAP, count=0, tags={TAG_TRAPS, TAG_SYNC_ONLY}))
+data_table.append(MkddItemData(SHELL_RAIN_TRAP, TRAP, ItemType.RAIN_TRAP, count=0, tags={TAG_TRAPS, TAG_SYNC_ONLY}))
+data_table.append(MkddItemData(BOMB_RAIN_TRAP, TRAP, ItemType.RAIN_TRAP, count=0, tags={TAG_TRAPS, TAG_SYNC_ONLY}))
 
 # Used by Universal Tracker glitched logic.
 data_table.append(MkddItemData(SKIP_DIFFICULTY, PROG, count = 0))
