@@ -1,4 +1,4 @@
-.set insert_adr, 0x80001080
+.set insert_adr, 0x80002000
 
 # Writes code into specified address.
 .macro WriteTo address
@@ -69,6 +69,9 @@
 .set item_box_p,                0x80001060
 .set shuffle_queue_w,           0x80001064
 .set rolling_from_queue_w,      0x80001068
+.set spawn_item_id_w,           0x8000106c  # Size 7
+.set spawn_item_pos_fx,         spawn_item_id_w + 4
+.set spawn_item_vel_fx,         spawn_item_id_w + 16
 
 # 4 bytes for position, 44 for string per text. text_sx points to the start of the string, x and y are offset -4 and -2.
 .set text_sx, 0x80000da0 + 4
@@ -388,6 +391,31 @@ Return
 REGION disable_start_pos_shuffle
 WriteTo 0x8016c65c
     nop
+
+
+REGION spawn_item
+InsertAt 0x80189b90, 10
+    lis     r5, spawn_item_id_w@ha
+    lwz     r4, spawn_item_id_w@l (r5)
+    cmplwi  r4, 20              # Item 20 = don't spawn any item.
+    beq+    14 * 4
+    li      r0, 20
+    stw     r0, spawn_item_id_w@l (r5)
+    addi    r6, r5, spawn_item_vel_fx@l
+    addi    r5, r5, spawn_item_pos_fx@l
+    lis     r3, item_obj_mgr@ha
+    lwz     r3, item_obj_mgr@l (r3)
+BranchLinkAt 0x8020929c         # Call occurItem.
+Write 7
+    cmplwi  r3, 0               # Check that item was created successfully.
+    beq-    5 * 4
+    li      r0, 0               # Initialize some needed data (owner id?).
+    stw     r0, 0x120 (r3)
+    li      r0, 1
+    stb     r0, 0x124 (r3)
+    lbz     r3, 0x22 (r31)      # Default code.
+Return
+
 
 REGION draw_string
 # Call the print function in the character selection screen.

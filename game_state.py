@@ -1,6 +1,6 @@
 import dolphin_memory_engine as dolphin
-import random
-from . import game_data, locations, locations_routes, mem_addresses, options
+import random, math
+from . import game_data, items, locations, locations_routes, mem_addresses, options
 from CommonClient import logger
 
 
@@ -28,6 +28,9 @@ class MkddGameState():
         self.global_items: list[game_data.Item] = []
         self.starting_position: int = 7
         self.overlapping_start_traps: int = 0
+        self.rain_trap_queue: list[str] = []
+        self.rain_trap_amount_left: int = 0
+        self.rain_trap_timer: int = 0
         self.queued_items: int = 0
 
         # Menu-level data.
@@ -54,6 +57,7 @@ class MkddGameState():
         self.item_box: int = 0
         self.finished: bool = False
         self.kart_position: tuple[float, float, float] = (0, 0, 0)
+        self.kart_velocity: tuple[float, float, float] = (0, 0, 0)
         self.route_attempt: locations_routes.RouteLocation|None = None
         self.route_attempt_time: float = 0
         # Print system.
@@ -151,9 +155,15 @@ class MkddGameState():
                 dolphin.read_float(kart_address + self.memory_addresses.kart_position_fx_offset + 4),
                 dolphin.read_float(kart_address + self.memory_addresses.kart_position_fx_offset + 8),
             )
+            self.kart_velocity = (
+                dolphin.read_float(kart_address + self.memory_addresses.kart_velocity_fx_offset),
+                dolphin.read_float(kart_address + self.memory_addresses.kart_velocity_fx_offset + 4),
+                dolphin.read_float(kart_address + self.memory_addresses.kart_velocity_fx_offset + 8),
+            )
         else:
             self.last_kart_position = (0, 0, 0)
             self.kart_position = (0, 0, 0)
+            self.kart_velocity = (0, 0, 0)
 
 
     def sync_state(self) -> None:
@@ -853,6 +863,55 @@ class MkddGameState():
         for i in range(8):
             dolphin.write_word(self.memory_addresses.starting_positions_wx + i * 4, self.starting_position)
         logger.debug(f"Applied overlap trap. Traps remaining: {self.overlapping_start_traps}")
+
+
+    def handle_rain_traps(self) -> None:
+        """Spawns item around the player if trap is received."""
+        if self.course_changed:
+            self.rain_trap_timer = 0
+
+        if len(self.rain_trap_queue) == 0 or not self.in_game:
+            return
+
+        if self.rain_trap_timer == 0: # Start new rain.
+            if self.race_timer_s < .1:
+                return
+            self.rain_trap_timer = self.race_timer + 8 * 60 # Rain has a 8 second cooldown.
+            if self.rain_trap_queue[0] == items.BANANA_RAIN_TRAP:
+                self.rain_trap_amount_left = 10
+            else:
+                self.rain_trap_amount_left = 5
+        
+        if self.rain_trap_amount_left > 0 and dolphin.read_word(self.memory_addresses.spawn_item_id_w) == game_data.ITEM_NONE.id:
+            self.rain_trap_amount_left -= 1
+            item_id: int = 0
+            match self.rain_trap_queue[0]:
+                case items.BANANA_RAIN_TRAP:
+                    item_id = game_data.ITEM_BANANA.id
+                case items.SHELL_RAIN_TRAP:
+                    item_id = random.choice([game_data.ITEM_GREEN_SHELL.id, game_data.ITEM_RED_SHELL.id])
+                case items.BOMB_RAIN_TRAP:
+                    item_id = game_data.ITEM_BOBOMB.id
+            dolphin.write_word(self.memory_addresses.spawn_item_id_w, item_id)
+            # Split the velocity into amplitude and normalized components.
+            speed = max(1, math.dist((0, 0), (self.kart_velocity[0], self.kart_velocity[2])))
+            vel_x = self.kart_velocity[0] / speed
+            vel_z = self.kart_velocity[2] / speed
+            speed = min(70, speed) * random.randint(30, 100)
+            pos = self.kart_position
+            x = pos[0] + vel_x * speed + random.randint(-1000, 1000)
+            y = pos[1] + random.randint(700, 1300)
+            z = pos[2] + vel_z * speed + random.randint(-1000, 1000)
+            dolphin.write_float(self.memory_addresses.spawn_item_pos_fx, x)
+            dolphin.write_float(self.memory_addresses.spawn_item_pos_fx + 4, y)
+            dolphin.write_float(self.memory_addresses.spawn_item_pos_fx + 8, z)
+            dolphin.write_float(self.memory_addresses.spawn_item_vel_fx, self.kart_velocity[0] + random.randint(-30, 30))
+            dolphin.write_float(self.memory_addresses.spawn_item_vel_fx + 4, random.randint(10, 50))
+            dolphin.write_float(self.memory_addresses.spawn_item_vel_fx + 8, self.kart_velocity[1] + random.randint(-30, 30))
+
+        if self.rain_trap_timer < self.race_timer: # Rain finished.
+            self.rain_trap_timer = 0
+            self.rain_trap_queue.pop(0)
 
 
 def dolphin_write_half(address: int, value: int) -> None:

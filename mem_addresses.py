@@ -68,6 +68,8 @@ class MkddMemAddresses():
     """Pointers for karts are found here from kart_control (size 8)."""
     kart_position_fx_offset: int
     """Kart's position is here from kart pointer (x, y, z)."""
+    kart_velocity_fx_offset: int
+    """Kart's velocity is here from kart pointer (x, y, z)."""
     kart_struct_size: int
     """Use this in combination with kart_stats_pointer and stat offsets to modify karts."""
     kart_speed_on_road_f_offset: int
@@ -102,6 +104,12 @@ class MkddMemAddresses():
     """Pointer for last gotten item box data."""
     shuffle_queue_w: int
     """Counter for how many items should be given to player."""
+    spawn_item_id_w: int
+    """Item id for item to spawn. 20 == None."""
+    spawn_item_pos_fx: int
+    """Position for item to spawn."""
+    spawn_item_vel_fx: int
+    """Velocity for item to spawn."""
     text_sx: int
     """Text to print."""
     text_size: int
@@ -185,6 +193,7 @@ class MkddMemAddressesUsa(MkddMemAddresses):
 
     kart_control_kart_pointers_offset = 0xA0
     kart_position_fx_offset = 0x23c
+    kart_velocity_fx_offset = 0x26c
 
     kart_struct_size = 0x100
     kart_speed_on_road_f_offset = 0x50
@@ -208,6 +217,9 @@ class MkddMemAddressesUsa(MkddMemAddresses):
     gp_next_items_bx = 0x80001043
     item_box_p = 0x80001060
     shuffle_queue_w = 0x80001064
+    spawn_item_id_w = 0x8000106c
+    spawn_item_pos_fx = spawn_item_id_w + 4
+    spawn_item_vel_fx = spawn_item_id_w + 16
 
     text_sx = 0x80000da4
     text_size = 0x30

@@ -168,8 +168,42 @@ class ShortcutsAsLocations(DefaultOnToggle):
     display_name = "Shortcuts as Locations"
 
 class TrapChance(Range):
-    """Percentage of how many filler items are converted into traps."""
+    """Percentage of how many filler items are converted into traps.
+    If this is 0, no traps will be in the pool. 100 means all filler items are traps.
+    Use weight options below to choose which traps will be more likely."""
     display_name = "Trap Chance"
+    range_start = 0
+    range_end = 100
+    default = 5
+
+class BananaRainTrapWeight(Range):
+    """Bananas will spawn in front of you!
+    Bigger number = bigger chance of occurring."""
+    display_name = "Banana Rain Trap Weight"
+    range_start = 0
+    range_end = 100
+    default = 30
+
+class ShellRainTrapWeight(Range):
+    """Shells will spawn in front of you!
+    Bigger number = bigger chance of occurring."""
+    display_name = "Shell Rain Trap Weight"
+    range_start = 0
+    range_end = 100
+    default = 30
+
+class BombRainTrapWeight(Range):
+    """Bob-ombs will spawn in front of you!
+    Bigger number = bigger chance of occurring."""
+    display_name = "Bomb Rain Trap Weight"
+    range_start = 0
+    range_end = 100
+    default = 10
+
+class OverlappingStartTrapWeight(Range):
+    """All karts will start at the same position on next race.
+    Loud sound warning!"""
+    display_name = "Overlapping Start Trap Weight"
     range_start = 0
     range_end = 100
     default = 5
@@ -206,6 +240,10 @@ class MkddOptions(PerGameCommonOptions):
     shortcuts_as_locations: ShortcutsAsLocations
     
     trap_chance: TrapChance
+    banana_rain_trap_weight: BananaRainTrapWeight
+    shell_rain_trap_weight: ShellRainTrapWeight
+    bomb_rain_trap_weight: BombRainTrapWeight
+    overlapping_start_trap_weight: OverlappingStartTrapWeight
 
     start_inventory_from_pool: StartInventoryPool
 

@@ -206,10 +206,12 @@ def apply_patch():
     apply_dict_patch(patches.item_box)
     apply_dict_patch(patches.car_item_box)
     apply_dict_patch(patches.disable_start_pos_shuffle)
+    apply_dict_patch(patches.spawn_item)
     apply_dict_patch(patches.draw_string)
     apply_ar_code(ar_codes.lap_modifier)
     apply_ar_code(ar_codes.gp_course_selection)
     apply_ar_code(ar_codes.fireball_limit)
+    apply_ar_code(ar_codes.bomb_limit)
     apply_ar_code(ar_codes.disable_reverse_lakitu)
     logger.info("Patch Applied.")
 
@@ -261,6 +263,8 @@ def give_item(ctx: MkddContext, item: MkddItemData) -> None:
         ctx.game_state.starting_position = max(0, ctx.game_state.starting_position - 1)
     elif item.name == items.OVERLAPPING_START_TRAP:
         ctx.game_state.overlapping_start_traps += 1
+    elif item.item_type == items.ItemType.RAIN_TRAP:
+        ctx.game_state.rain_trap_queue.append(item.name)
     elif item.name == items.RANDOM_ITEM:
         ctx.game_state.queued_items += 1
     elif item.name == items.TROPHY:
@@ -338,6 +342,7 @@ def update_game(ctx: MkddContext) -> None:
     ctx.game_state.apply_kart_stats()
     ctx.game_state.handle_starting_position()
     ctx.game_state.handle_overlapping_start_trap()
+    ctx.game_state.handle_rain_traps()
 
 
 async def check_current_course_changed(ctx: MkddContext) -> None:
