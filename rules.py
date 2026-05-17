@@ -67,6 +67,9 @@ class MkddRules:
         
         self.set_loc_rule(locations.TROPHY_GOAL,
                 lambda state: state.has(items.TROPHY, self.player, self.world.trophy_requirement))
+        
+        self.set_loc_rule(locations.WIN_ALL_CUP_TOUR,
+                lambda state: state.has(items.PROGRESSIVE_CLASS, self.player, self.world.options.all_cup_tour_min_cc))
 
         for course in game_data.RACE_COURSES:
             self.set_ent_rule(f"Menu -> {course.name} TT",

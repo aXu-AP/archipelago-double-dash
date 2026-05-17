@@ -40,6 +40,14 @@ Mario Kart Double Dash:
     # Trophies: Collect set amount of gold trophies to win.
     # Possible values: all_cup_tour, trophies
 
+  all_cup_tour_min_cc: 100cc
+    # At what CC you need to play All Cup Tour to win.
+    # Possible values: 50cc, 100cc, 150cc, mirror
+
+  all_cup_tour_min_rank: gold
+    # How well you need to do in All Cup Tour to win.
+    # Possible values: gold, silver, bronze, perfect
+
   trophy_requirement_percent: 65
     # How many gold trophies are needed for goal completion.
     # Percentage of the whole amount of trophies in pool.

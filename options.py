@@ -10,6 +10,24 @@ class Goal(Choice):
     option_all_cup_tour = 0
     option_trophies = 1
 
+class AllCupTourMinCC(Choice):
+    """At what CC you need to play All Cup Tour to win."""
+    display_name = "All Cup Tour Min CC"
+    option_50cc = 0
+    option_100cc = 1
+    option_150cc = 2
+    option_mirror = 3
+    default = 1
+
+class AllCupTourMinRank(Choice):
+    """How well you need to do in All Cup Tour to win."""
+    display_name = "All Cup Tour Min Rank"
+    option_gold = 0
+    option_silver = 1
+    option_bronze = 2
+    option_perfect = 3
+    default = 0
+
 class TrophyRequirementPercent(Range):
     """How many gold trophies are needed for goal completion.
     Percentage of the whole amount of trophies in pool.
@@ -212,6 +230,8 @@ class OverlappingStartTrapWeight(Range):
 @dataclass
 class MkddOptions(PerGameCommonOptions):
     goal: Goal
+    all_cup_tour_min_cc: AllCupTourMinCC
+    all_cup_tour_min_rank: AllCupTourMinRank
     trophy_requirement_percent: TrophyRequirementPercent
     grand_prix_trophies: GrandPrixTrophies
     shuffle_extra_trophies: ShuffleExtraTrophies
@@ -250,6 +270,8 @@ class MkddOptions(PerGameCommonOptions):
     def to_slot_data(self) -> dict[str, any]:
         """Returns dict of relevant options for UT or the client."""
         return self.as_dict(
+            "all_cup_tour_min_cc",
+            "all_cup_tour_min_rank",
             "logic_difficulty",
             "time_trials",
             "all_cup_tour_length",
