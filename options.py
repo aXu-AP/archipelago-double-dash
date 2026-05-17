@@ -132,8 +132,9 @@ class StartItemsPerCharacter(Range):
     range_end = 5
     default = 1
 
-class FranticItems(Range):
-    """Changes the item distribution to give all items evenly regardless of current position."""
+class FranticItems(NamedRange):
+    """Changes the item distribution to give all items evenly regardless of current position.
+    0 = vanilla, 100 = every item has equal chance, values in between are possible."""
     display_name = "Frantic Items"
     range_start = 0
     range_end = 100
