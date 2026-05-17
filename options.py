@@ -10,17 +10,17 @@ class Goal(Choice):
     option_all_cup_tour = 0
     option_trophies = 1
 
-class TrophyRequirement(Range):
+class TrophyRequirementPercent(Range):
     """How many gold trophies are needed for goal completion.
-    Recommended: 9-12 if you aim to complete the game on 150cc. 13-16 if you aim to complete the game on Mirror.
-    Value will be limited to the number of trophies in the pool."""
-    display_name = "Trophy Requirement"
+    Percentage of the whole amount of trophies in pool.
+    Default is 65 %, which will be 10 trophies out of 16 with other settings left to defaults."""
+    display_name = "Trophy Requirement Percent"
     range_start = 0
-    range_end = 32
-    default = 10
+    range_end = 100
+    default = 65
 
 class GrandPrixTrophies(DefaultOnToggle):
-    """Does getting gold in cups earn you trophies."""
+    """Does getting gold in cups earn you trophies. Adds 16 trophies."""
     display_name = "Grand Prix Trophies"
 
 class ShuffleExtraTrophies(Range):
@@ -28,7 +28,7 @@ class ShuffleExtraTrophies(Range):
     These trophies can appear in other players' worlds."""
     display_name = "Shuffle Extra Trophies"
     range_start = 0
-    range_end = 16
+    range_end = 50
     default = 0
 
 class LogicDifficulty(NamedRange):
@@ -212,7 +212,7 @@ class OverlappingStartTrapWeight(Range):
 @dataclass
 class MkddOptions(PerGameCommonOptions):
     goal: Goal
-    trophy_requirement: TrophyRequirement
+    trophy_requirement_percent: TrophyRequirementPercent
     grand_prix_trophies: GrandPrixTrophies
     shuffle_extra_trophies: ShuffleExtraTrophies
     logic_difficulty: LogicDifficulty
@@ -250,7 +250,6 @@ class MkddOptions(PerGameCommonOptions):
     def to_slot_data(self) -> dict[str, any]:
         """Returns dict of relevant options for UT or the client."""
         return self.as_dict(
-            "trophy_requirement",
             "logic_difficulty",
             "time_trials",
             "all_cup_tour_length",

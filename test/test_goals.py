@@ -7,7 +7,7 @@ from . import MkddTestBase
 BASE_OPTIONS = {
     "grand_prix_trophies": False,
     "shuffle_extra_trophies": 5,
-    "trophy_requirement": 5,
+    "trophy_requirement_percent": 10,
     "time_trials": "disable",
     "logic_difficulty": 100,
     "kart_upgrades": 0,
@@ -33,18 +33,6 @@ class TestGoalAllCupTour(MkddTestBase):
         self.collect_all_but(["Trophy", "Victory", "All Cup Tour"])
 
         expected_trophy_pool(self)
-
-
-class TestGoalTrophiesZeroRequirement(MkddTestBase):
-    options = {
-        **BASE_OPTIONS,
-        "goal": "trophies",
-        "trophy_requirement": 0,
-        "shuffle_extra_trophies": 0,
-    }
-
-    def test_immediately_beatable(self) -> None:
-        self.assertBeatable(True)
 
 
 def expected_trophy_pool(self):

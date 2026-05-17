@@ -60,24 +60,26 @@ class MkddWorld(World):
         self.character_item_total_weights: dict[str, list[int]] = {}
         self.global_items_total_weights: list[int] = []
 
+        self.trophy_requirement: int = 0
+
         self.logger: logging.Logger = logging.getLogger("MKDD Logger")
         super(MkddWorld, self).__init__(world, player)
 
     def generate_early(self):
-        # Adjust amount of trophies in the pool if the requirement is too high.
+        # Calculate max number of trophies.
         max_requirement: int = self.options.shuffle_extra_trophies.value
         if self.options.grand_prix_trophies:
             max_requirement += 16
-        if self.options.trophy_requirement.value > max_requirement:
-            self.logger.warning(f"{self.player_name}: Requirement for trophies is higher than available trophies. Adding extra trophies...")
-            self.options.shuffle_extra_trophies.value = self.options.trophy_requirement.value
-            if self.options.grand_prix_trophies:
-                self.options.shuffle_extra_trophies.value -= 16
+        if max_requirement == 0:
+            self.options.shuffle_extra_trophies.value = 1
+            self.logger.warning(f"{self.player_name}: No trophies in the pool, adding 1.")
+        self.trophy_requirement = max(1, int(max_requirement * self.options.trophy_requirement_percent / 100))
 
         # Universal Tracker passthrough.
         if hasattr(self.multiworld, "re_gen_passthrough"):
             slot_data: dict = self.multiworld.re_gen_passthrough["Mario Kart Double Dash"]
             self.options.update_from_slot_data(slot_data)
+            self.trophy_requirement = slot_data["trophy_requirement"]
 
 
     def create_regions(self) -> None:
@@ -365,6 +367,7 @@ class MkddWorld(World):
         self.options.custom_lap_counts.value = new_lap_counts
         return {
             "version": version.get_version(),
+            "trophy_requirement": self.trophy_requirement,
             "cups_courses": self.cups_courses,
             "character_item_total_weights": self.character_item_total_weights,
             "global_items_total_weights": self.global_items_total_weights,

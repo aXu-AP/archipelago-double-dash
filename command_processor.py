@@ -87,7 +87,7 @@ class MkddCommandProcessor(ClientCommandProcessor):
         
         gs: MkddGameState = self.ctx.game_state
         pr: function = self.ctx.ui.print_json
-        pr(_msg("Trophies: ", f"{self.ctx.trophies}/{self.ctx.options.trophy_requirement}"))
+        pr(_msg("Trophies: ", f"{self.ctx.trophies}/{self.ctx.trophy_requirement}"))
         pr(_msg("Unlocked characters: ", ", ".join([game_data.CHARACTERS[c].name for c in gs.unlocked_characters])))
         pr(_msg("Unlocked karts (upgrades): ", ", ".join([f"{game_data.KARTS[c].name} ({(
             ", ".join(u.name for u in gs.kart_upgrades[c]))})" for c in gs.unlocked_karts])))
