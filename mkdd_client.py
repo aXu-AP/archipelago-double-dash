@@ -58,6 +58,7 @@ class MkddContext(CommonContext):
 
         # Options.
         self.options: options.MkddOptions = options.init_options()
+        self.trophy_requirement: int = 0
 
         # Game data.
         self.game_state: game_state.MkddGameState = game_state.MkddGameState(mem_addresses.MkddMemAddressesUsa)
@@ -78,6 +79,7 @@ class MkddContext(CommonContext):
         self.game_state = game_state.MkddGameState(mem_addresses.MkddMemAddressesUsa)
         self.game_state.options = self.options
         self.trophies = 0
+        self.trophy_requirement = 0
         self.victory = False
         if self.dolphin_status == CONNECTION_CONNECTED_STATUS:
             self.game_state.sync_state()
@@ -120,6 +122,7 @@ class MkddContext(CommonContext):
                     Utils.async_start(self.update_death_link(bool(args["slot_data"]["death_link"])))
                 
                 self.options.update_from_slot_data(slot_data)
+                self.trophy_requirement = slot_data["trophy_requirement"]
                 self.game_state.cups_courses = slot_data["cups_courses"]
 
                 self.game_state.character_item_total_weights = slot_data.get("character_item_total_weights")
@@ -223,7 +226,7 @@ def sync_ui(ctx: MkddContext) -> None:
         ctx.ui.update_speed_upgrades(ctx.game_state.engine_upgrade_level, 3)
         ctx.ui.update_cups(ctx.game_state.unlocked_cups)
         ctx.ui.update_cc(ctx.game_state.unlocked_vehicle_class)
-        ctx.ui.update_trophies(ctx.trophies, ctx.options.trophy_requirement)
+        ctx.ui.update_trophies(ctx.trophies, ctx.trophy_requirement)
 
 
 def give_item(ctx: MkddContext, item: MkddItemData) -> None:
@@ -303,7 +306,7 @@ async def check_locations(ctx: MkddContext) -> None:
     """
     new_location_names: set[str] = set()
 
-    if ctx.trophies >= ctx.options.trophy_requirement:
+    if ctx.trophies >= ctx.trophy_requirement:
         new_location_names.add(locations.TROPHY_GOAL)
     
     new_location_names |= ctx.game_state.check_item_box_locations()

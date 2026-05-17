@@ -10,7 +10,7 @@ from worlds.mario_kart_double_dash import locations
 
 BASE_OPTIONS = {
     "goal": "trophies",
-    "trophy_requirement": 0,
+    "trophy_requirement_percent": 0,
     "grand_prix_trophies": False,
     "shuffle_extra_trophies": 0,
     "logic_difficulty": 100, # unrestricted – difficulty never blocks

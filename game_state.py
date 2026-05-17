@@ -385,12 +385,18 @@ class MkddGameState():
 
     def check_all_cup_tour_locations(self) -> set[str]:
         """Checks for winning in All Cup Tour."""
-        if (self.mode == game_data.Modes.CEREMONY and 
+        if not (self.mode == game_data.Modes.CEREMONY and 
                 self.selected_cup == game_data.CUP_ALL_CUP_TOUR and
-                self.total_ranking == 0):
-            return {locations.WIN_ALL_CUP_TOUR}
-        else:
+                self.vehicle_class >= self.options.all_cup_tour_min_cc):
             return set()
+        
+        if self.options.all_cup_tour_min_rank == options.AllCupTourMinRank.option_perfect:
+            if self.total_points >= self.options.all_cup_tour_length * 10:
+                return {locations.WIN_ALL_CUP_TOUR}
+        else:
+            if self.total_ranking <= self.options.all_cup_tour_min_rank:
+                return {locations.WIN_ALL_CUP_TOUR}
+        return set()
 
 
     def check_tt_locations(self) -> set[str]:
