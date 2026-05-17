@@ -63,7 +63,7 @@ Mario Kart Double Dash:
     # How many trophies are added in the pool in addition to predetermined trophy locations.
     # These trophies can appear in other players' worlds."""
     # Minimum value is 0
-    # Maximum value is 16
+    # Maximum value is 50
 
   logic_difficulty: normal
     # Balances the difficulty modeling, how many upgrades you are presumed to have to win races.
