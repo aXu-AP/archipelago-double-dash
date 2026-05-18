@@ -33,6 +33,8 @@ class MkddMemAddresses():
     """Players' and cpus' points in a table."""
     game_ticks_w: int
     """Frames since game startup. 60 per second."""
+    pause_state_w: int
+    """1 if game is paused. Can be 0 or 2 otherwise."""
     kart_control_pointer: int
     """Pointer to kart manager."""
     kart_stats_pointer: int
@@ -140,6 +142,7 @@ class MkddMemAddressesUsa(MkddMemAddresses):
     total_ranking_w = 0x803b1260
     total_points_wx = 0x803b11cc
     game_ticks_w = 0x803b0754 # Currently unused.
+    pause_state_w = 0x803b0720
     kart_control_pointer = 0x803CC588
     kart_stats_pointer = 0x80bd5000
     gp_race_no_w = 0x803b0fc8
