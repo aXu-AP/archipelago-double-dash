@@ -2,7 +2,7 @@ import os
 from CommonClient import logger
 from NetUtils import JSONMessagePart
 from settings import get_settings
-from . import game_data, mkdd_client
+from . import game_data, mkdd_client, options
 from .game_state import MkddGameState
 from .settings import MkddSettings
 from .ut_common_client_importer import ClientCommandProcessor, CommonContext
@@ -87,6 +87,17 @@ class MkddCommandProcessor(ClientCommandProcessor):
         
         gs: MkddGameState = self.ctx.game_state
         pr: function = self.ctx.ui.print_json
+        goaltxt = ""
+        if self.ctx.options.goal == options.Goal.option_all_cup_tour:
+            goaltxt = (
+                "All Cup Tour (" +
+                ["50cc ", "100cc ", "150cc ", "Mirror "][self.ctx.options.all_cup_tour_min_cc] +
+                ["Gold", "Silver", "Bronze", "Perfect"][self.ctx.options.all_cup_tour_min_rank] +
+                f", {self.ctx.options.all_cup_tour_length} races)"
+            )
+        else:
+            goaltxt = "Trophies"
+        pr(_msg("Goal: ", goaltxt))
         pr(_msg("Trophies: ", f"{self.ctx.trophies}/{self.ctx.trophy_requirement}"))
         pr(_msg("Unlocked characters: ", ", ".join([game_data.CHARACTERS[c].name for c in gs.unlocked_characters])))
         pr(_msg("Unlocked karts (upgrades): ", ", ".join([f"{game_data.KARTS[c].name} ({(

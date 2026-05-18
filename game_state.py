@@ -51,6 +51,7 @@ class MkddGameState():
         self.in_game: bool = False
         self.human_players: int = 0
         self.current_lap: int = 0
+        self.pause_state: int = 0
         self.in_race_placement: int = 0
         self.race_timer: int = 0
         self.race_timer_s: float = 0.0
@@ -110,6 +111,7 @@ class MkddGameState():
         # Race-level data.
         self.human_players = dolphin.read_byte(self.memory_addresses.human_players_b)
         self.current_lap = dolphin.read_word(self.memory_addresses.current_lap_wx) + 1
+        self.pause_state = dolphin.read_word(self.memory_addresses.pause_state_w)
         # Get placement and modify it to be 0-based for less confusion (rankings are also 0-based).
         self.in_race_placement = dolphin.read_word(self.memory_addresses.in_race_placement_wx) - 1
 
@@ -480,6 +482,38 @@ class MkddGameState():
             self.text_str[idx] = ""
 
 
+    def get_character_texts(self, p1_character: game_data.Character, p2_character: game_data.Character|None) -> list[str]:
+        def _get_character_text(char: game_data.Character, items: list[game_data.Item]) -> str:
+            """Get text with character name and items."""
+            if len(items) == 0:
+                return f"{char.name} (no items)"
+            text = f"{char.name}: {", ".join([item.name for item in items])}"
+            if len(text) > 40:
+                text = f"{char.name}: {", ".join([item.short_name for item in items])}"
+            if len(text) > 43:
+                text = text[:41] + ".."
+            return text
+        
+        ret: list[str] = []
+        p1_items: list[game_data.Item] = self.character_items.get(p1_character, []).copy()
+        p1_items.extend(self.global_items)
+        if p2_character:
+            p2_items: list[game_data.Item] = self.character_items.get(p2_character, []).copy()
+            p2_items.extend(self.global_items)
+            # Check for synergy (default character combo).
+            if p1_character.item_offset == p2_character.item_offset:
+                # Remove global items and add p2 items (including global items).
+                for _ in self.global_items:
+                    p1_items.pop()
+                p1_items.extend(p2_items)
+                p2_items = p1_items
+                if len(p2_items) > 0:
+                    ret.append("Item synergy")
+            ret.insert(0, _get_character_text(p2_character, p2_items))
+        ret.insert(0, _get_character_text(p1_character, p1_items))
+        return ret
+
+
     def handle_character_menu(self) -> None:
         """
         Updates state about selected characters and karts.
@@ -556,42 +590,15 @@ class MkddGameState():
             self.last_selected_kart[player] = kart
 
         # Print selected kart or characters and their items.
-        def _get_character_text(char: game_data.Character, items: list[game_data.Item]) -> str:
-            if len(items) == 0:
-                return f"{char.name} (no items)"
-            text = f"{char.name}: {", ".join([item.name for item in items])}"
-            if len(text) > 40:
-                text = f"{char.name}: {", ".join([item.short_name for item in items])}"
-            if len(text) > 43:
-                text = text[:41] + ".."
-            return text
-
         text_x = 92
-        text_y1 = 215
-        text_y2 = 240
-        text_y3 = 265
+        text_y = 215
         if p1_kart:
             kart_upgrade_text = ", ".join(u.short_name for u in self.kart_upgrades[p1_kart.id])
-            self.print_ingame(text_x, text_y1, f"{p1_kart.name} {kart_upgrade_text}")
+            self.print_ingame(text_x, text_y, f"{p1_kart.name} {kart_upgrade_text}")
         elif p1_character:
-            p1_items: list[game_data.Item] = self.character_items.get(p1_character, []).copy()
-            p1_items.extend(self.global_items)
-            if p2_character:
-                p2_items: list[game_data.Item] = self.character_items.get(p2_character, []).copy()
-                p2_items.extend(self.global_items)
-                # Check for synergy (default character combo).
-                character1 = min(p1_character.id, p2_character.id)
-                character2 = max(p1_character.id, p2_character.id)
-                if character1 % 2 == 0 and character1 + 1 == character2 or character1 >= 16 and character2 >= 16:
-                    # Remove global items and add p2 items (including global items).
-                    for _ in self.global_items:
-                        p1_items.pop()
-                    p1_items.extend(p2_items)
-                    p2_items = p1_items
-                    if len(p2_items) > 0:
-                        self.print_ingame(text_x, text_y3, "Item synergy")
-                self.print_ingame(text_x, text_y2, _get_character_text(p2_character, p2_items))
-            self.print_ingame(text_x, text_y1, _get_character_text(p1_character, p1_items))
+            texts: list[str] = self.get_character_texts(p1_character, p2_character)
+            for idx, txt in enumerate(texts):
+                self.print_ingame(text_x, text_y + idx * 25, txt)
 
 
     def apply_shuffled_courses(self) -> None:
@@ -744,6 +751,53 @@ class MkddGameState():
                     if self.selected_course in available_cups_courses[self.selected_cup]:
                         break
                 dolphin.write_word(self.memory_addresses.menu_course_w, self.selected_course)
+
+
+    def add_course_selection_texts(self) -> None:
+        """Prints some status data when the player is selecting course."""
+        if not (self.current_course.type == game_data.CourseType.MENU
+                and self.menu_pointer == 0
+                and self.mode == game_data.Modes.GRANDPRIX):
+            return
+        
+        if self.selected_cup == game_data.CUP_ALL_CUP_TOUR:
+            goaltxt = (
+                ["50cc ", "100cc ", "150cc ", "Mirror "][self.options.all_cup_tour_min_cc] +
+                ["Gold", "Silver", "Bronze", "Perfect"][self.options.all_cup_tour_min_rank] +
+                f", {self.options.all_cup_tour_length} races"
+            )
+            self.print_ingame(304, 192, "All Cup Tour requirements:", 0)
+            self.print_ingame(304, 204, goaltxt, 0)
+        
+        if self.unlocked_cup_skips > 0:
+            self.print_ingame(304, 436, f"Race skips unlocked: {self.unlocked_cup_skips}", 0)
+            self.print_ingame(304, 448, f"You can start from {["2nd", "3rd", "4th"][min(2, self.unlocked_cup_skips - 1)]} race.", 0)
+
+
+    def add_pause_texts(self) -> None:
+        if self.pause_state != 1:
+            return
+        
+        text_x: int = 20
+        text_y: int = 236
+        kart_upgrade_text = ", ".join(u.short_name for u in self.kart_upgrades[self.active_kart.id])
+        texts: list[str] = [f"Kart: {self.active_kart.name} {kart_upgrade_text}"]
+        if self.mode == game_data.Modes.GRANDPRIX:
+            texts.extend(self.get_character_texts(self.active_characters[0], self.active_characters[1]))
+        elif self.mode == game_data.Modes.TIMETRIAL:
+            text_y = 350
+            def _to_minutes(seconds: float) -> str:
+                minutes = int(seconds / 60)
+                seconds -= minutes * 60
+                return f"{minutes:2d}:{seconds:2.3f}".replace(".", ":")
+
+            texts.append(f"Good time:   {_to_minutes(self.current_course.good_time)}")
+            if self.options.time_trials == options.TimeTrials.option_include_staff_ghosts:
+                texts.append(f"Staff ghost: {_to_minutes(self.current_course.staff_time)}")
+
+        for idx, txt in enumerate(texts):
+            self.print_ingame(text_x, text_y + idx * 12, txt)
+            
 
 
     def apply_speed_modifiers(self) -> None:
