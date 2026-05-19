@@ -35,6 +35,8 @@ class MkddRules:
                         lambda state, items = location.required_items: state.has_all_counts(items, self.player))
             if locations.TAG_REQUIRES_BOOST in location.tags:
                 self.add_loc_rule(location.name, lambda state: has_boost_item(state, self.player))
+                if not self.world.options.faster_50cc_100cc and locations.TAG_NO_SLOW_KARTS in location.tags:
+                    self.add_loc_rule(location.name, lambda state: state.has(items.PROGRESSIVE_CLASS, self.player))
                 if locations.TAG_SHORTCUT in location.tags:
                     self.add_loc_rule(location.name, lambda state, course = location.region: state.has(items.get_item_name_tt_course(course), self.player), "or")
             if locations.TAG_CHAIN_CHOMP in location.tags:

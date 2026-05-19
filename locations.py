@@ -31,6 +31,7 @@ TAG_ITEM_BOX_CUSTOM = "*Custom Item Box"
 TAG_ITEM_BOX_REPLACEABLE = "*Replaceable Item Box"
 TAG_REQUIRES_BOOST = "*Requires Boost"
 TAG_CHAIN_CHOMP = "*Requires Chain Chomp"
+TAG_NO_SLOW_KARTS = "*Requires 100cc"
 
 
 class MkddLocation(Location):
