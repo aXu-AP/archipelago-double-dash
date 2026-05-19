@@ -2,6 +2,7 @@ from typing import NamedTuple
 
 TAG_REQUIRES_BOOST = "*Requires Boost"
 TAG_CHAIN_CHOMP = "*Requires Chain Chomp"
+TAG_NO_SLOW_KARTS = "*Requires 100cc"
 
 
 class Line(NamedTuple):
@@ -64,15 +65,15 @@ ROUTE_LOCATIONS: dict[str, list[RouteLocation]] = {
         RouteLocation("Bridge Shortcut", Line(-3600, 1700, -3600, 2400), Line(6300, 1700, 6300, 2400), 3, tags={TAG_REQUIRES_BOOST}),
     ],
     "Yoshi Circuit": [
-        RouteLocation("Arc Shortcut", Line(-8800, 13300, -5800, 12600), Line(-9700, 11700, -6700, 10400), 3, void_height=12900, tags={TAG_REQUIRES_BOOST, TAG_CHAIN_CHOMP}),
-        RouteLocation("Tunnel Shortcut", Line(3400, -18200, 2700, -16700), Line(5800, -15400, 4000, -14900), 3, void_height=12200, tags={TAG_REQUIRES_BOOST, TAG_CHAIN_CHOMP}),
+        RouteLocation("Arc Shortcut", Line(-8800, 13300, -5800, 12600), Line(-9700, 11700, -6700, 10400), 3, void_height=12900, tags={TAG_REQUIRES_BOOST, TAG_CHAIN_CHOMP, TAG_NO_SLOW_KARTS}),
+        RouteLocation("Tunnel Shortcut", Line(3400, -18200, 2700, -16700), Line(5800, -15400, 4000, -14900), 3, void_height=12200, tags={TAG_REQUIRES_BOOST, TAG_CHAIN_CHOMP, TAG_NO_SLOW_KARTS}),
     ],
     "DK Mountain": [
         RouteLocation("Hairpin Turn Shortcut", Line(-11600, -25200, -9500, -22600), Line(-12100, -25100, -11400, -21200), 2, void_height=7400),
     ],
     "Dino Dino Jungle": [
-        RouteLocation("Bridge Shortcut", Line(-18500, 8100, -18500, 7000), Line(-29200, 6500, -28300, 5640), 5),
-        RouteLocation("Cave Shortcut", Line(-20700, -14500, -20700, -12500), Line(-17300, -14700, -17300, -10800), 5, tags={TAG_REQUIRES_BOOST, TAG_CHAIN_CHOMP}),
+        RouteLocation("Bridge Shortcut", Line(-18500, 8100, -18500, 7000), Line(-29200, 6500, -28300, 5640), 5, void_height=8100),
+        RouteLocation("Cave Shortcut", Line(-20700, -14500, -20700, -12500), Line(-17300, -14700, -17300, -10800), 5, void_height=11000, tags={TAG_REQUIRES_BOOST, TAG_CHAIN_CHOMP, TAG_NO_SLOW_KARTS}),
     ],
     "Bowser's Castle": [
         RouteLocation("Cannon Room Shortcut", Line(-26580, 22600, -27550, 20900), Line(-29600, 22800, -32200, 22800), 3, void_height=8000),
