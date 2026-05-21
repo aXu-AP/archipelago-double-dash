@@ -19,6 +19,7 @@ from .settings import MkddSettings
 
 class MkddWebWorld(WebWorld):
     theme = "ocean"
+    option_groups = options.option_groups
     tutorials = [
         Tutorial(
             tutorial_name="Setup Guide",
