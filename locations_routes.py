@@ -2,6 +2,7 @@ from typing import NamedTuple
 
 TAG_REQUIRES_BOOST = "*Requires Boost"
 TAG_CHAIN_CHOMP = "*Requires Chain Chomp"
+TAG_REQUIRES_STAR = "*Requires Star"
 TAG_NO_SLOW_KARTS = "*Requires 100cc"
 
 
@@ -44,6 +45,7 @@ def lines_intersect(l1: Line, l2: Line) -> bool:
 
 ROUTE_LOCATIONS: dict[str, list[RouteLocation]] = {
     "Dry Dry Desert": [
+        RouteLocation("Survive Sand Pit", Line(18600, -7800, 17800, -7800), Line(19100, -7000, 17000, -7000), 1, void_height=3400, tags={TAG_REQUIRES_STAR}),
         RouteLocation("Last Sign Shortcut", Line(-18500, 9000, -15500, 6000), Line(-20000, 7300, -17000, 4600), 3, tags={TAG_REQUIRES_BOOST}),
     ],
     "Mushroom Bridge": [
