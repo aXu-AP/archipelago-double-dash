@@ -277,7 +277,7 @@ class MkddWorld(World):
                     weights = [10 - item.usefulness for item in items_left]
         # In case the user has specified no items, force at least one boost item for all locations be reachable.
         if (self.options.shortcuts_as_locations
-            and self.options.time_trials == self.options.time_trials.option_disable
+            and self.options.time_trials == options.TimeTrials.option_disable
             and self.options.items_for_everybody + self.options.items_per_character + self.options.start_items_per_character == 0):
             item_pool.append(self.create_item(items.get_item_name_character_item(game_data.CHARACTERS[0].name, game_data.ITEM_STAR.name)))
         
