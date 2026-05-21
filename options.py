@@ -1,6 +1,6 @@
 from dataclasses import dataclass
-from Options import Choice, DefaultOnToggle, NamedRange, OptionDict, OptionGroup, PerGameCommonOptions, Range, StartInventoryPool, Toggle
-from schema import And, Schema
+from Options import Choice, DefaultOnToggle, NamedRange, OptionCounter, OptionGroup, PerGameCommonOptions, Range, StartInventoryPool, Toggle
+from schema import Optional, Schema
 
 # Goal
 class Goal(Choice):
@@ -224,13 +224,28 @@ class ShorterCourses(Toggle):
     """Makes most courses 2 laps long. Might make the flow of the game better."""
     display_name = "Shorter Courses"
 
-class CustomLapCounts(OptionDict):
+class CustomLapCounts(OptionCounter):
     """Set custom amount of laps on each course.
     Write each course on its own line, followed by : and number of laps(max 9)."""
     display_name = "Custom Lap Counts"
     default = {"Wario Colosseum": 2}
     schema = Schema({
-        str: And(int, lambda n: 1 <= n <= 9)
+        Optional("Luigi Circuit"): lambda n: 1 <= n <= 9,
+        Optional("Peach Beach"): lambda n: 1 <= n <= 9,
+        Optional("Baby Park"): lambda n: 1 <= n <= 9,
+        Optional("Dry Dry Desert"): lambda n: 1 <= n <= 9,
+        Optional("Mushroom Bridge"): lambda n: 1 <= n <= 9,
+        Optional("Mario Circuit"): lambda n: 1 <= n <= 9,
+        Optional("Daisy Cruiser"): lambda n: 1 <= n <= 9,
+        Optional("Waluigi Stadium"): lambda n: 1 <= n <= 9,
+        Optional("Sherbet Land"): lambda n: 1 <= n <= 9,
+        Optional("Mushroom City"): lambda n: 1 <= n <= 9,
+        Optional("Yoshi Circuit"): lambda n: 1 <= n <= 9,
+        Optional("DK Mountain"): lambda n: 1 <= n <= 9,
+        Optional("Wario Colosseum"): lambda n: 1 <= n <= 9,
+        Optional("Dino Dino Jungle"): lambda n: 1 <= n <= 9,
+        Optional("Bowser's Castle"): lambda n: 1 <= n <= 9,
+        Optional("Rainbow Road"): lambda n: 1 <= n <= 9,
     })
 
 
