@@ -1,7 +1,8 @@
 from dataclasses import dataclass
-from Options import Choice, DefaultOnToggle, NamedRange, OptionDict, PerGameCommonOptions, Range, StartInventoryPool, Toggle, Visibility
+from Options import Choice, DefaultOnToggle, NamedRange, OptionDict, OptionGroup, PerGameCommonOptions, Range, StartInventoryPool, Toggle
 from schema import And, Schema
 
+# Goal
 class Goal(Choice):
     """Victory condition for the game.
     All Cup Tour: Collect set amount of gold trophies to unlock All Cup Tour. Get gold in All Cup Tour to win.
@@ -9,24 +10,6 @@ class Goal(Choice):
     display_name = "Goal"
     option_all_cup_tour = 0
     option_trophies = 1
-
-class AllCupTourMinCC(Choice):
-    """At what CC you need to play All Cup Tour to win."""
-    display_name = "All Cup Tour Min CC"
-    option_50cc = 0
-    option_100cc = 1
-    option_150cc = 2
-    option_mirror = 3
-    default = 1
-
-class AllCupTourMinRank(Choice):
-    """How well you need to do in All Cup Tour to win."""
-    display_name = "All Cup Tour Min Rank"
-    option_gold = 0
-    option_silver = 1
-    option_bronze = 2
-    option_perfect = 3
-    default = 0
 
 class TrophyRequirementPercent(Range):
     """How many gold trophies are needed for goal completion.
@@ -49,6 +32,25 @@ class ShuffleExtraTrophies(Range):
     range_end = 50
     default = 0
 
+class AllCupTourMinCC(Choice):
+    """At what CC you need to play All Cup Tour to win."""
+    display_name = "All Cup Tour Min CC"
+    option_50cc = 0
+    option_100cc = 1
+    option_150cc = 2
+    option_mirror = 3
+    default = 1
+
+class AllCupTourMinRank(Choice):
+    """How well you need to do in All Cup Tour to win."""
+    display_name = "All Cup Tour Min Rank"
+    option_gold = 0
+    option_silver = 1
+    option_bronze = 2
+    option_perfect = 3
+    default = 0
+
+# Content
 class LogicDifficulty(NamedRange):
     """Balances the difficulty modeling, how many upgrades you are presumed to have to win races.
     Use normal (0) if you can comfortably win 100cc races.
@@ -75,6 +77,28 @@ class TimeTrials(Choice):
     option_include_staff_ghosts = 2
     default = 1
 
+class ItemBoxesAsLocations(Choice):
+    """Makes some item boxes count as checks.
+    Interesting locations adds 1-3 checks per course.
+    Box Groups grants you checks by touching any box in a row/group.
+    Boxsanity adds checks to every box individually."""
+    display_name = "Item Boxes as Locations"
+    option_disabled = 0
+    option_interesting_locations = 1
+    option_box_groups = 2
+    option_boxsanity = 3
+    default = 1
+
+class AddCustomItemBoxes(DefaultOnToggle):
+    """Moves some item boxes to interesting places.
+    These boxes might need going off route and hard to reach places.
+    Note: Boxes aren't created, just moved to custom positions (so some vanilla boxes are missing)."""
+    display_name = "Add Custom Item Boxes"
+
+class ShortcutsAsLocations(DefaultOnToggle):
+    """Grants checks from completing shortcuts. Some shortcuts require items like mushrooms."""
+    display_name = "Shortcuts as Locations"
+
 class CourseShuffle(Choice):
     """How the courses are shuffled in cups."""
     display_name = "Course Shuffle"
@@ -83,34 +107,7 @@ class CourseShuffle(Choice):
     # TODO: option_shuffle_per_class = 2
     default = 1
 
-class AllCupTourLength(Range):
-    """How many races are in the All Cup Tour? 16 = vanilla. Default 8."""
-    display_name = "All Cup Tour Length"
-    range_start = 2
-    range_end = 16
-    default = 8
-
-class Mirror200cc(Toggle):
-    """Mirror mode is 200cc if enabled."""
-    display_name = "Mirror is 200cc"
-
-class Faster50cc100cc(Toggle):
-    """Makes 50cc as fast as 100cc and 100cc closer to 150cc."""
-    display_name = "Faster 50cc and 100cc"
-
-class ShorterCourses(Toggle):
-    """Makes most courses 2 laps long. Might make the flow of the game better."""
-    display_name = "Shorter Courses"
-
-class CustomLapCounts(OptionDict):
-    """Set custom amount of laps on each course.
-    Write each course on its own line, followed by : and number of laps(max 9)."""
-    display_name = "Custom Lap Counts"
-    default = {"Wario Colosseum": 2}
-    schema = Schema({
-        str: And(int, lambda n: 1 <= n <= 9)
-    })
-    
+# Items
 class ItemsForEverybody(Range):
     """How many global item unlocks there are."""
     display_name = "Items for Everybody"
@@ -150,9 +147,10 @@ class GuaranteedItems(DefaultOnToggle):
     For example, if your character has mushroom unlocked, you cannot get blank item at 4th or worse place."""
     display_name = "Guaranteed Items"
 
+# Karts
 class KartUpgrades(Range):
     """How many random kart stat upgrades there are total.
-    Unlike progressive engine upgrades, these upgrades are tied to certain vehicles."""
+    Unlike progressive speed upgrades, these upgrades are tied to certain vehicles."""
     display_name = "Kart Upgrades"
     range_start = 0
     range_end = 100
@@ -164,28 +162,7 @@ class SpeedUpgrades(DefaultOnToggle):
     Disabling this sets logic difficulty on hard if it's lower."""
     display_name = "Speed Upgrades"
 
-class ItemBoxesAsLocations(Choice):
-    """Makes some item boxes count as checks.
-    Interesting locations adds 1-3 checks per course.
-    Box Groups grants you checks by touching any box in a row/group.
-    Boxsanity adds checks to every box individually."""
-    display_name = "Item Boxes as Locations"
-    option_disabled = 0
-    option_interesting_locations = 1
-    option_box_groups = 2
-    option_boxsanity = 3
-    default = 1
-
-class AddCustomItemBoxes(DefaultOnToggle):
-    """Moves some item boxes to interesting places.
-    These boxes might need going off route and hard to reach places.
-    Note: Boxes aren't created, just moved to custom positions (so some vanilla boxes are missing)."""
-    display_name = "Add Custom Item Boxes"
-
-class ShortcutsAsLocations(DefaultOnToggle):
-    """Grants checks from completing shortcuts. Some shortcuts require items like mushrooms."""
-    display_name = "Shortcuts as Locations"
-
+# Traps
 class TrapChance(Range):
     """Percentage of how many filler items are converted into traps.
     If this is 0, no traps will be in the pool. 100 means all filler items are traps.
@@ -227,25 +204,51 @@ class OverlappingStartTrapWeight(Range):
     range_end = 100
     default = 5
 
+# Quality of Life
+class Mirror200cc(Toggle):
+    """Mirror mode is 200cc if enabled."""
+    display_name = "Mirror is 200cc"
+
+class Faster50cc100cc(Toggle):
+    """Makes 50cc as fast as 100cc and 100cc closer to 150cc."""
+    display_name = "Faster 50cc and 100cc"
+
+class AllCupTourLength(Range):
+    """How many races are in the All Cup Tour? 16 = vanilla. Default 8."""
+    display_name = "All Cup Tour Length"
+    range_start = 2
+    range_end = 16
+    default = 8
+
+class ShorterCourses(Toggle):
+    """Makes most courses 2 laps long. Might make the flow of the game better."""
+    display_name = "Shorter Courses"
+
+class CustomLapCounts(OptionDict):
+    """Set custom amount of laps on each course.
+    Write each course on its own line, followed by : and number of laps(max 9)."""
+    display_name = "Custom Lap Counts"
+    default = {"Wario Colosseum": 2}
+    schema = Schema({
+        str: And(int, lambda n: 1 <= n <= 9)
+    })
+
 
 @dataclass
 class MkddOptions(PerGameCommonOptions):
     goal: Goal
-    all_cup_tour_min_cc: AllCupTourMinCC
-    all_cup_tour_min_rank: AllCupTourMinRank
     trophy_requirement_percent: TrophyRequirementPercent
     grand_prix_trophies: GrandPrixTrophies
     shuffle_extra_trophies: ShuffleExtraTrophies
+    all_cup_tour_min_cc: AllCupTourMinCC
+    all_cup_tour_min_rank: AllCupTourMinRank
+
     logic_difficulty: LogicDifficulty
     time_trials: TimeTrials
-
+    item_boxes_as_locations: ItemBoxesAsLocations
+    add_custom_item_boxes: AddCustomItemBoxes
+    shortcuts_as_locations: ShortcutsAsLocations
     course_shuffle: CourseShuffle
-    all_cup_tour_length: AllCupTourLength
-
-    mirror_200cc: Mirror200cc
-    faster_50cc_100cc: Faster50cc100cc
-    shorter_courses: ShorterCourses
-    custom_lap_counts: CustomLapCounts
 
     items_for_everybody: ItemsForEverybody
     items_per_character: ItemsPerCharacter
@@ -255,16 +258,18 @@ class MkddOptions(PerGameCommonOptions):
 
     kart_upgrades: KartUpgrades
     speed_upgrades: SpeedUpgrades
-
-    item_boxes_as_locations: ItemBoxesAsLocations
-    add_custom_item_boxes: AddCustomItemBoxes
-    shortcuts_as_locations: ShortcutsAsLocations
     
     trap_chance: TrapChance
     banana_rain_trap_weight: BananaRainTrapWeight
     shell_rain_trap_weight: ShellRainTrapWeight
     bomb_rain_trap_weight: BombRainTrapWeight
     overlapping_start_trap_weight: OverlappingStartTrapWeight
+
+    mirror_200cc: Mirror200cc
+    faster_50cc_100cc: Faster50cc100cc
+    all_cup_tour_length: AllCupTourLength
+    shorter_courses: ShorterCourses
+    custom_lap_counts: CustomLapCounts
 
     start_inventory_from_pool: StartInventoryPool
 
@@ -275,15 +280,15 @@ class MkddOptions(PerGameCommonOptions):
             "all_cup_tour_min_rank",
             "logic_difficulty",
             "time_trials",
-            "all_cup_tour_length",
-            "custom_lap_counts",
-            "mirror_200cc",
-            "faster_50cc_100cc",
-            "frantic_items",
-            "guaranteed_items",
             "item_boxes_as_locations",
             "add_custom_item_boxes",
             "shortcuts_as_locations",
+            "frantic_items",
+            "guaranteed_items",
+            "all_cup_tour_length",
+            "mirror_200cc",
+            "faster_50cc_100cc",
+            "custom_lap_counts",
         )
 
     def update_from_slot_data(self, slot_data: dict[str, any]) -> None:
@@ -295,3 +300,48 @@ class MkddOptions(PerGameCommonOptions):
 def init_options() -> MkddOptions:
     """Initializes options object with default values."""
     return MkddOptions(**{key: val.default for key, val in MkddOptions.type_hints.items()})
+
+
+option_groups: list[OptionGroup] = [
+    OptionGroup("Goal", [
+        Goal,
+        TrophyRequirementPercent,
+        GrandPrixTrophies,
+        ShuffleExtraTrophies,
+        AllCupTourMinCC,
+        AllCupTourMinRank,
+    ]),
+    OptionGroup("Content", [
+        LogicDifficulty,
+        TimeTrials,
+        ItemBoxesAsLocations,
+        AddCustomItemBoxes,
+        ShortcutsAsLocations,
+        CourseShuffle,
+    ]),
+    OptionGroup("Items", [
+        ItemsForEverybody,
+        ItemsPerCharacter,
+        StartItemsPerCharacter,
+        FranticItems,
+        GuaranteedItems,
+    ]),
+    OptionGroup("Karts", [
+        KartUpgrades,
+        SpeedUpgrades,
+    ]),
+    OptionGroup("Traps", [
+        TrapChance,
+        BananaRainTrapWeight,
+        ShellRainTrapWeight,
+        BombRainTrapWeight,
+        OverlappingStartTrapWeight,
+    ]),
+    OptionGroup("Quality of Life", [
+        Mirror200cc,
+        Faster50cc100cc,
+        AllCupTourLength,
+        ShorterCourses,
+        CustomLapCounts,
+    ]),
+]
