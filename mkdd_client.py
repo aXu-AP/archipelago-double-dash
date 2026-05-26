@@ -185,6 +185,10 @@ def apply_ar_code(code: list[int]):
         address = (code[i] & 0x01FF_FFFF) | 0x8000_0000
         if command == 0x04:
             dolphin.write_word(address, code[i + 1])
+        elif command == 0x00:
+            dolphin.write_byte(address, code[i + 1])
+        else:
+            logger.warn(f"Unknown AR code: {command:2x}")
 
 
 def apply_dict_patch(code: dict[int, list[int]]):
