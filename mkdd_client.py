@@ -314,14 +314,15 @@ async def check_locations(ctx: MkddContext) -> None:
     if ctx.trophies >= ctx.trophy_requirement:
         new_location_names.add(locations.TROPHY_GOAL)
     
-    new_location_names |= ctx.game_state.check_item_box_locations()
-    new_location_names |= ctx.game_state.check_route_locations()
-    new_location_names |= ctx.game_state.check_finish_course_locations()
-    new_location_names |= ctx.game_state.check_take_lead_locations()
-    new_location_names |= ctx.game_state.check_gp_race_locations()
-    new_location_names |= ctx.game_state.check_gp_cup_locations()
-    new_location_names |= ctx.game_state.check_all_cup_tour_locations()
-    new_location_names |= ctx.game_state.check_tt_locations()
+    if ctx.game_state.state_valid:
+        new_location_names |= ctx.game_state.check_item_box_locations()
+        new_location_names |= ctx.game_state.check_route_locations()
+        new_location_names |= ctx.game_state.check_finish_course_locations()
+        new_location_names |= ctx.game_state.check_take_lead_locations()
+        new_location_names |= ctx.game_state.check_gp_race_locations()
+        new_location_names |= ctx.game_state.check_gp_cup_locations()
+        new_location_names |= ctx.game_state.check_all_cup_tour_locations()
+        new_location_names |= ctx.game_state.check_tt_locations()
 
     new_locations = {locations.name_to_id.get(loc_name) for loc_name in new_location_names}
     new_locations.discard(None)
