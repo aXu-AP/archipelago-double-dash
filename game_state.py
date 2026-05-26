@@ -789,7 +789,7 @@ class MkddGameState():
             def _to_minutes(seconds: float) -> str:
                 minutes = int(seconds / 60)
                 seconds -= minutes * 60
-                return f"{minutes:2d}:{seconds:2.3f}".replace(".", ":")
+                return f"{minutes:02d}:{seconds:06.3f}".replace(".", ":")
 
             texts.append(f"Good time:   {_to_minutes(self.current_course.good_time)}")
             if self.options.time_trials == options.TimeTrials.option_include_staff_ghosts:
