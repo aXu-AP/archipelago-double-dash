@@ -32,6 +32,7 @@ class MkddGameState():
         self.rain_trap_amount_left: int = 0
         self.rain_trap_timer: int = 0
         self.queued_items: int = 0
+        self.state_valid: bool = False
 
         # Menu-level data.
         self.menu_pointer: int = 0
@@ -166,6 +167,8 @@ class MkddGameState():
             self.last_kart_position = (0, 0, 0)
             self.kart_position = (0, 0, 0)
             self.kart_velocity = (0, 0, 0)
+        
+        self.state_valid = self.check_state_validity()
 
 
     def sync_state(self) -> None:
@@ -184,6 +187,22 @@ class MkddGameState():
         dolphin.write_word(self.memory_addresses.max_vehicle_class_w, self.unlocked_vehicle_class)
         dolphin.write_bytes(self.memory_addresses.tt_items_bx, game_data.TT_ITEM_TABLE[self.time_trial_items])
     
+
+    def check_state_validity(self) -> bool:
+        if self.mode == game_data.Modes.TIMETRIAL and not self.options.time_trials and self.menu_pointer == 0:
+            self.print_ingame(304, 180, "Time Trials are disabled!", 0)
+            self.print_ingame(304, 200, "Change mode to Grand Prix.", 0)
+            return False
+        if self.active_characters[0] == self.active_characters[1] and self.in_game:
+            self.print_ingame(304, 180, "Invalid game state!", 0)
+            self.print_ingame(304, 200, "Return to main menu.", 0)
+            return False
+        if self.mode == game_data.Modes.GRANDPRIX and self.vehicle_class > self.unlocked_vehicle_class:
+            self.print_ingame(304, 180, "Invalid game state!", 0)
+            self.print_ingame(304, 200, "Return to main menu.", 0)
+            return False
+        return True
+
 
     def check_item_box_locations(self) -> set[str]:
         """Check for locations that are granted from item boxes."""
@@ -717,9 +736,6 @@ class MkddGameState():
                         if i_cup not in available_cups_courses:
                             available_cups_courses[i_cup] = set()
                         available_cups_courses[i_cup].add(self.cups_courses[i_cup].index(i_course))
-            if len(available_cups_courses) == 0 and self.menu_pointer == 0:
-                self.print_ingame(304, 180, "No Time Trials unlocked yet!", 0)
-                self.print_ingame(304, 200, "Change mode to Grand Prix.", 0)
         elif self.mode == game_data.Modes.GRANDPRIX:
             # Give option to skip x first courses.
             gp_selectable_courses = range(self.unlocked_cup_skips + 1)
