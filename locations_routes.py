@@ -64,7 +64,7 @@ ROUTE_LOCATIONS: dict[str, list[RouteLocation]] = {
         RouteLocation("Last Turn Shortcut", Line(-900, 22200, 1900, 20400), Line(-4400, 19100, -900, 19100), 4),
     ],
     "Mushroom City": [
-        RouteLocation("Bridge Shortcut", Line(-3600, 1700, -3600, 2400), Line(6300, 1700, 6300, 2400), 3, tags={TAG_REQUIRES_BOOST}),
+        RouteLocation("Bridge Shortcut", Line(-3600, 1700, -3600, 2400), Line(6300, 1700, 6300, 2400), 4, tags={TAG_REQUIRES_BOOST}),
     ],
     "Yoshi Circuit": [
         RouteLocation("Arc Shortcut", Line(-8800, 13300, -5800, 12600), Line(-9700, 11700, -6700, 10400), 3, void_height=12900, tags={TAG_REQUIRES_BOOST, TAG_CHAIN_CHOMP, TAG_NO_SLOW_KARTS}),
