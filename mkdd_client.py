@@ -211,6 +211,7 @@ def apply_patch():
     apply_dict_patch(patches.disable_start_pos_shuffle)
     apply_dict_patch(patches.spawn_item)
     apply_dict_patch(patches.draw_string)
+    apply_dict_patch(patches.invalidate_cache)
     apply_ar_code(ar_codes.lap_modifier)
     apply_ar_code(ar_codes.gp_course_selection)
     apply_ar_code(ar_codes.fireball_limit)
