@@ -80,8 +80,8 @@ Mario Kart Double Dash:
     #
     # You can define additional values between the minimum and maximum values.
     # Minimum value is -50
-    # Maximum value is 100
-    # Possible values: baby (=-50), easy (=-25), normal (=0), hard (=50), unrestricted (=100)
+    # Maximum value is 120
+    # Possible values: baby (=-50), easy (=-25), normal (=0), hard (=50), unrestricted (=120)
 
   time_trials: basic
     # Are time trials in logic? If enabled, item pool has course unlocks for time trials.
