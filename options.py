@@ -57,14 +57,14 @@ class LogicDifficulty(NamedRange):
     Unrestricted places locations in logic as soon as they are technically possible."""
     display_name = "Logic Difficulty"  
     range_start = -50
-    range_end = 100
+    range_end = 120
     default = 0
     special_range_names = {
         "baby": -50,
         "easy": -25,
         "normal": 0,
         "hard": 50,
-        "unrestricted": 100,
+        "unrestricted": 120,
     }
 
 class TimeTrials(Choice):
