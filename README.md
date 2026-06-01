@@ -4,7 +4,7 @@ This is an Archipelago implementation for Mario Kart: Double Dash!!. In case you
 
 ## What does randomization do to this game?
 
-Characters, karts, items, cups and access to time trial courses are shuffled into the item pool. There's also upgrades for the karts and character specific items. The courses in the cups can be also shuffled. The locations include winning races in each course, getting bronze/silver/gold cups at various vehicle classes and winning races with certain character/kart/course combinations (for example, win with Mario driving Red Fire or win with Daisy at Daisy Cruiser).
+Characters, karts, items, cups and access to time trial courses are shuffled into the item pool. There's also upgrades for the karts and character specific items. The courses in the cups can be also shuffled. The locations include winning races in each course, getting bronze/silver/gold cups at various vehicle classes and winning races with certain character/kart/course combinations (for example, win with Mario driving Red Fire or win with Daisy at Daisy Cruiser). Collecting item boxes and completing shortcuts can also be checks.
 
 ## What is the goal of the game?
 
@@ -16,7 +16,7 @@ There's a status bar at the bottom of the client which tells you what characters
 
 ## What game modes are available?
 
-Grand Prix and Time Trial. 2 players on one kart should work, but is untested (you may want to enable 2 player time trials cheat code to be able to get all the checks). 3-4 players is unsupported.
+Grand Prix and Time Trial. 2 players on one kart works (you may want to enable 2 player time trials cheat code to be able to get all the checks). 3-4 players is unsupported.
 
 ## Setup
 
@@ -34,4 +34,4 @@ You're good to go!
 
 * To **Yoshi2** for patiently showing me the ropes of reverse engineering! This is my first romhacking project so help was really needed!
 * To **Ralph@gc-forever** for making tons of cheat codes for MKDD and allowing me to use them for the randomizator! Some of them are used by the project as is (see [ar_codes.py](ar_codes.py) for complete list) and many of them have given insight to make some custom features myself.
-* To **ItzRonsku** and **Hugeli** for testing.
+* To **ItzRonsku** and **Hugeli** for initial testing and to many others for subsequent testing.
