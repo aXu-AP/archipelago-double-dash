@@ -149,6 +149,7 @@ class MkddMemAddressesUsa(MkddMemAddresses):
     class_speed_multipliers_fx = 0x80361d44
     max_speed_f = 0x803d1894
     all_cup_tour_contents_wx = 0x803b1300
+    all_cup_tour_starting_track_w = 0x803323A8
     cup_contents_wx = 0x803322e8
     course_names_s = [
         0x80331fd0, # Luigi Circuit
