@@ -197,7 +197,7 @@ Mario Kart Double Dash:
     # Minimum value is 2
     # Maximum value is 16
 
-  all_cup_tour_fully_randomizes: true
+  all_cup_tour_fully_random: false
     # Fully randomizes race pool for All Cup Tour.
     # False keeps Luigi Circuit 1st and Rainbow Road Last like in vanilla.
     # Possible values: true, false

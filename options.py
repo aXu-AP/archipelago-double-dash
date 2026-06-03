@@ -222,7 +222,7 @@ class AllCupTourLength(Range):
 
 class AllCupTourFullyRandom(Toggle):
     """Fully randomizes race pool for All Cup Tour. False keeps Luigi Circuit 1st and Rainbow Road Last like in vanilla."""
-    display_name = "All Cup Tour Fully Randomizes"
+    display_name = "All Cup Tour Fully Random"
 
 class ShorterCourses(Toggle):
     """Makes most courses 2 laps long. Might make the flow of the game better."""
@@ -287,7 +287,7 @@ class MkddOptions(PerGameCommonOptions):
     mirror_200cc: Mirror200cc
     faster_50cc_100cc: Faster50cc100cc
     all_cup_tour_length: AllCupTourLength
-    all_cup_tour_fully_randomizes: AllCupTourFullyRandom
+    all_cup_tour_fully_random: AllCupTourFullyRandom
     shorter_courses: ShorterCourses
     custom_lap_counts: CustomLapCounts
 
@@ -309,7 +309,7 @@ class MkddOptions(PerGameCommonOptions):
             "mirror_200cc",
             "faster_50cc_100cc",
             "custom_lap_counts",
-            "all_cup_tour_fully_randomizes"
+            "all_cup_tour_fully_random"
         )
 
     def update_from_slot_data(self, slot_data: dict[str, any]) -> None:
