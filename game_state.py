@@ -712,7 +712,6 @@ class MkddGameState():
         
         # Shuffle All Cup Tour properly with randomized courses.
         if self.selected_cup != self.last_selected_cup:
-            print(self.options.all_cup_tour_fully_randomizes)
             if self.options.all_cup_tour_fully_randomizes:
                 course_order = list(range(16)) 
                 random.shuffle(course_order)
