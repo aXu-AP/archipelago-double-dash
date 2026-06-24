@@ -277,11 +277,6 @@ class MkddWorld(World):
                     # Refill the pool with some balancing.
                     items_left = items_left_characters_pool.copy()
                     weights = [10 - item.usefulness for item in items_left]
-        # In case the user has specified no items, force at least one boost item for all locations be reachable.
-        if (self.options.shortcuts_as_locations
-            and self.options.time_trials == options.TimeTrials.option_disable
-            and self.options.items_for_everybody + self.options.items_per_character + self.options.start_items_per_character == 0):
-            item_pool.append(self.create_item(items.get_item_name_character_item(game_data.CHARACTERS[0].name, game_data.ITEM_STAR.name)))
         
 
         self.character_item_total_weights = {character.name:[] for character in game_data.CHARACTERS}
@@ -292,14 +287,35 @@ class MkddWorld(World):
                     sum([item.get_weight(i, self.options.frantic_items) for item in items_per_character[character]])
                 )
 
-        # Remove some items if there are more items than locations.
+        remove_items: bool = True
+        ensure_star: bool = True
         if len(item_pool) > total_locations:
             self.logger.warning(f"{self.player_name}: Too many items, removing {len(item_pool) - total_locations} items from the pool.")
-        while len(item_pool) > total_locations:
-            item: items.MkddItem = self.random.choice(item_pool)
-            item_type: items.ItemType = items.data_table[item.code].item_type
-            if item_type == items.ItemType.KART_UPGRADE or item_type == items.ItemType.ITEM_UNLOCK:
-                item_pool.remove(item)
+        while remove_items or ensure_star:
+            # Remove some items if there are more items than locations.
+            while len(item_pool) > total_locations:
+                item: items.MkddItem = self.random.choice(item_pool)
+                item_type: items.ItemType = items.data_table[item.code].item_type
+                if item_type == items.ItemType.KART_UPGRADE:
+                    item_pool.remove(item)
+                if item_type == items.ItemType.ITEM_UNLOCK:
+                    item_pool.remove(item)
+                    ensure_star = True
+            remove_items = False
+            
+            # In case the user has specified no items, force at least one boost item for all locations be reachable.
+            if self.options.shortcuts_as_locations and ensure_star:
+                for item in item_pool:
+                    item_data: items.MkddItemData = items.data_table[item.code]
+                    if (
+                            item_data.item_type == items.ItemType.ITEM_UNLOCK
+                            and item_data.meta["item"] == game_data.ITEM_STAR):
+                        ensure_star = False
+                        break
+                if ensure_star:
+                    item_pool.append(self.create_item(items.get_item_name_character_item(game_data.CHARACTERS[0].name, game_data.ITEM_STAR.name)))
+                    remove_items = True
+            ensure_star = False
 
         remaining_item_count = total_locations - len(item_pool)
         trap_count = int(remaining_item_count * self.options.trap_chance / 100)
