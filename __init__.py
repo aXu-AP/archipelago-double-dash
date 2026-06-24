@@ -354,7 +354,6 @@ class MkddWorld(World):
             for loc in self.multiworld.get_locations(self.player):
                 if course.name in locations.data_table[loc.address].tags:
                     hints[loc.address] = entrance
-        print(hint_data)
         hint_data[self.player] = hints
 
     def fill_slot_data(self) -> dict[str, Any]:
