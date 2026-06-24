@@ -712,17 +712,33 @@ class MkddGameState():
         
         # Shuffle All Cup Tour properly with randomized courses.
         if self.selected_cup != self.last_selected_cup:
-            course_order = list(range(1, 15)) # First is LC, last is RR - shuffle everything between.
-            random.shuffle(course_order)
-            course_order = [0, *course_order, 15]
-            flat_course_list = [i_course for i_cup in self.cups_courses for i_course in i_cup]
-            offset = 0
-            for i_course in course_order:
+            if self.options.all_cup_tour_fully_randomizes:
+                course_order = list(range(16)) 
+                random.shuffle(course_order)
+                flat_course_list = [i_course for i_cup in self.cups_courses for i_course in i_cup]
+                offset = 0
+                for i_course in course_order:
+                    dolphin.write_word(
+                            self.memory_addresses.all_cup_tour_contents_wx + offset,
+                            flat_course_list.index(i_course)
+                    )
+                    offset += 4
                 dolphin.write_word(
-                        self.memory_addresses.all_cup_tour_contents_wx + offset,
-                        flat_course_list.index(i_course)
+                    self.memory_addresses.all_cup_tour_starting_track_w,
+                    game_data.RACE_COURSES[course_order[0]].id
                 )
-                offset += 4
+            else:    
+                course_order = list(range(1, 15)) # First is LC, last is RR - shuffle everything between.
+                random.shuffle(course_order)
+                course_order = [0, *course_order, 15]
+                flat_course_list = [i_course for i_cup in self.cups_courses for i_course in i_cup]
+                offset = 0
+                for i_course in course_order:
+                    dolphin.write_word(
+                            self.memory_addresses.all_cup_tour_contents_wx + offset,
+                            flat_course_list.index(i_course)
+                    )
+                    offset += 4
 
 
     def apply_course_availability(self) -> None:
