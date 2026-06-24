@@ -163,14 +163,16 @@ class MkddWorld(World):
             self.get_location(locations.TROPHY_GOAL).place_locked_item(self.create_item("Victory"))
         
     
-    def _random_from(self, pool: set[str], count: int = 1) -> list[str]:
+    def _random_from(self, pool: list[str], count: int = 1) -> list[str]:
         """Returns random choices from given pool, taking into account player defined starting inventory."""
         ret: list[str] = []
-        precollected: set[str] = {item for item in self.options.start_inventory_from_pool if item in pool}
-        pool -= precollected
-        current_count = len(precollected)
+        current_count: int = 0
+        for item in self.options.start_inventory_from_pool:
+            if item in pool:
+                pool.remove(item)
+                current_count += 1
         while current_count < count:
-            item_name: str = self.random.choice(list(pool))
+            item_name: str = self.random.choice(pool)
             ret.append(item_name)
             pool.remove(item_name)
             current_count += 1
@@ -182,15 +184,15 @@ class MkddWorld(World):
         # (item_name, count)
         precollected: list[str] = []
         # Give 1 cup, can't be All Star Cup.
-        precollected.extend(self._random_from(set(game_data.NORMAL_CUPS)))
+        precollected.extend(self._random_from(game_data.NORMAL_CUPS.copy()))
         # Give 1 time trial track.
         if self.options.time_trials != options.TimeTrials.option_disable:
-            precollected.extend(self._random_from({items.get_item_name_tt_course(c.name) for c in game_data.RACE_COURSES}))
+            precollected.extend(self._random_from([items.get_item_name_tt_course(c.name) for c in game_data.RACE_COURSES]))
         # Give 2 random characters to begin.
-        precollected.extend(self._random_from({character.name for character in game_data.CHARACTERS}, 2))
+        precollected.extend(self._random_from([character.name for character in game_data.CHARACTERS], 2))
         # Give 1 kart in each weight class.
         for weight in range(3):
-            precollected.extend(self._random_from({kart.name for kart in game_data.KARTS if kart.weight == weight}))
+            precollected.extend(self._random_from([kart.name for kart in game_data.KARTS if kart.weight == weight]))
         if not self.options.speed_upgrades:
             precollected.append(items.PROGRESSIVE_ENGINE)
             # Set minimum difficulty on "hard", otherwise the seed can be unbeatable.
