@@ -42,8 +42,8 @@ class MkddRules:
             if locations.TAG_CHAIN_CHOMP in location.tags:
                 self.add_loc_rule(location.name, lambda state: has_chain_chomp(state, self.player), "or")
             if locations.TAG_REQUIRES_STAR in location.tags:
-                self.add_loc_rule(location.name, lambda state, tt_course = items.get_item_name_tt_course(location.region):
-                                  has_star(state, self.player)
+                self.add_loc_rule(location.name, lambda state, tt_course = items.get_item_name_tt_course(location.region), gp_course = f"{location.region} GP":
+                                  (has_star(state, self.player) and state.can_reach_region(gp_course, self.player))
                                   or state.has_all_counts({tt_course: 1, items.PROGRESSIVE_TIME_TRIAL_ITEM: 3}, self.player))
             if locations.TAG_TT in location.tags:
                 tt_difficulty: int = location.difficulty
