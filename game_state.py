@@ -328,7 +328,7 @@ class MkddGameState():
     def check_take_lead_locations(self) -> set[str]:
         """Checks for locations that are given upon being in first place after the first lap."""
         if (self.mode == game_data.Modes.GRANDPRIX
-                and self.in_game
+                and (self.in_game or self.finished)
                 and self.current_lap > 1 
                 and self.in_race_placement == 0):
             return {locations.get_loc_name_lead(self.current_course.name)}
