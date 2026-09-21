@@ -3,19 +3,23 @@ Archipelago init file for Mario Kart Double Dash!!
 """
 import logging
 import math
-from typing import Any
+from collections import Counter, defaultdict
+from typing import Any, cast
 
-from BaseClasses import Region, ItemClassification, Tutorial
+from BaseClasses import ItemClassification, MultiWorld, Region, Tutorial
 from worlds.AutoWorld import WebWorld, World
 from worlds.LauncherComponents import Component, components, icon_paths, launch_subprocess
 
-from . import game_data, locations, items, regions, version
+from . import game_data, items, locations, regions, version
 from .items import MkddItem
 from .locations import MkddLocation, MkddLocationData
 from .options import MkddOptions
 from .regions import MkddRegionData
 from .rules import MkddRules
 from .settings import MkddSettings
+
+from .settings import MkddSettings
+
 
 class MkddWebWorld(WebWorld):
     theme = "ocean"
@@ -62,6 +66,8 @@ class MkddWorld(World):
         self.global_items_total_weights: list[int] = []
 
         self.trophy_requirement: int = 0
+        self.accessible_trophies: dict[int, int] = {}
+        self.item_link_double_counts: dict[int, int] = {}
 
         self.logger: logging.Logger = logging.getLogger("MKDD Logger")
         super(MkddWorld, self).__init__(world, player)
@@ -82,6 +88,58 @@ class MkddWorld(World):
             self.options.update_from_slot_data(slot_data)
             self.trophy_requirement = slot_data["trophy_requirement"]
 
+    @classmethod
+    def stage_pre_fill(cls, multiworld: "MultiWorld"):
+        worlds: list[MkddWorld] = [
+            cast(MkddWorld, world) for world in multiworld.get_game_worlds(cls.game)
+        ]
+        if not worlds:
+            return
+        trophies = [
+            item for item in multiworld.get_items() if item.name == items.TROPHY
+        ]
+        group_lookup = defaultdict(set)
+        for group_id, group in multiworld.groups.items():
+            for player in group["players"]:
+                group_lookup[group_id].add(player)
+
+        trophy_count_per_player = Counter()
+        linked_trophies_per_player = defaultdict(Counter)
+        per_player_trophies_per_player = defaultdict(Counter)
+
+        for trophy in trophies:
+            player = trophy.player
+
+            # TODO: these can probably be combined?
+            if player in group_lookup:
+                # the trophy is being sent to an item link - give it to each
+                # player in the link
+                for real_player in group_lookup[player]:
+                    per_player_trophies_per_player[real_player][player] += 1
+            else:
+                # the trophy is for a specific player - give it only to them
+                per_player_trophies_per_player[player][player] += 1
+
+            if trophy.location and trophy.location.player in group_lookup.keys():
+                # the trophy is coming *from* an item link - take it out of the
+                # pool for its destination player
+                linked_trophies_per_player[player][trophy.location.player] += 1
+            elif player in group_lookup:
+                # the trophy is being sent to an item link - give it to each
+                # player in the link
+                for real_player in group_lookup[player]:
+                    trophy_count_per_player[real_player] += 1
+            else:
+                # the trophy is for a particular player - give it only to them
+                trophy_count_per_player[player] += 1
+
+        for world in worlds:
+            count = trophy_count_per_player[world.player]
+            world.trophy_requirement = max(
+                1, int(count * world.options.trophy_requirement_percent / 100)
+            )
+            world.accessible_trophies = per_player_trophies_per_player[world.player]
+            world.item_link_double_counts = linked_trophies_per_player[world.player]
 
     def create_regions(self) -> None:
         # Course shuffle (entrance rando). If using Universal Tracker, get shuffled tracks from slot data.

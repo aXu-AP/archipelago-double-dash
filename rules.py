@@ -1,9 +1,11 @@
 from typing import TYPE_CHECKING
 
 from BaseClasses import CollectionState, Item, MultiWorld
-from worlds.generic.Rules import add_rule, set_rule, CollectionRule
 from worlds.AutoWorld import LogicMixin
-from . import locations, items, regions, game_data, options, version
+from worlds.generic.Rules import CollectionRule, add_rule, set_rule
+
+from . import game_data, items, locations, options, regions, version
+from . import game_data, items, locations, options, regions, version
 
 if TYPE_CHECKING:
     from . import MkddWorld
@@ -71,8 +73,7 @@ class MkddRules:
             self.set_ent_rule(f"Menu -> {cup}",
                     lambda state, cup = cup: state.has(cup, self.player))
         
-        self.set_loc_rule(locations.TROPHY_GOAL,
-                lambda state: state.has(items.TROPHY, self.player, self.world.trophy_requirement))
+        self.set_loc_rule(locations.TROPHY_GOAL, self.trophy_goal_met)
         
         if self.world.options.goal == options.Goal.option_all_cup_tour:
             self.set_loc_rule(locations.WIN_ALL_CUP_TOUR,
@@ -88,6 +89,15 @@ class MkddRules:
             lambda state: calculate_player_level(state, self.player, 1) + self.world.options.logic_difficulty >= 50)
         self.add_loc_rule(locations.GOLD_HEAVY,
             lambda state: calculate_player_level(state, self.player, 2) + self.world.options.logic_difficulty >= 50)
+
+    def trophy_goal_met(self, state: CollectionState) -> bool:
+        return sum(
+            state.count(items.TROPHY, player)
+            # this is overly conservative, but is necessary to make minimal
+            # accessibility seeds guaranteed to be valid
+            - self.world.item_link_double_counts[player]
+            for player in self.world.accessible_trophies
+        ) >= self.world.trophy_requirement
 
 
 class MkddState(LogicMixin):
